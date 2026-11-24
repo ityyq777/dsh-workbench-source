@@ -9,6 +9,7 @@ import type { ActionOrigin } from "@wb/sdk";
 import { newId, now as dbNow, type AutomationRule } from "./db.js";
 import { conditionPass, nextAt, render } from "./rule.js";
 import { checkAction } from "./whitelist.js";
+import { actionBelongsTo } from "./builtin.js";
 
 /** 引擎侧 action 调用入口：宿主 invoke 的等价物（plugin 来源）。 */
 export type InvokeFn = (
@@ -31,6 +32,8 @@ export interface ActionExecutorDeps {
   config: () => ActionExecutorConfig;
   /** 可选的本地时钟；缺省用 db.ts 的宿主时钟。 */
   now?: () => number;
+  /** 内置规则豁免白名单，调用必须留痕 */
+  audit?: (entry: { action: string; domain: string; ok: boolean; args?: unknown; error?: string }) => void;
 }
 
 /** 一次执行的返回值（与源码一致）。 */
@@ -51,6 +54,7 @@ export function createActionExecutor({
   log = () => {},
   config,
   now = dbNow,
+  audit = () => {},
 }: ActionExecutorDeps): ActionExecutor {
   /** 正在执行的 action 数；源码上限为 2。 */
   let active = 0;
@@ -126,12 +130,22 @@ export function createActionExecutor({
       if (trigger === "schedule") setNext(rule);
       return { skipped: true, reason: "busy" };
     }
-    // 执行时复核：配置收紧后，老规则立即停跑而不是继续调用。
-    const allowedNow = config().allowedActions;
-    if (checkAction(rule.actionName, allowedNow)) {
-      record(rule, trigger, "skipped", "", "action 未启用：" + rule.actionName, now());
-      if (trigger === "schedule") setNext(rule);
-      return { skipped: true, reason: "disabled" };
+    // 内置规则：只允许调声明方本域 action（注册时已校验，这里再兜一道），
+    // 且豁免用户白名单——等价于插件调用自己，调用另记审计。
+    if (rule.origin === "plugin") {
+      if (!actionBelongsTo(rule.ownerDomain, rule.actionName)) {
+        record(rule, trigger, "skipped", "", "内置规则跨域调用被拒绝：" + rule.actionName, now());
+        if (trigger === "schedule") setNext(rule);
+        return { skipped: true, reason: "disabled" };
+      }
+    } else {
+      // 执行时复核：配置收紧后，老规则立即停跑而不是继续调用。
+      const allowedNow = config().allowedActions;
+      if (checkAction(rule.actionName, allowedNow)) {
+        record(rule, trigger, "skipped", "", "action 未启用：" + rule.actionName, now());
+        if (trigger === "schedule") setNext(rule);
+        return { skipped: true, reason: "disabled" };
+      }
     }
     active += 1;
     const started = now();
@@ -140,10 +154,16 @@ export function createActionExecutor({
       const response: any = await invoke(rule.actionName, args, "plugin");
       const result = JSON.stringify(response && response.result !== undefined ? response.result : response);
       record(rule, trigger, "ok", result, "", started);
+      if (rule.origin === "plugin") {
+        audit({ action: rule.actionName, domain: rule.ownerDomain, ok: true, args });
+      }
       return { ok: true };
     } catch (error) {
       const message = String((error && (error as Error).message) || error);
       record(rule, trigger, "error", "", message, started);
+      if (rule.origin === "plugin") {
+        audit({ action: rule.actionName, domain: rule.ownerDomain, ok: false, args: rule.actionArgs, error: message });
+      }
       log("automation " + rule.name + " failed: " + message);
       return { ok: false, error: message };
     } finally {

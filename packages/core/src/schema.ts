@@ -137,10 +137,20 @@ CREATE TABLE IF NOT EXISTS automation_rule (
   -- execMode=action 时调 action；execMode=agent 时把提示词交给宿主「自动化任务」投递。
   exec_mode TEXT NOT NULL DEFAULT 'action',
   agent_json TEXT NOT NULL DEFAULT '',
-  schedule_id TEXT
+  schedule_id TEXT,
+  -- 来源：user=用户在设置页建的；plugin=子插件在 DomainDef.automations 声明后由宿主建的。
+  origin TEXT NOT NULL DEFAULT 'user',
+  owner_domain TEXT,
+  rule_key TEXT,
+  -- 声明方插件版本，用来提示「内置规则已更新」；不参与调度判断。
+  origin_version TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_automation_rule_due ON automation_rule(enabled, next_run_at);
 CREATE INDEX IF NOT EXISTS idx_automation_rule_schedule ON automation_rule(schedule_id);
+-- 内置规则按 (声明域名, 域内键) 唯一：重复注册幂等，重装插件不会多出一条。
+CREATE UNIQUE INDEX IF NOT EXISTS idx_automation_rule_builtin
+  ON automation_rule(owner_domain, rule_key) WHERE origin='plugin';
+CREATE INDEX IF NOT EXISTS idx_automation_rule_origin ON automation_rule(origin);
 
 -- 运行记录只在本机，不参与云同步；rule_id 指向 automation_rule。
 CREATE TABLE IF NOT EXISTS automation_run (

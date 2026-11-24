@@ -22,7 +22,12 @@ function make(allow = DEFAULT_ALLOW, options = {}) {
     calls.push({ action, args });
     return { result: { ok: true, action } };
   };
-  const engine = createAutomation({ db, invoke, getSchedule: options.getSchedule || (() => null) });
+  const engine = createAutomation({
+    db,
+    invoke,
+    getSchedule: options.getSchedule || (() => null),
+    hasDomain: options.hasDomain || (() => true),
+  });
   if (allow.length) engine.saveConfig({ allowedActions: allow });
   return { db, engine, calls };
 }
@@ -277,4 +282,208 @@ test("宿主任务被删除后列表标记为缺失", async () => {
   const live = await engine.listRulesLive();
   assert.equal(live[0].scheduleMissing, true);
   assert.equal(live[0].enabled, false);
+});
+
+// ── 内置自动化规则（DomainDef.automations）──
+
+/** 一条邮件域内置规则：每天 09:00 汇总未读，只读 mail.messageList。 */
+const MAIL_DECL = {
+  key: "daily-unread-digest",
+  title: "每天 09:00 汇总未读邮件",
+  trigger: { kind: "dailyAt", time: "09:00", tz: "Asia/Shanghai" },
+  action: { name: "mail.messageList", args: { unread: true, limit: 20 } },
+  defaultEnabled: true,
+  editableArgs: true,
+};
+
+/** 带内置规则的引擎：域 wb-addon-mail 视为已安装。 */
+function makeBuiltin(options = {}) {
+  const ctx = make(options.allow || DEFAULT_ALLOW, options);
+  const installed = new Set(options.installed || ["wb-addon-mail"]);
+  // hasDomain 在 make 里注入，这里换成一个可变的集合，模拟卸载/重装。
+  return Object.assign(ctx, { installed });
+}
+
+/** 注册 mail 域的内置规则（默认带 mail.messages-synced 订阅声明）。 */
+function registerMail(ctx, decls = [MAIL_DECL], version = "0.6.5") {
+  return ctx.engine.registerBuiltin({
+    domainId: "wb-addon-mail",
+    domainVersion: version,
+    decls,
+    subscriptions: [{ type: "mail.messages-synced" }],
+  });
+}
+
+test("内置规则注册即建规则：稳定 id、标记来源、重复注册幂等", () => {
+  const ctx = make();
+  const out = registerMail(ctx);
+  assert.deepEqual(out.registered, ["daily-unread-digest"]);
+  const rules = ctx.engine.listRules();
+  assert.equal(rules.length, 1);
+  const rule = rules[0];
+  assert.equal(rule.id, "auto:wb-addon-mail:daily-unread-digest");
+  assert.equal(rule.origin, "plugin");
+  assert.equal(rule.ownerDomain, "wb-addon-mail");
+  assert.equal(rule.ruleKey, "daily-unread-digest");
+  assert.equal(rule.enabled, true);
+  assert.equal(rule.triggerType, "schedule");
+  assert.equal(rule.triggerConfig.kind, "dailyAt");
+  assert.equal(rule.actionName, "mail.messageList");
+  assert.equal(rule.originState, "active");
+
+  registerMail(ctx);
+  assert.equal(ctx.engine.listRules().length, 1);
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 1);
+});
+
+test("内置规则只能调用本域 action：跨域声明直接报错且不落库", () => {
+  const ctx = make();
+  assert.throws(
+    () =>
+      registerMail(ctx, [
+        { ...MAIL_DECL, key: "cross", action: { name: "tasks.create", args: { title: "x" } } },
+      ]),
+    /只能调用声明方本域 action/,
+  );
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 0);
+});
+
+test("事件触发的内置规则必须已在 DomainDef.events.subscriptions 声明", () => {
+  const ctx = make();
+  assert.throws(
+    () =>
+      registerMail(ctx, [
+        { ...MAIL_DECL, key: "on-sync", trigger: { kind: "event", event: "mail.messages-deleted" } },
+      ]),
+    /未在 DomainDef\.events\.subscriptions 声明/,
+  );
+  // 声明过的类型可以用，且事件触发落成 domainId + event。
+  registerMail(ctx, [
+    { ...MAIL_DECL, key: "on-sync", trigger: { kind: "event", event: "mail.messages-synced" } },
+  ]);
+  const rule = ctx.engine.listRules().find((r) => r.ruleKey === "on-sync");
+  assert.equal(rule.triggerType, "event");
+  assert.deepEqual(rule.triggerConfig, { kind: "event", domainId: "wb-addon-mail", event: "mail.messages-synced" });
+});
+
+test("内置规则可停用，重启后启用状态保持；定义字段不可改、不可删", async () => {
+  const ctx = make();
+  registerMail(ctx);
+  const rule = ctx.engine.listRules()[0];
+  // 用户停用
+  const off = await ctx.engine.updateRule({ id: rule.id, enabled: false });
+  assert.equal(off.enabled, false);
+  // 重启引擎（同一库）后重新声明：状态保持停用
+  const again = createAutomation({ db: ctx.db, invoke: async () => ({ result: {} }), hasDomain: () => true });
+  registerMail({ engine: again });
+  assert.equal(again.listRules()[0].enabled, false);
+  // 触发方式 / action / 条件不可改
+  await assert.rejects(
+    again.updateRule({ id: rule.id, triggerConfig: { kind: "interval", everyMinutes: 5 } }),
+    /内置规则由插件声明，不能修改 triggerConfig/,
+  );
+  await assert.rejects(again.updateRule({ id: rule.id, actionName: "mail.accountList" }), /不能修改 actionName/);
+  await assert.rejects(again.updateRule({ id: rule.id, condition: { field: "a", op: "eq", value: 1 } }), /不能修改 condition/);
+  // editableArgs 允许改参数
+  const changed = await again.updateRule({ id: rule.id, actionArgs: { unread: true, limit: 5 } });
+  assert.deepEqual(changed.actionArgs, { unread: true, limit: 5 });
+  // 不能删
+  await assert.rejects(again.deleteRule(rule.id), /内置规则由插件声明，不能删除/);
+});
+
+test("内置规则可手动运行：执行入口只调本域 action", async () => {
+  const ctx = make();
+  registerMail(ctx);
+  const rule = ctx.engine.listRules()[0];
+  const out = await ctx.engine.runRule(rule.id);
+  assert.equal(out.ok, true);
+  assert.equal(ctx.calls.length, 1);
+  assert.equal(ctx.calls[0].action, "mail.messageList");
+  assert.equal(ctx.calls[0].args.limit, 20);
+});
+
+test("声明消失时停用并标「插件已不再声明」，重新声明后恢复原启用状态", () => {
+  const ctx = make();
+  registerMail(ctx, [MAIL_DECL]);
+  const out = ctx.engine.registerBuiltin({
+    domainId: "wb-addon-mail",
+    domainVersion: "0.6.5",
+    decls: [],
+    subscriptions: [],
+  });
+  assert.deepEqual(out.paused, ["daily-unread-digest"]);
+  const stale = ctx.engine.listRules()[0];
+  assert.equal(stale.enabled, false);
+  assert.equal(stale.originState, "stale");
+  // 重新声明：恢复停用前的启用状态
+  registerMail(ctx, [MAIL_DECL]);
+  const back = ctx.engine.listRules()[0];
+  assert.equal(back.enabled, true);
+  assert.equal(back.originState, "active");
+});
+
+test("插件卸载后内置规则不再调度并标「插件已卸载」", async () => {
+  const ctx = make();
+  let installed = true;
+  const engine = createAutomation({
+    db: ctx.db,
+    invoke: async (action, args) => {
+      ctx.calls.push({ action, args });
+      return { result: { ok: true } };
+    },
+    hasDomain: () => installed,
+  });
+  registerMail({ engine });
+  const rule = engine.listRules()[0];
+  // 把下次运行时间改到过去，触发一次 tick
+  ctx.db.prepare("UPDATE automation_rule SET next_run_at=0 WHERE id=?").run(rule.id);
+  await engine.tick();
+  assert.equal(ctx.calls.length, 1);
+  installed = false;
+  ctx.db.prepare("UPDATE automation_rule SET next_run_at=0 WHERE id=?").run(rule.id);
+  await engine.tick();
+  assert.equal(ctx.calls.length, 1, "卸载后不应再调度");
+  const off = engine.listRules()[0];
+  assert.equal(off.originState, "uninstalled");
+});
+
+test("备份只导出内置规则的定义外覆盖：启用状态与参数可导入生效", async () => {
+  const ctx = make();
+  registerMail(ctx);
+  const rule = ctx.engine.listRules()[0];
+  await ctx.engine.updateRule({ id: rule.id, enabled: false, actionArgs: { unread: true, limit: 3 } });
+  const dump = ctx.engine.exportData();
+  assert.equal(dump.rules.length, 0, "内置规则定义不进备份");
+  assert.equal(dump.builtin.length, 1);
+  assert.equal(dump.builtin[0].ownerDomain, "wb-addon-mail");
+  assert.equal(dump.builtin[0].enabled, false);
+  assert.deepEqual(dump.builtin[0].actionArgs, { unread: true, limit: 3 });
+
+  // 新库：先导入（插件没装时覆盖保留），再注册声明，覆盖自动生效。
+  const fresh = openDb(":memory:");
+  const engine2 = createAutomation({ db: fresh, invoke: async () => ({ result: {} }), hasDomain: () => true });
+  const result = await engine2.importData({ rules: [], builtin: dump.builtin });
+  assert.equal(result.builtinApplied, 0);
+  registerMail({ engine: engine2 });
+  const restored = engine2.listRules()[0];
+  assert.equal(restored.enabled, false);
+  assert.deepEqual(restored.actionArgs, { unread: true, limit: 3 });
+});
+
+test("旧库升级后所有规则 origin 回填 user，统计按来源拆分", () => {
+  const ctx = make();
+  // 模拟历史用户规则：省略 origin，落库走默认值。
+  ctx.db
+    .prepare(
+      "INSERT INTO automation_rule(id,name,enabled,trigger_type,trigger_config,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+    )
+    .run("rule_old", "老规则", 1, "manual", '{"kind":"manual"}', "mail.messageList", "{}", null, 1, 1);
+  const old = ctx.engine.listRules().find((r) => r.id === "rule_old");
+  assert.equal(old.origin, "user");
+  assert.equal(old.ownerDomain, "");
+  registerMail(ctx);
+  const stats = ctx.engine.stats();
+  assert.equal(stats.userRules, 1);
+  assert.equal(stats.builtinRules, 1);
+  assert.equal(stats.builtinEnabled, 1);
 });

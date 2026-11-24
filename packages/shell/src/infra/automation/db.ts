@@ -73,6 +73,14 @@ export interface AutomationRule {
   createdAt: number;
   updatedAt: number;
   rev: number;
+  /** 来源：user=用户手工创建；plugin=子插件声明后由宿主创建 */
+  origin: "user" | "plugin";
+  /** 声明方域 id（origin=plugin 时有值） */
+  ownerDomain: string;
+  /** 声明方域内键（origin=plugin 时有值） */
+  ruleKey: string;
+  /** 声明方插件版本，用于提示「内置规则已更新」 */
+  originVersion: string;
 }
 
 /** 自动化运行记录（automation_run 的行映射，对外 camelCase）。 */
@@ -109,6 +117,10 @@ export function ruleRow(row: any): AutomationRule {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     rev: row.rev,
+    origin: row.origin === "plugin" ? "plugin" : "user",
+    ownerDomain: row.owner_domain || "",
+    ruleKey: row.rule_key || "",
+    originVersion: row.origin_version || "",
   };
 }
 

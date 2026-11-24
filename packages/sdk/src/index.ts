@@ -127,6 +127,49 @@ export interface DomainEventDecl {
   targets?: string[];
 }
 
+/**
+ * 内置自动化规则的触发声明（声明即授权，与 events.publishes 同构）：
+ *  - interval：每 everyMinutes 分钟一次；
+ *  - dailyAt：每天 time（HH:MM，按 tz）触发，weekdays 缺省周一到周日；
+ *  - event：本域事件触发，事件类型必须已在 `events.subscriptions` 声明。
+ */
+export interface BuiltinAutomationTrigger {
+  kind: "interval" | "dailyAt" | "event";
+  /** kind=interval：1–10080 分钟 */
+  everyMinutes?: number;
+  /** kind=dailyAt：HH:MM */
+  time?: string;
+  /** kind=dailyAt：IANA 时区，缺省 Asia/Shanghai */
+  tz?: string;
+  /** kind=dailyAt：1（周一）–7（周日） */
+  weekdays?: number[];
+  /** kind=event：本域事件类型（必须在 events.subscriptions 里声明） */
+  event?: string;
+}
+
+/**
+ * 子插件声明的内置自动化规则。
+ *
+ * 红线：内置规则只允许调用**声明方本域**的 action（跨域调用可绕过用户白名单，
+ * 等于任何插件都能点燃别的插件），宿主在注册阶段直接报错。
+ * 用户可启用/停用、查看运行记录、手动运行；不能删除，也不能改 trigger/action/condition。
+ */
+export interface BuiltinAutomationDecl {
+  /** 域内唯一键，跨版本对齐用；规则 id 由 `auto:{domainId}:{key}` 推导 */
+  key: string;
+  /** 规则标题（用户看到的名字） */
+  title: string;
+  description?: string;
+  trigger: BuiltinAutomationTrigger;
+  /** 被调用的本域 action 与参数模板；args 支持 `{{event.item.title}}` 占位 */
+  action: { name?: string; args?: Record<string, unknown> };
+  condition?: { field: string; op: string; value?: unknown } | string;
+  /** 首次注册时默认是否启用，缺省 true */
+  defaultEnabled?: boolean;
+  /** 允许用户覆盖 actionArgs（trigger/action/condition 永远不可改） */
+  editableArgs?: boolean;
+}
+
 /** 域事件的声明与运行对账（宿主「事件队列」页的插件一栏用）。 */
 export interface DomainEventsInfo {
   domain: string;
@@ -423,6 +466,12 @@ export interface DomainDef {
    * 宿主「事件队列」页按这份清单对账，未声明的推送与订阅直接报错。
    */
   events?: { publishes?: DomainEventDecl[]; subscriptions?: DomainEventDecl[] };
+  /**
+   * 内置自动化规则：注册即建规则（声明即授权），用户可以启停但删不掉。
+   * 只允许调用本域 action；event 触发的事件必须已在 events.subscriptions 声明；
+   * 声明被删除时规则停用并标记「插件已不再声明」，运行记录保留。
+   */
+  automations?: BuiltinAutomationDecl[];
   /** 同步声明：mode=row 行级 LWW；mode=tree 必须实现 reconcile，整表覆盖 */
   sync?: DomainSyncDef;
   /** UI 视图贡献点：客户端模块注册同名 view 后出现在工作台首页 */

@@ -1,6 +1,14 @@
 import { renderTaskTarget } from "./task-targets.js";
 import type { RegisteredDomain } from "../types/host-types.js";
-export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets, agentVisible }: any) {
+export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets, agentVisible, builtinCount }: any) {
+  /** 插件声明的内置自动化规则条数（没有声明或引擎不可用时为 0）。 */
+  function builtinRulesOf(domainId: string): number {
+    try {
+      return typeof builtinCount === "function" ? Number(builtinCount(domainId)) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  }
   function findDomain(raw: string): RegisteredDomain | null {
     const key = String(raw ?? "").trim();
     if (!key) return null;
@@ -213,6 +221,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
           );
         }
       }
+      const builtinRules = builtinRulesOf(rec.def.id);
       out.push({
         id: rec.def.id,
         title: rec.def.title,
@@ -220,6 +229,8 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
         enabled: rec.error === null,
         error: rec.error,
         summary: cap.summary,
+        // 插件在 DomainDef.automations 里声明、由宿主建成的内置规则条数。
+        builtinRules,
         source: cap.source,
         actionCount:
           origin === "agent"
@@ -264,6 +275,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
     for (const d of meta.domains) {
       lines.push("", "[" + d.id + "] " + d.title + " v" + d.version + (d.enabled ? "" : "（未启用：" + d.error + "）"));
       lines.push("  " + d.summary);
+      if (d.builtinRules) lines.push("  内置规则：" + d.builtinRules + " 条（插件声明，用户可启停）");
       if (d.taskOwnership) lines.push(renderTaskTarget(d.taskOwnership));
       lines.push(...renderSlotLine(d.slots));
       if (!d.records.length) {

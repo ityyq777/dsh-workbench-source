@@ -31,6 +31,17 @@ function StatsBody(props) {
     })),
     h("div", { className: "wba-panel" },
       h("div", { className: "wba-panel-h" },
+        h("p", { className: "wba-panel-title" }, t("stats.origin.title")),
+        h("span", { className: "wba-hint" }, t("stats.origin.hint"))),
+      h("div", { className: "wba-kv" },
+        h("b", null, t("stats.origin.user")), h("span", null, String((s && s.userRules) || 0)),
+        h("b", null, t("stats.origin.builtin")), h("span", null, String((s && s.builtinRules) || 0)),
+        h("b", null, t("stats.origin.builtinEnabled")), h("span", null, String((s && s.builtinEnabled) || 0)),
+        h("b", null, t("stats.origin.builtinDisabled")), h("span", null, String((s && s.builtinDisabled) || 0)),
+        h("b", null, t("stats.origin.stale")), h("span", null, String((s && s.builtinStale) || 0)),
+        h("b", null, t("stats.origin.uninstalled")), h("span", null, String((s && s.builtinUninstalled) || 0)))),
+    h("div", { className: "wba-panel" },
+      h("div", { className: "wba-panel-h" },
         h("p", { className: "wba-panel-title" }, t("stats.allowed")),
         h("span", { className: "wba-hint" }, t("stats.allowedHint"))),
       (props.actions || []).length
@@ -73,6 +84,13 @@ module.exports = function StatsView(props) {
         h(C.Btn, { h: h, kind: "primary", onClick: function () { if (props.onNavigate) props.onNavigate("rules", { new: true }); } }, icons.label("plus", t("common.createShort"), { short: true })))),
     stats.error ? h(C.Notice, { h: h, kind: "error", text: stats.error }) : null,
     s.staleCount ? h(C.Notice, { h: h, kind: "warn", text: t("stats.staleWarning", { n: s.staleCount }) }) : null,
+    (s.builtinStale || s.builtinUninstalled)
+      ? h(C.Notice, {
+          h: h,
+          kind: "warn",
+          text: t("stats.originWarning", { stale: s.builtinStale || 0, uninstalled: s.builtinUninstalled || 0 }),
+        })
+      : null,
     stats.loading
       ? h("div", { className: "wba-cards" }, [0, 1, 2, 3, 4].map(function (i) {
           return h("div", { key: i, className: "wba-card" }, h("div", { className: "wba-skel" }));

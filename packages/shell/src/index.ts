@@ -207,6 +207,11 @@ export function apply(ctx: any): void {
     log,
     getSchedule,
     now: () => clock.now(),
+    // 内置规则的调度状态依赖「域是否仍安装」；卸载后立刻停跑。
+    hasDomain: (id: string) => domains.has(id),
+    // 内置规则豁免白名单，调用另留一条可读日志（正式审计由 invoke 统一记）。
+    audit: (entry: { action: string; domain: string; ok: boolean; error?: string }) =>
+      log("[automation]", entry.domain, entry.action, entry.ok ? "ok" : "failed", entry.error || ""),
   });
   /** automation.* 的 DomainActionDef：先收集，再随 createActions 一起进 META_ACTIONS。 */
   const automationDefs = new Map<string, DomainActionDef>();
@@ -231,6 +236,7 @@ export function apply(ctx: any): void {
     search,
     sessionRoles,
     extraMetaActions: [["host.agentRun", agentRun], ...automationDefs.entries()],
+    builtinAutomations: (domainId: string) => automation.builtinCount(domainId),
     queueRef,
   });
 
@@ -286,6 +292,20 @@ export function apply(ctx: any): void {
     domains.set(def.id, rec);
     // 声明即登记：定向类型从这里能被认出（订阅拒绝、观测面回传 mode/targets 都要用）。
     eventQueue.declare(def.id, def.events?.publishes);
+    // 声明即授权：内置自动化规则在这里落成可调度规则。校验失败的声明整条拒绝且不落库，
+    // 域本身继续注册——坏规则不该让整个插件不可用。
+    if (Array.isArray(def.automations) && def.automations.length) {
+      try {
+        automation.registerBuiltin({
+          domainId: def.id,
+          domainVersion: def.version,
+          decls: def.automations,
+          subscriptions: def.events?.subscriptions,
+        });
+      } catch (e) {
+        log("内置自动化规则注册失败（该域声明的规则未生效）：", def.id, (e && (e as Error).message) || e);
+      }
+    }
 
     const setupApi: DomainSetupApi = {
       addon: { id: def.id, version: def.version, dir: "" },
@@ -373,6 +393,8 @@ export function apply(ctx: any): void {
       } catch (e) {
         log("业务域清理失败", def.id, e);
       }
+      // 内置规则随域卸载停调度（行保留，重装后同 key 幂等接回）。
+      automation.unregisterBuiltin(def.id);
       domains.delete(def.id);
       emit("domains-changed", listDomains());
     };

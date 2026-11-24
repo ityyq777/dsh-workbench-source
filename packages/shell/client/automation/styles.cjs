@@ -33,6 +33,8 @@ module.exports = require("../../../addons/lib/client-base-styles.cjs")("wba").jo
   ".wba-kv b{font-weight:600;color:var(--wb-muted);white-space:nowrap}",
   ".wba-kv span,.wba-kv code{min-width:0;overflow-wrap:anywhere}",
   ".wba-pills{display:flex;flex-wrap:wrap;gap:6px}",
+  // 内置规则来源标：用强调色区分用户自定义（中性）与插件声明（accent）。
+  ".wba-pill.info{color:var(--wb-accent);border-color:color-mix(in oklab,var(--wb-accent) 35%,transparent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}",
   ".wba-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wb-border);border-radius:999px;padding:2px 10px;font-size:12px;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
   ".wba-chip[aria-pressed=true]{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-surface)}",
   ".wba-chip.static{cursor:default}",
@@ -82,6 +84,7 @@ module.exports = require("../../../addons/lib/client-base-styles.cjs")("wba").jo
   ".wba-seg button[aria-pressed=true]{background:var(--wb-surface);box-shadow:0 0 0 1px var(--wb-border);font-weight:600}",
   ".wba-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
   ".wba-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}",
+  ".wba-hint{font-size:12px;color:var(--wb-muted);line-height:1.4}",
   ".wba-grow{flex:1;min-width:0}",
   ".wba-svg{display:inline-block;vertical-align:middle;flex:none}",
   ".wba-w-120{width:120px;flex:none}",

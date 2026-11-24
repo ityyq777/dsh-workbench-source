@@ -122,13 +122,17 @@ function filterRules(rows, filters) {
   var status = (filters && filters.status) || "";
   var trigger = (filters && filters.trigger) || "";
   var mode = (filters && filters.mode) || "";
+  var origin = (filters && filters.origin) || "";
   return rows.filter(function (r) {
     if (q) {
       var hit = String(r.name).toLowerCase().indexOf(q) !== -1 ||
         String(r.actionName || "").toLowerCase().indexOf(q) !== -1 ||
+        String(r.ownerDomain || "").toLowerCase().indexOf(q) !== -1 ||
         String((r.agent && r.agent.prompt) || "").toLowerCase().indexOf(q) !== -1;
       if (!hit) return false;
     }
+    if (origin === "user" && r.origin === "plugin") return false;
+    if (origin === "plugin" && r.origin !== "plugin") return false;
     if (status === "on" && !r.enabled) return false;
     if (status === "off" && r.enabled) return false;
     if (mode === "agent" && r.execMode !== "agent") return false;
@@ -154,6 +158,26 @@ function scheduleKind(status) {
   return "";
 }
 
+/** 来源徽标：用户自定义 / 插件内置（带插件名），内置规则再叠加声明状态。 */
+function originPill(C, h, t, r) {
+  if (r.origin !== "plugin") {
+    return h(C.Pill, { h: h, kind: "" }, t("rules.origin.user"));
+  }
+  var state = r.originState || "active";
+  var kind = state === "active" ? "info" : state === "updated" ? "warn" : "error";
+  var label = t("rules.origin.plugin") + (r.ownerDomain ? " · " + shortDomain(r.ownerDomain) : "");
+  var pill = h(C.Pill, { h: h, kind: kind }, label);
+  if (state === "active") return pill;
+  return h("span", { className: "wba-inline" },
+    pill,
+    h("span", { className: "wba-hint" }, t("rules.origin.state." + state)));
+}
+
+/** wb-addon-mail → mail；仅用于展示。 */
+function shortDomain(id) {
+  return String(id || "").replace(/^wb-addon-/, "");
+}
+
 function EmptyCard(props) {
   var h = props.h;
   var t = props.t;
@@ -175,6 +199,7 @@ function RuleRow(props) {
   var t = props.t;
   var icon = props.icon;
   var r = props.rule;
+  var builtin = r.origin === "plugin";
   var agentRule = r.execMode === "agent";
   var snap = r.agent && typeof r.agent === "object" ? r.agent : {};
   var kind = agentRule ? "agent" : (r.triggerConfig && r.triggerConfig.kind) || r.triggerType || "manual";
@@ -184,6 +209,7 @@ function RuleRow(props) {
     h("td", null,
       h("div", { className: "wba-strong wba-ellipsis", title: r.name }, r.name),
       h("div", { className: "wba-mono" }, r.id)),
+    h("td", { className: "wba-nowrap" }, originPill(C, h, t, r)),
     h("td", { className: "wba-nowrap" },
       h("span", { className: "wba-inline" },
         icon ? icon(agentRule ? "bot" : TRIGGER_ICON[kind] || "zap", 13) : null,
@@ -206,9 +232,11 @@ function RuleRow(props) {
     h("td", null, h("div", { className: "wba-actions" },
       agentRule ? h("button", { type: "button", className: "wba-icon-btn", title: t("rules.history"), onClick: function () { props.onHistory(r); } }, icon ? icon("send", 14) : "✉") : null,
       h("button", { type: "button", className: "wba-icon-btn", title: t("common.run"), disabled: props.runningId === r.id || (agentRule && r.scheduleMissing), onClick: function () { props.onRun(r); } }, icon ? icon("play", 14) : "▶"),
-      h("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function () { props.onEdit(r); } }, icon ? icon("pencil", 14) : "✎"),
+      builtin ? null : h("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function () { props.onEdit(r); } }, icon ? icon("pencil", 14) : "✎"),
       h("button", { type: "button", className: "wba-icon-btn", title: r.enabled ? t("common.disable") : t("common.enable"), onClick: function () { props.onToggle(r); } }, icon ? icon(r.enabled ? "power-off" : "power", 14) : "⏻"),
-      h("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function () { props.onDelete(r); } }, icon ? icon("trash-2", 14) : "🗑"))));
+      builtin
+        ? h("span", { className: "wba-icon-btn", title: t("rules.builtinLocked") }, icon ? icon("lock", 14) : "🔒")
+        : h("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function () { props.onDelete(r); } }, icon ? icon("trash-2", 14) : "🗑"))));
 }
 
 function RulesBody(props) {
@@ -246,6 +274,12 @@ function RulesBody(props) {
           }),
           h("option", { value: "agent" }, t("rules.agentAction")))),
       h("label", { className: "wba-field" },
+        h("span", { className: "wba-label" }, t("rules.filterOrigin")),
+        h("select", { className: "wba-input", value: filters.origin || "", onChange: function (e) { props.onFilter({ origin: e.target.value }); } },
+          h("option", { value: "" }, t("common.all")),
+          h("option", { value: "user" }, t("rules.origin.user")),
+          h("option", { value: "plugin" }, t("rules.origin.plugin")))),
+      h("label", { className: "wba-field" },
         h("span", { className: "wba-label" }, t("rules.exec.mode")),
         h("select", { className: "wba-input", value: filters.mode || "", onChange: function (e) { props.onFilter({ mode: e.target.value }); } },
           h("option", { value: "" }, t("common.all")),
@@ -275,7 +309,7 @@ function RulesBody(props) {
         : h("div", { className: "wba-table-wrap" },
             h("table", { className: "wba-table" },
               h("thead", null, h("tr", null,
-                ["name", "trigger", "action", "status", "lastRun", "ops"].map(function (k) {
+                ["name", "origin", "trigger", "action", "status", "lastRun", "ops"].map(function (k) {
                   return h("th", { key: k }, t("rules.col." + k));
                 }))),
               h("tbody", null, rows.map(function (r) {
@@ -311,7 +345,7 @@ module.exports = function RulesView(props) {
   var initS = React.useState(null);
   var busyS = React.useState(false);
   var msgS = React.useState("");
-  var filterS = React.useState({ q: "", status: "", trigger: "", mode: "" });
+  var filterS = React.useState({ q: "", status: "", trigger: "", mode: "", origin: "" });
   var runningS = React.useState("");
   var historyS = React.useState(null);
   var all = (list.data && list.data.items) || [];
@@ -406,7 +440,7 @@ module.exports = function RulesView(props) {
       filters: filterS[0],
       runningId: runningS[0],
       onFilter: function (patch) { filterS[1](Object.assign({}, filterS[0], patch)); },
-      onClear: function () { filterS[1]({ q: "", status: "", trigger: "", mode: "" }); },
+      onClear: function () { filterS[1]({ q: "", status: "", trigger: "", mode: "", origin: "" }); },
       onNew: openNew,
       onRun: run,
       onEdit: function (r) {

@@ -71,6 +71,15 @@ var require_locale = __commonJS({
         "auto_rules_searchPh": "\u641C\u7D22\u540D\u79F0\u6216 action",
         "auto_rules_filterStatus": "\u72B6\u6001",
         "auto_rules_filterTrigger": "\u89E6\u53D1\u65B9\u5F0F",
+        "auto_rules_filterOrigin": "\u6765\u6E90",
+        "auto_rules_col_origin": "\u6765\u6E90",
+        "auto_rules_origin_user": "\u7528\u6237\u81EA\u5B9A\u4E49",
+        "auto_rules_origin_plugin": "\u63D2\u4EF6\u5185\u7F6E",
+        "auto_rules_origin_state_active": "\u7531\u63D2\u4EF6\u58F0\u660E\uFF0C\u968F\u63D2\u4EF6\u5347\u7EA7",
+        "auto_rules_origin_state_updated": "\u5185\u7F6E\u89C4\u5219\u5DF2\u66F4\u65B0",
+        "auto_rules_origin_state_stale": "\u63D2\u4EF6\u5DF2\u4E0D\u518D\u58F0\u660E",
+        "auto_rules_origin_state_uninstalled": "\u63D2\u4EF6\u5DF2\u5378\u8F7D",
+        "auto_rules_builtinLocked": "\u5185\u7F6E\u89C4\u5219\u7531\u63D2\u4EF6\u58F0\u660E\uFF1A\u4E0D\u80FD\u5220\u9664\uFF0C\u4E5F\u4E0D\u80FD\u6539\u89E6\u53D1\u4E0E action\uFF1B\u53EF\u505C\u7528\u6216\u6309\u58F0\u660E\u6539\u53C2\u6570",
         "auto_rules_triggerCol": "\u89E6\u53D1",
         "auto_rules_status_on": "\u542F\u7528",
         "auto_rules_status_off": "\u505C\u7528",
@@ -224,6 +233,7 @@ var require_locale = __commonJS({
         "auto_runs_filterStatus": "\u72B6\u6001",
         "auto_runs_col_status": "\u72B6\u6001",
         "auto_runs_col_rule": "\u89C4\u5219",
+        "auto_runs_origin_plugin": "\u63D2\u4EF6\u5185\u7F6E",
         "auto_runs_col_trigger": "\u89E6\u53D1",
         "auto_runs_col_start": "\u5F00\u59CB",
         "auto_runs_col_cost": "\u8017\u65F6",
@@ -254,6 +264,15 @@ var require_locale = __commonJS({
         "auto_stats_kpi_errorHint": "\u8FD1 24 \u5C0F\u65F6 status=error",
         "auto_stats_kpi_skipped": "\u4ECA\u65E5\u8DF3\u8FC7",
         "auto_stats_kpi_skippedHint": "\u6761\u4EF6\u4E0D\u6EE1\u8DB3\u3001\u8D85\u9650\u6216\u5E76\u53D1\u5DF2\u6EE1",
+        "auto_stats_origin_title": "\u6309\u6765\u6E90",
+        "auto_stats_origin_hint": "\u7528\u6237\u81EA\u5B9A\u4E49\u4E0E\u63D2\u4EF6\u5185\u7F6E\u5206\u5F00\u7EDF\u8BA1\uFF1B\u5185\u7F6E\u89C4\u5219\u6765\u81EA\u63D2\u4EF6\u7684 DomainDef.automations \u58F0\u660E",
+        "auto_stats_origin_user": "\u7528\u6237\u81EA\u5B9A\u4E49",
+        "auto_stats_origin_builtin": "\u63D2\u4EF6\u5185\u7F6E",
+        "auto_stats_origin_builtinEnabled": "\u5185\u7F6E\u542F\u7528",
+        "auto_stats_origin_builtinDisabled": "\u5185\u7F6E\u505C\u7528",
+        "auto_stats_origin_stale": "\u58F0\u660E\u5DF2\u6D88\u5931",
+        "auto_stats_origin_uninstalled": "\u63D2\u4EF6\u5DF2\u5378\u8F7D",
+        "auto_stats_originWarning": "\u6709 {stale} \u6761\u5185\u7F6E\u89C4\u5219\u58F0\u660E\u5DF2\u6D88\u5931\u3001{uninstalled} \u6761\u6240\u5C5E\u63D2\u4EF6\u5DF2\u5378\u8F7D\uFF1A\u5B83\u4EEC\u4E0D\u4F1A\u6267\u884C\uFF0C\u91CD\u65B0\u58F0\u660E\u6216\u91CD\u88C5\u63D2\u4EF6\u540E\u81EA\u52A8\u6062\u590D\u3002",
         "auto_stats_allowed": "\u5141\u8BB8\u8C03\u7528",
         "auto_stats_allowedHint": "\u5728\u8BBE\u7F6E\u9875\u52FE\u9009\uFF0C\u9ED8\u8BA4\u7A7A",
         "auto_stats_allowedEmpty": "\u5C1A\u672A\u542F\u7528\u4EFB\u4F55 action\uFF1B\u52FE\u9009\u540E\u624D\u80FD\u521B\u5EFA\u89C4\u5219\u3002",
@@ -336,6 +355,15 @@ var require_locale = __commonJS({
         "auto_rules_searchPh": "Search name or action",
         "auto_rules_filterStatus": "Status",
         "auto_rules_filterTrigger": "Trigger",
+        "auto_rules_filterOrigin": "Origin",
+        "auto_rules_col_origin": "Origin",
+        "auto_rules_origin_user": "User-defined",
+        "auto_rules_origin_plugin": "Plugin built-in",
+        "auto_rules_origin_state_active": "Declared by the plugin, follows its updates",
+        "auto_rules_origin_state_updated": "Built-in rule updated",
+        "auto_rules_origin_state_stale": "No longer declared by the plugin",
+        "auto_rules_origin_state_uninstalled": "Plugin uninstalled",
+        "auto_rules_builtinLocked": "Declared by the plugin: cannot be deleted, nor have its trigger or action changed; disable it or edit its args if allowed",
         "auto_rules_triggerCol": "Trigger",
         "auto_rules_status_on": "Enabled",
         "auto_rules_status_off": "Disabled",
@@ -489,6 +517,7 @@ var require_locale = __commonJS({
         "auto_runs_filterStatus": "Status",
         "auto_runs_col_status": "Status",
         "auto_runs_col_rule": "Rule",
+        "auto_runs_origin_plugin": "Plugin built-in",
         "auto_runs_col_trigger": "Trigger",
         "auto_runs_col_start": "Started",
         "auto_runs_col_cost": "Duration",
@@ -519,6 +548,15 @@ var require_locale = __commonJS({
         "auto_stats_kpi_errorHint": "Last 24h status=error",
         "auto_stats_kpi_skipped": "Skipped today",
         "auto_stats_kpi_skippedHint": "Condition, rate limit or concurrency",
+        "auto_stats_origin_title": "By origin",
+        "auto_stats_origin_hint": "User-defined and plugin built-in rules are counted separately; built-in rules come from DomainDef.automations",
+        "auto_stats_origin_user": "User-defined",
+        "auto_stats_origin_builtin": "Plugin built-in",
+        "auto_stats_origin_builtinEnabled": "Built-in enabled",
+        "auto_stats_origin_builtinDisabled": "Built-in disabled",
+        "auto_stats_origin_stale": "No longer declared",
+        "auto_stats_origin_uninstalled": "Plugin uninstalled",
+        "auto_stats_originWarning": "{stale} built-in rule(s) are no longer declared and {uninstalled} belong to uninstalled plugins: they will not run and recover once the plugin declares them again.",
         "auto_stats_allowed": "Allowed",
         "auto_stats_allowedHint": "Chosen in Settings; empty by default",
         "auto_stats_allowedEmpty": "No actions enabled yet; enable some before creating rules.",
@@ -1625,8 +1663,8 @@ var require_config_scheme_bar = __commonJS({
       var [name, setName] = React.useState("");
       var [from, setFrom] = React.useState("current");
       function begin(mode) {
-        var current = schemes.filter(function(s) {
-          return s.id === activeId;
+        var current = schemes.filter(function(s2) {
+          return s2.id === activeId;
         })[0];
         setName(mode === "rename" && current ? current.name : "");
         setFrom(current ? "current" : "default");
@@ -1664,8 +1702,8 @@ var require_config_scheme_bar = __commonJS({
               "aria-label": c.title
             },
             h2("option", { value: "" }, c.none),
-            schemes.map(function(s) {
-              return h2("option", { key: s.id, value: s.id }, s.name);
+            schemes.map(function(s2) {
+              return h2("option", { key: s2.id, value: s2.id }, s2.name);
             })
           ),
           h2("span", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.current : "")
@@ -1747,35 +1785,35 @@ var require_client_base_styles = __commonJS({
     ];
     module2.exports = function baseStyles(prefix) {
       var p = String(prefix || "wb");
-      var s = "." + p;
+      var s2 = "." + p;
       return SECRET_FIELD.concat([
-        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-        s + "-title{font-size:16px;font-weight:650;margin:0}",
-        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
-        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--dsw-alias-label-primary-inverted,#fff)}",
-        s + "-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in oklab,var(--wb-danger,#b91c1c) 35%,transparent)}",
-        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
-        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:color-mix(in oklab,var(--wb-accent,#2563eb) 9%,transparent);color:var(--dsw-alias-label-primary,inherit)}",
-        s + "-notice.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 10%,transparent);color:var(--wb-danger,#b91c1c)}" + s + "-notice.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 10%,transparent);color:var(--wb-ok,#047857)}",
-        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:color-mix(in oklab,currentColor 7%,transparent);color:inherit}",
-        s + "-pill.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 12%,transparent);color:var(--wb-ok,#047857)}" + s + "-pill.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 12%,transparent);color:var(--wb-danger,#b91c1c)}" + s + "-pill.warn{background:color-mix(in oklab,var(--wb-warn,#b45309) 14%,transparent);color:var(--wb-warn,#b45309)}",
-        s + "-json{margin:0;padding:8px;background:color-mix(in oklab,currentColor 4%,transparent);border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
+        s2 + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s2 + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s2 + "-title{font-size:16px;font-weight:650;margin:0}",
+        s2 + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s2 + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s2 + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s2 + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s2 + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s2 + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s2 + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s2 + "-table th," + s2 + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s2 + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s2 + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s2 + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s2 + "-btn:disabled{opacity:.5;cursor:default}",
+        s2 + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--dsw-alias-label-primary-inverted,#fff)}",
+        s2 + "-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in oklab,var(--wb-danger,#b91c1c) 35%,transparent)}",
+        s2 + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s2 + "-label{font-weight:600}",
+        s2 + "-field input," + s2 + "-field select," + s2 + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s2 + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s2 + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:color-mix(in oklab,var(--wb-accent,#2563eb) 9%,transparent);color:var(--dsw-alias-label-primary,inherit)}",
+        s2 + "-notice.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 10%,transparent);color:var(--wb-danger,#b91c1c)}" + s2 + "-notice.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 10%,transparent);color:var(--wb-ok,#047857)}",
+        s2 + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s2 + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:color-mix(in oklab,currentColor 7%,transparent);color:inherit}",
+        s2 + "-pill.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 12%,transparent);color:var(--wb-ok,#047857)}" + s2 + "-pill.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 12%,transparent);color:var(--wb-danger,#b91c1c)}" + s2 + "-pill.warn{background:color-mix(in oklab,var(--wb-warn,#b45309) 14%,transparent);color:var(--wb-warn,#b45309)}",
+        s2 + "-json{margin:0;padding:8px;background:color-mix(in oklab,currentColor 4%,transparent);border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s2 + "-muted{color:var(--wb-muted,#6b7280)}" + s2 + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s2 + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s2 + "-wrap{padding:0 0 8px;gap:10px}" + s2 + "-card{padding:12px;border-radius:10px}" + s2 + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s2 + "-form{grid-template-columns:minmax(0,1fr)}" + s2 + "-title{font-size:15px}" + s2 + "-btn." + s2 + "-icon-text ." + s2 + "-btn-label{display:none}" + s2 + "-btn." + s2 + "-icon-text{padding-left:8px;padding-right:8px}" + s2 + "-table-wrap{overflow-x:auto;max-width:100%}" + s2 + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s2 + "-wrap{padding:0 0 6px}" + s2 + "-card{padding:10px}" + s2 + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -2215,6 +2253,8 @@ var require_styles2 = __commonJS({
       ".wba-kv b{font-weight:600;color:var(--wb-muted);white-space:nowrap}",
       ".wba-kv span,.wba-kv code{min-width:0;overflow-wrap:anywhere}",
       ".wba-pills{display:flex;flex-wrap:wrap;gap:6px}",
+      // 内置规则来源标：用强调色区分用户自定义（中性）与插件声明（accent）。
+      ".wba-pill.info{color:var(--wb-accent);border-color:color-mix(in oklab,var(--wb-accent) 35%,transparent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}",
       ".wba-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--wb-border);border-radius:999px;padding:2px 10px;font-size:12px;background:transparent;color:inherit;cursor:pointer;font-family:inherit}",
       ".wba-chip[aria-pressed=true]{background:var(--wb-accent);border-color:var(--wb-accent);color:var(--wb-surface)}",
       ".wba-chip.static{cursor:default}",
@@ -2264,6 +2304,7 @@ var require_styles2 = __commonJS({
       ".wba-seg button[aria-pressed=true]{background:var(--wb-surface);box-shadow:0 0 0 1px var(--wb-border);font-weight:600}",
       ".wba-block{display:flex;flex-direction:column;gap:6px;min-width:0}",
       ".wba-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}",
+      ".wba-hint{font-size:12px;color:var(--wb-muted);line-height:1.4}",
       ".wba-grow{flex:1;min-width:0}",
       ".wba-svg{display:inline-block;vertical-align:middle;flex:none}",
       ".wba-w-120{width:120px;flex:none}",
@@ -2962,7 +3003,7 @@ var require_client_common = __commonJS({
         return h2("pre", { className: p + "-json" }, text);
       }
       function useLoad(React, api, action, args, deps) {
-        var s = React.useState({ loading: true, data: null, error: "" });
+        var s2 = React.useState({ loading: true, data: null, error: "" });
         var tick = React.useState(0);
         var refresh = function() {
           tick[1](tick[0] + 1);
@@ -2970,11 +3011,11 @@ var require_client_common = __commonJS({
         React.useEffect(
           function() {
             var alive = true;
-            s[1]({ loading: true, data: null, error: "" });
+            s2[1]({ loading: true, data: null, error: "" });
             call(api, action, args).then(function(data) {
-              if (alive) s[1]({ loading: false, data, error: "" });
+              if (alive) s2[1]({ loading: false, data, error: "" });
             }).catch(function(e) {
-              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+              if (alive) s2[1]({ loading: false, data: null, error: errText(e) });
             });
             return function() {
               alive = false;
@@ -2982,7 +3023,7 @@ var require_client_common = __commonJS({
           },
           (deps || []).concat([tick[0]])
         );
-        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+        return { loading: s2[0].loading, data: s2[0].data, error: s2[0].error, refresh };
       }
       return {
         unwrap,
@@ -5731,16 +5772,16 @@ var require_event_queue_page = __commonJS({
               children: item[1]
             });
           }) }),
-          filters.length ? jsx2.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function(s) {
-            var label = s ? statusText(lang, s) : t("queue_all_status");
-            var on = filter === s;
+          filters.length ? jsx2.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function(s2) {
+            var label = s2 ? statusText(lang, s2) : t("queue_all_status");
+            var on = filter === s2;
             return jsx2.jsx("button", {
-              key: s || "all",
+              key: s2 || "all",
               type: "button",
-              className: "wbq-filter" + (on ? " on" : "") + (s ? " s-" + s : ""),
+              className: "wbq-filter" + (on ? " on" : "") + (s2 ? " s-" + s2 : ""),
               "aria-pressed": on,
               onClick: function() {
-                setFilter(s);
+                setFilter(s2);
                 setPage(1);
               },
               children: label
@@ -7150,11 +7191,11 @@ var require_stats = __commonJS({
     var C = require_common();
     var icons = require_common().icons;
     var DENIED = ["vault.*", "automation.*", "audit.*", "*.delete", "*.backup"];
-    function kpiRows(s) {
-      var today = s && s.today || {};
+    function kpiRows(s2) {
+      var today = s2 && s2.today || {};
       return [
-        ["total", "layers", s && s.total || 0, "stats.kpi.total", "stats.kpi.totalHint"],
-        ["enabled", "power", s && s.enabled || 0, "stats.kpi.enabled", "stats.kpi.enabledHint"],
+        ["total", "layers", s2 && s2.total || 0, "stats.kpi.total", "stats.kpi.totalHint"],
+        ["enabled", "power", s2 && s2.enabled || 0, "stats.kpi.enabled", "stats.kpi.enabledHint"],
         ["ok", "check-circle", today.ok || 0, "stats.kpi.ok", "stats.kpi.okHint"],
         ["error", "alert-triangle", today.error || 0, "stats.kpi.error", "stats.kpi.errorHint"],
         ["skipped", "skip-forward", today.skipped || 0, "stats.kpi.skipped", "stats.kpi.skippedHint"]
@@ -7181,6 +7222,32 @@ var require_stats = __commonJS({
             h2("p", { className: "wba-card-hint" }, t(k[4]))
           );
         })),
+        h2(
+          "div",
+          { className: "wba-panel" },
+          h2(
+            "div",
+            { className: "wba-panel-h" },
+            h2("p", { className: "wba-panel-title" }, t("stats.origin.title")),
+            h2("span", { className: "wba-hint" }, t("stats.origin.hint"))
+          ),
+          h2(
+            "div",
+            { className: "wba-kv" },
+            h2("b", null, t("stats.origin.user")),
+            h2("span", null, String(s && s.userRules || 0)),
+            h2("b", null, t("stats.origin.builtin")),
+            h2("span", null, String(s && s.builtinRules || 0)),
+            h2("b", null, t("stats.origin.builtinEnabled")),
+            h2("span", null, String(s && s.builtinEnabled || 0)),
+            h2("b", null, t("stats.origin.builtinDisabled")),
+            h2("span", null, String(s && s.builtinDisabled || 0)),
+            h2("b", null, t("stats.origin.stale")),
+            h2("span", null, String(s && s.builtinStale || 0)),
+            h2("b", null, t("stats.origin.uninstalled")),
+            h2("span", null, String(s && s.builtinUninstalled || 0))
+          )
+        ),
         h2(
           "div",
           { className: "wba-panel" },
@@ -7230,7 +7297,7 @@ var require_stats = __commonJS({
       var t = props.t;
       var stats = C.useLoad(React, api, "automation.stats", {}, []);
       var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
-      var s = stats.data || { total: 0, enabled: 0, today: {} };
+      var s2 = stats.data || { total: 0, enabled: 0, today: {} };
       return h2(
         "div",
         { className: "wba-wrap" },
@@ -7256,14 +7323,19 @@ var require_stats = __commonJS({
           )
         ),
         stats.error ? h2(C.Notice, { h: h2, kind: "error", text: stats.error }) : null,
-        s.staleCount ? h2(C.Notice, { h: h2, kind: "warn", text: t("stats.staleWarning", { n: s.staleCount }) }) : null,
+        s2.staleCount ? h2(C.Notice, { h: h2, kind: "warn", text: t("stats.staleWarning", { n: s2.staleCount }) }) : null,
+        s2.builtinStale || s2.builtinUninstalled ? h2(C.Notice, {
+          h: h2,
+          kind: "warn",
+          text: t("stats.originWarning", { stale: s2.builtinStale || 0, uninstalled: s2.builtinUninstalled || 0 })
+        }) : null,
         stats.loading ? h2("div", { className: "wba-cards" }, [0, 1, 2, 3, 4].map(function(i) {
           return h2("div", { key: i, className: "wba-card" }, h2("div", { className: "wba-skel" }));
         })) : h2(StatsBody, {
           h: h2,
           t,
           icon: props.icon,
-          s,
+          s: s2,
           actions: opts.data && opts.data.actions || [],
           denied: opts.data && opts.data.denied || DENIED,
           onSettings: function() {
@@ -7526,8 +7598,8 @@ var require_agent_timing = __commonJS({
       ["after", "hourglass", "agent.after"]
     ];
     function hhmm(value) {
-      var s = String(value || "").trim();
-      return /^\d{2}:\d{2}$/.test(s) ? s + ":00" : s;
+      var s2 = String(value || "").trim();
+      return /^\d{2}:\d{2}$/.test(s2) ? s2 + ":00" : s2;
     }
     function buildTiming(form) {
       var kind = form.pKind || "daily";
@@ -8571,11 +8643,14 @@ var require_rules = __commonJS({
       var status = filters && filters.status || "";
       var trigger = filters && filters.trigger || "";
       var mode = filters && filters.mode || "";
+      var origin = filters && filters.origin || "";
       return rows.filter(function(r) {
         if (q) {
-          var hit = String(r.name).toLowerCase().indexOf(q) !== -1 || String(r.actionName || "").toLowerCase().indexOf(q) !== -1 || String(r.agent && r.agent.prompt || "").toLowerCase().indexOf(q) !== -1;
+          var hit = String(r.name).toLowerCase().indexOf(q) !== -1 || String(r.actionName || "").toLowerCase().indexOf(q) !== -1 || String(r.ownerDomain || "").toLowerCase().indexOf(q) !== -1 || String(r.agent && r.agent.prompt || "").toLowerCase().indexOf(q) !== -1;
           if (!hit) return false;
         }
+        if (origin === "user" && r.origin === "plugin") return false;
+        if (origin === "plugin" && r.origin !== "plugin") return false;
         if (status === "on" && !r.enabled) return false;
         if (status === "off" && r.enabled) return false;
         if (mode === "agent" && r.execMode !== "agent") return false;
@@ -8597,6 +8672,25 @@ var require_rules = __commonJS({
       if (status === "active") return "ok";
       if (status === "paused") return "warn";
       return "";
+    }
+    function originPill(C2, h2, t, r) {
+      if (r.origin !== "plugin") {
+        return h2(C2.Pill, { h: h2, kind: "" }, t("rules.origin.user"));
+      }
+      var state = r.originState || "active";
+      var kind = state === "active" ? "info" : state === "updated" ? "warn" : "error";
+      var label = t("rules.origin.plugin") + (r.ownerDomain ? " \xB7 " + shortDomain(r.ownerDomain) : "");
+      var pill = h2(C2.Pill, { h: h2, kind }, label);
+      if (state === "active") return pill;
+      return h2(
+        "span",
+        { className: "wba-inline" },
+        pill,
+        h2("span", { className: "wba-hint" }, t("rules.origin.state." + state))
+      );
+    }
+    function shortDomain(id) {
+      return String(id || "").replace(/^wb-addon-/, "");
     }
     function EmptyCard(props) {
       var h2 = props.h;
@@ -8621,6 +8715,7 @@ var require_rules = __commonJS({
       var t = props.t;
       var icon = props.icon;
       var r = props.rule;
+      var builtin = r.origin === "plugin";
       var agentRule = r.execMode === "agent";
       var snap = r.agent && typeof r.agent === "object" ? r.agent : {};
       var kind = agentRule ? "agent" : r.triggerConfig && r.triggerConfig.kind || r.triggerType || "manual";
@@ -8635,6 +8730,7 @@ var require_rules = __commonJS({
           h2("div", { className: "wba-strong wba-ellipsis", title: r.name }, r.name),
           h2("div", { className: "wba-mono" }, r.id)
         ),
+        h2("td", { className: "wba-nowrap" }, originPill(C, h2, t, r)),
         h2(
           "td",
           { className: "wba-nowrap" },
@@ -8672,13 +8768,13 @@ var require_rules = __commonJS({
           h2("button", { type: "button", className: "wba-icon-btn", title: t("common.run"), disabled: props.runningId === r.id || agentRule && r.scheduleMissing, onClick: function() {
             props.onRun(r);
           } }, icon ? icon("play", 14) : "\u25B6"),
-          h2("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function() {
+          builtin ? null : h2("button", { type: "button", className: "wba-icon-btn", title: t("common.edit"), onClick: function() {
             props.onEdit(r);
           } }, icon ? icon("pencil", 14) : "\u270E"),
           h2("button", { type: "button", className: "wba-icon-btn", title: r.enabled ? t("common.disable") : t("common.enable"), onClick: function() {
             props.onToggle(r);
           } }, icon ? icon(r.enabled ? "power-off" : "power", 14) : "\u23FB"),
-          h2("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function() {
+          builtin ? h2("span", { className: "wba-icon-btn", title: t("rules.builtinLocked") }, icon ? icon("lock", 14) : "\u{1F512}") : h2("button", { type: "button", className: "wba-icon-btn danger", title: t("common.delete"), onClick: function() {
             props.onDelete(r);
           } }, icon ? icon("trash-2", 14) : "\u{1F5D1}")
         ))
@@ -8746,6 +8842,20 @@ var require_rules = __commonJS({
           h2(
             "label",
             { className: "wba-field" },
+            h2("span", { className: "wba-label" }, t("rules.filterOrigin")),
+            h2(
+              "select",
+              { className: "wba-input", value: filters.origin || "", onChange: function(e) {
+                props.onFilter({ origin: e.target.value });
+              } },
+              h2("option", { value: "" }, t("common.all")),
+              h2("option", { value: "user" }, t("rules.origin.user")),
+              h2("option", { value: "plugin" }, t("rules.origin.plugin"))
+            )
+          ),
+          h2(
+            "label",
+            { className: "wba-field" },
             h2("span", { className: "wba-label" }, t("rules.exec.mode")),
             h2(
               "select",
@@ -8793,7 +8903,7 @@ var require_rules = __commonJS({
             h2("thead", null, h2(
               "tr",
               null,
-              ["name", "trigger", "action", "status", "lastRun", "ops"].map(function(k) {
+              ["name", "origin", "trigger", "action", "status", "lastRun", "ops"].map(function(k) {
                 return h2("th", { key: k }, t("rules.col." + k));
               })
             )),
@@ -8831,7 +8941,7 @@ var require_rules = __commonJS({
       var initS = React.useState(null);
       var busyS = React.useState(false);
       var msgS = React.useState("");
-      var filterS = React.useState({ q: "", status: "", trigger: "", mode: "" });
+      var filterS = React.useState({ q: "", status: "", trigger: "", mode: "", origin: "" });
       var runningS = React.useState("");
       var historyS = React.useState(null);
       var all = list.data && list.data.items || [];
@@ -8935,7 +9045,7 @@ var require_rules = __commonJS({
             filterS[1](Object.assign({}, filterS[0], patch));
           },
           onClear: function() {
-            filterS[1]({ q: "", status: "", trigger: "", mode: "" });
+            filterS[1]({ q: "", status: "", trigger: "", mode: "", origin: "" });
           },
           onNew: openNew,
           onRun: run,
@@ -9187,7 +9297,16 @@ var require_runs = __commonJS({
                     }
                   },
                   h2("td", null, h2(C.Pill, { h: h2, kind: resultKind(r.status) }, t("run.status." + r.status) || r.status)),
-                  h2("td", { className: "wba-ellipsis" }, props.ruleName ? props.ruleName(r.ruleId) : r.ruleId),
+                  h2(
+                    "td",
+                    { className: "wba-ellipsis" },
+                    h2(
+                      "span",
+                      { className: "wba-inline" },
+                      h2("span", null, props.ruleName ? props.ruleName(r.ruleId) : r.ruleId),
+                      props.ruleOrigin && props.ruleOrigin(r.ruleId) === "plugin" ? h2(C.Pill, { h: h2, kind: "info" }, t("runs.origin.plugin")) : null
+                    )
+                  ),
                   h2("td", { className: "wba-nowrap" }, r.trigger ? t("trigger." + r.trigger) || r.trigger : "\u2014"),
                   h2("td", { className: "wba-nowrap" }, C.fmtTime(r.startedAt, props.lang)),
                   h2("td", { className: "wba-nowrap" }, cost(r)),
@@ -9238,8 +9357,10 @@ var require_runs = __commonJS({
       var expandS = React.useState("");
       var ruleList = rules.data && rules.data.items || [];
       var names = {};
+      var origins = {};
       ruleList.forEach(function(r) {
         names[r.id] = r.name;
+        origins[r.id] = r.origin;
       });
       var rows = (runs.data && runs.data.items || []).filter(function(r) {
         if (filterS[0].ruleId && r.ruleId !== filterS[0].ruleId) return false;
@@ -9278,6 +9399,9 @@ var require_runs = __commonJS({
           error: runs.error,
           ruleName: function(id) {
             return names[id] || id;
+          },
+          ruleOrigin: function(id) {
+            return origins[id] || "user";
           },
           onRule: function(v) {
             filterS[1](Object.assign({}, filterS[0], { ruleId: v }));
@@ -9841,8 +9965,8 @@ var require_slot_catalog = __commonJS({
         return INDEX[String(id || "")] || null;
       },
       ids: function() {
-        return SLOTS.map(function(s) {
-          return s.id;
+        return SLOTS.map(function(s2) {
+          return s2.id;
         });
       }
     };
@@ -11282,8 +11406,8 @@ var require_system_tabs = __commonJS({
         var total = data ? data.total : 0;
         var totalPages = Math.max(1, Math.ceil(total / pageSize));
         var statsText = stats ? t("audit_stats") + "\uFF1A" + totalOf(stats) + " \xB7 " + t("audit_failed") + " " + (stats.failed || 0) : "";
-        function totalOf(s) {
-          return t("audit_total") + " " + (s.total || 0);
+        function totalOf(s2) {
+          return t("audit_total") + " " + (s2.total || 0);
         }
         return jsx2.jsxs(react2.Fragment, { children: [
           jsx2.jsxs("div", { className: "wb-card", children: [
@@ -12035,11 +12159,11 @@ var ViewOutlet = require_view_outlet();
 function ensureCss() {
   if (typeof document === "undefined") return;
   if (document.getElementById("wb-css")) return;
-  var s = document.createElement("style");
-  s.id = "wb-css";
-  s.setAttribute("data-plugin-css", NS);
-  s.textContent = CSS;
-  document.head.appendChild(s);
+  var s2 = document.createElement("style");
+  s2.id = "wb-css";
+  s2.setAttribute("data-plugin-css", NS);
+  s2.textContent = CSS;
+  document.head.appendChild(s2);
 }
 function SearchPanel(props) {
   var api = props.api;

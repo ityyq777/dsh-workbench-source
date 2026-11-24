@@ -18,6 +18,7 @@ export function createActions({
   db,
   search,
   extraMetaActions,
+  builtinAutomations,
   queueRef, sessionRoles,
 }: any) {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
@@ -213,7 +214,15 @@ export function createActions({
     return !!found && agentVisible(name, found.def);
   });
 META_ACTIONS.set("capabilities.setTaskTarget", taskTargets.setAction);
-const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapability } = createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTargets, agentVisible });
+const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapability } = createCapabilities({
+  domains,
+  SHELL_VERSION,
+  actionEntry,
+  taskTargets,
+  agentVisible,
+  // 内置规则条数由自动化引擎提供（插件声明了多少条已生效规则）。
+  builtinCount: (domainId: string) => (typeof builtinAutomations === "function" ? builtinAutomations(domainId) : 0),
+});
   function findActionDef(name: string): { def: DomainActionDef; domainId: string } | null {
     const builtin = BUILTIN_ACTIONS.get(name);
     if (builtin) return { def: builtin, domainId: META_DOMAIN };

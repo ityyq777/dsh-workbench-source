@@ -78,7 +78,12 @@ function RunsBody(props) {
                     onClick: function () { props.onExpand(open ? "" : r.id); },
                   },
                     h("td", null, h(C.Pill, { h: h, kind: resultKind(r.status) }, t("run.status." + r.status) || r.status)),
-                    h("td", { className: "wba-ellipsis" }, props.ruleName ? props.ruleName(r.ruleId) : r.ruleId),
+                    h("td", { className: "wba-ellipsis" },
+                      h("span", { className: "wba-inline" },
+                        h("span", null, props.ruleName ? props.ruleName(r.ruleId) : r.ruleId),
+                        props.ruleOrigin && props.ruleOrigin(r.ruleId) === "plugin"
+                          ? h(C.Pill, { h: h, kind: "info" }, t("runs.origin.plugin"))
+                          : null)),
                     h("td", { className: "wba-nowrap" }, r.trigger ? t("trigger." + r.trigger) || r.trigger : "—"),
                     h("td", { className: "wba-nowrap" }, C.fmtTime(r.startedAt, props.lang)),
                     h("td", { className: "wba-nowrap" }, cost(r)),
@@ -112,7 +117,8 @@ module.exports = function RunsView(props) {
   var expandS = React.useState("");
   var ruleList = (rules.data && rules.data.items) || [];
   var names = {};
-  ruleList.forEach(function (r) { names[r.id] = r.name; });
+  var origins = {};
+  ruleList.forEach(function (r) { names[r.id] = r.name; origins[r.id] = r.origin; });
   var rows = ((runs.data && runs.data.items) || []).filter(function (r) {
     if (filterS[0].ruleId && r.ruleId !== filterS[0].ruleId) return false;
     if (filterS[0].status && r.status !== filterS[0].status) return false;
@@ -139,6 +145,7 @@ module.exports = function RunsView(props) {
       loading: runs.loading,
       error: runs.error,
       ruleName: function (id) { return names[id] || id; },
+      ruleOrigin: function (id) { return origins[id] || "user"; },
       onRule: function (v) { filterS[1](Object.assign({}, filterS[0], { ruleId: v })); },
       onStatus: function (v) { filterS[1](Object.assign({}, filterS[0], { status: v })); },
       onExpand: function (id) { expandS[1](id); },

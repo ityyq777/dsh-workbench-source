@@ -82,6 +82,18 @@ export function apply(ctx) {
         },
       ],
     },
+    // 内置自动化规则：注册即建规则（声明即授权），用户可启停、可手动运行，但删不掉也改不了触发与 action。
+    automations: [
+      {
+        key: "daily-unread-digest",
+        title: "每天 09:00 汇总未读邮件",
+        description: "把本地已同步的未读邮件按收件箱列一份摘要；只读 mail.messageList，不发信也不改邮件状态。",
+        trigger: { kind: "dailyAt", time: "09:00", tz: "Asia/Shanghai" },
+        action: { name: "mail.messageList", args: { unread: true, limit: 20 } },
+        defaultEnabled: true,
+        editableArgs: true,
+      },
+    ],
     // 只同步配置方案表，业务数据仍只在本机。
         sync: { tables: [{ name: "mail_config_scheme", mode: "row" }] },
     // 提供落点：邮件详情动作条渲染 item.actions，别的插件可以把按钮挂进来。

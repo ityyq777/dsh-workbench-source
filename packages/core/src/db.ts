@@ -38,6 +38,23 @@ function migrateLocalDb(db: DatabaseSync): void {
         db.exec("ALTER TABLE automation_rule ADD COLUMN " + name + " " + ddl);
       }
     }
+    // 内置自动化规则来源：老库一律回填 user（历史规则都是用户自己建的）。
+    for (const [name, ddl] of [
+      ["origin", "TEXT NOT NULL DEFAULT 'user'"],
+      ["owner_domain", "TEXT"],
+      ["rule_key", "TEXT"],
+      ["origin_version", "TEXT"],
+    ] as const) {
+      if (!hasColumn(db, "automation_rule", name)) {
+        db.exec("ALTER TABLE automation_rule ADD COLUMN " + name + " " + ddl);
+      }
+    }
+    // 索引放在补列之后建：老库的 automation_rule 刚补上 owner_domain / rule_key 才能建。
+    db.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_automation_rule_builtin " +
+        "ON automation_rule(owner_domain, rule_key) WHERE origin='plugin'",
+    );
+    db.exec("CREATE INDEX IF NOT EXISTS idx_automation_rule_origin ON automation_rule(origin)");
     // 事件队列定向投递：老库的事件一律视为广播，补列后对外语义不变。
     if (!hasColumn(db, "host_event", "mode")) {
       db.exec("ALTER TABLE host_event ADD COLUMN mode TEXT NOT NULL DEFAULT 'broadcast'");
