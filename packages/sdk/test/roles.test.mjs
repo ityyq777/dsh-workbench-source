@@ -12,6 +12,11 @@ test("旧业务域可以省略角色，纯对话角色可以声明空动作列�
   assert.deepEqual(parseDomainRoles(domain, [pure]), [pure]);
 });
 
+test("动作清单可省略：只写指令的角色照样能注册", () => {
+  const { actions, ...noActions } = role;
+  assert.deepEqual(parseDomainRoles(domain, [noActions]), [{ ...role, actions: [] }]);
+});
+
 test("宿主获得独立声明快照，按精确动作名去重", () => {
   const input = { ...role, actions: ["docs.read", "docs.read"], domainId: "other" };
   const copy = parseDomainRoles(domain, [input]);
@@ -31,7 +36,8 @@ test("拒绝畸形、缺字段或动作清单含通配符的角色声明", () =>
   for (const value of [null, "", {}, [null], new Array(1)]) {
     assert.throws(() => parseDomainRoles(domain, value), /必须是/);
   }
-  for (const key of Object.keys(role)) {
+  // actions 现在可选，其余字段仍必填。
+  for (const key of Object.keys(role).filter((name) => name !== "actions")) {
     assert.throws(() => parseDomainRoles(domain, [{ ...role, [key]: undefined }]), new RegExp(key));
   }
   for (const item of [{ version: 2 }, { name: " " }, { actions: ["docs.*"] }, { actions: [true] }, { actions: ["docs"] }]) {

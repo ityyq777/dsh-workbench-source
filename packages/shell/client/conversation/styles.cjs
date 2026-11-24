@@ -122,7 +122,9 @@ module.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + `
 .wbr-check:has(input:checked){border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}
 .wbr-check:focus-within{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-check code{font-size:11.5px}
-.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-danger)}
+.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-warn)}
+.wbr-unknown-line{margin:0;font-size:12px;color:var(--wb-warn)}
+.wbr-actions-hint{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
 .wbr-unknown small{color:var(--wb-muted)}
 .wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
 .wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}

@@ -7,8 +7,8 @@
  * 步骤导航直接用共享控件 lib/stepper.cjs，这里只负责每步的内容、逐步校验、
  * 保存前的全量复核（回到第一个不合格的步骤）和跨步保留的草稿。
  *
- * 动作名校验不能省：写错一个名字，这个角色以后每次调用都会被 tool-policy 的
- * 精确白名单拒掉，所以在离开「允许的动作」这一步之前就要拦住。
+ * 动作清单只是「参考动作」：写在这里供展示与按动作名检索，不构成权限。
+ * 角色能做什么由角色指令自己约束，所以目录里没有的名字只提示，不拦保存。
  */
 var React = require("react");
 var h = React.createElement;
@@ -34,11 +34,9 @@ function translator(lang) {
  * 全量复核：返回第一个不合格的步骤下标，全部通过返回 -1。
  * 顺序即步骤顺序，所以「下一步」只看当前步，保存时用它兜底。
  */
-function firstFailing(draft, catalog) {
+function firstFailing(draft) {
   if (!String(draft.name || "").trim()) return 0;
   if (!String(draft.instructions || "").trim()) return 1;
-  var picked = (draft.actions || []).concat(groups.parseManual(draft.manual));
-  if (groups.validateActions(picked, catalog).unknown.length) return 2;
   return -1;
 }
 
@@ -105,7 +103,7 @@ function Editor(props) {
 
   // 「下一步」只放行当前步；若前面更早的步骤被改坏了（回跳后清空名称），也一并退回。
   function next() {
-    var blocked = firstFailing(draft, catalog);
+    var blocked = firstFailing(draft);
     if (blocked >= 0 && blocked <= step) {
       mark(blocked, true);
       setStatus(blockedText(blocked));
@@ -129,7 +127,7 @@ function Editor(props) {
 
   // 保存前全量复核：某一处被清空（或手填了坏动作名）就回到那一步，而不是静默失败。
   function submit() {
-    var blocked = firstFailing(draft, catalog);
+    var blocked = firstFailing(draft);
     if (blocked >= 0) {
       mark(blocked, true);
       setStatus(blockedText(blocked));
@@ -187,6 +185,7 @@ function Editor(props) {
         h("div", { className: "wbr-actions-head" },
           h("strong", null, t("role_actions_title")),
           h("span", { className: "wbr-count" }, t("role_actions_selected", { n: effective.length }))),
+        h("p", { className: "wbr-actions-hint" }, t("role_actions_hint")),
         props.catalogError ? h(Notice, { h: h, kind: "warn", text: props.catalogError }) : null,
         h("input", {
           ref: searchRef, name: "actionSearch", className: "wbr-input", value: query,
@@ -211,7 +210,7 @@ function Editor(props) {
             name: "manual", className: "wbr-input", rows: 3, value: draft.manual || "",
             onChange: function (e) { mark(2, false); set({ manual: e.target.value }); },
           })),
-        unknown.length ? h("div", { className: "wbr-unknown", role: "alert" },
+        unknown.length ? h("div", { className: "wbr-unknown", role: "status" },
           h("strong", null, t("role_unknown_title")),
           h("span", null, unknown.join("、")),
           h("small", null, t("role_unknown_hint"))) : null));
@@ -234,7 +233,7 @@ function Editor(props) {
       chips.length ? h("div", { className: "wbr-chips" }, chips.map(function (group) {
         return h("code", { key: group.domain, className: "wbr-chip" }, group.domain + " " + group.items.length);
       })) : null,
-      unknown.length ? h("p", { className: "wbr-field-error", role: "alert" },
+      unknown.length ? h("p", { className: "wbr-unknown-line", role: "status" },
         t("role_unknown_title") + " " + unknown.join("、")) : null);
   }
 

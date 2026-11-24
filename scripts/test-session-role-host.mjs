@@ -50,7 +50,9 @@ try {
   assert.equal((await selectCustom()).unavailable,false);
   const customAgent = {session:{id:"catalog"}};
   assert.match(section.text({agent:customAgent}),/检查用字/);
-  assert.match(await invoke("Workbench","example.read",{},customAgent),/ACTION_ROLE_DENIED/);
+  // 没声明任何动作的纯对话角色也能调动作：actions 只是参考清单，不构成权限。
+  assert.equal(await invoke("Workbench","example.read",{},customAgent),'"example.read"');
+  assert.equal(await invoke("Workbench","example.update",{},customAgent),'"example.update"');
   const edited = (await catalog({op:"update",id:custom.id,instructions:"检查结构",actions:["example.read"]})).role;
   assert.notEqual(edited.version,custom.version);
   assert.equal((await http("GET","session-role?sessionId=catalog")).unavailable,true);
@@ -70,12 +72,15 @@ try {
   claim("first",1);
   assert.match(section.text({agent}),/只读示例/);
   assert.match(section.text({agent}),/first/);
-  assert.match(await invoke("Workbench","example.update",{sessionId:"other"}),/ACTION_ROLE_DENIED/);
-  assert.doesNotMatch(await invoke("Workbench","actions.list"),/example.update/);
-  assert.match(await invoke("Workbench","actions.help",{action:"example.update"}),/错误/);
+  // 角色只声明了 example.read，仍可调 example.update——不再按动作清单拦截。
+  assert.equal(await invoke("Workbench","example.update",{sessionId:"other"}),'"example.update"');
+  // 动作清单不再按角色收窄：agent 能看到并查到角色没声明的动作。
+  assert.match(await invoke("Workbench","actions.list"),/example.update/);
+  assert.doesNotMatch(await invoke("Workbench","actions.help",{action:"example.update"}),/错误/);
   assert.match(await invoke("Workbench","example.read"),/example.read/);
   plan = true;
-  assert.match(await invoke("Workbench","example.read"),/ACTION_ROLE_DENIED/);
+  // 计划模式只读是另一条限制，与角色无关，有自己的错误码。
+  assert.match(await invoke("Workbench","example.read"),/ACTION_PLAN_READ_ONLY/);
   plan = false;
   await patch({roleId:null});
   assert.match(section.text({agent}),/只读示例/);
@@ -94,6 +99,7 @@ try {
   claim("last",6);
   unload();
   assert.equal((await http("GET","session-role?sessionId=main")).unavailable,true);
-  assert.match(await invoke("Workbench","example.read"),/ACTION_ROLE_DENIED/);
-  console.log("通过：旧入口退役、目录、轮次隔离、执行约束、命令单次角色与卸载失效");
+  // 插件卸掉后角色失效要用户重选，这条拦截仍然保留。
+  assert.match(await invoke("Workbench","example.read"),/ACTION_ROLE_STALE/);
+  console.log("通过：旧入口退役、目录、轮次隔离、动作不再按角色名单拦截、计划模式只读、命令单次角色与卸载失效");
 } finally { for (const dispose of cleanups.reverse()) dispose(); rmSync(dir,{recursive:true,force:true}); }

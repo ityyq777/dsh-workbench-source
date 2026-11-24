@@ -30,9 +30,12 @@ export function createActions({
   const originAccess = createOriginAccess(db, { pinned: { "actions.setActionOrigins": ["ui"] } });
 
   /** 权限开关拦下的错误：都要进审计，且即使 action 属于「默认不记」的类别也不例外。 */
+  // ACTION_ROLE_DENIED 只作历史兼容保留：角色不再按 actions 拦动作，
+  // 现在角色侧只剩「版本失效」与「计划模式只读」两种拒绝，各有自己的 code。
   function isPolicyDenied(error: unknown): boolean {
     const code = String((error as { code?: unknown } | null)?.code ?? "");
-    return code === "ACTION_ROLE_DENIED" || code === "ACTION_AGENT_DISABLED" || code === "ACTION_UI_ONLY" || code === "ACTION_ORIGIN_DENIED";
+    return code === "ACTION_ROLE_DENIED" || code === "ACTION_ROLE_STALE" || code === "ACTION_PLAN_READ_ONLY"
+      || code === "ACTION_AGENT_DISABLED" || code === "ACTION_UI_ONLY" || code === "ACTION_ORIGIN_DENIED";
   }
 
   /** 来源不在允许集合里时的结构化错误：调用方据此知道自己是被权限挡下的，而不是参数错。 */

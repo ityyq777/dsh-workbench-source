@@ -20,8 +20,8 @@ export function createSessionRoles(db: DatabaseSync, domains: Map<string, Regist
   const resolve = catalog.resolve;
   function info(sid: string) {
     const cfg = config(sid);
-    // actions 只给选择器做「按动作名搜索」用（例如「谁能 tasks.update」）；
-    // 权限判定仍只认 role_id + role_version 绑定的快照，不读这里。
+    // actions 只是参考清单：给角色选择器做「按动作名搜索」与详情展示用
+    // （例如「谁能 tasks.update」），不参与任何准入判定——角色不再限制能调哪些动作。
     const roles = catalog.list().map(({ id, domain, name, description, version, source, actions }) => ({
       id, domain, name, description, version, source, actions: Array.isArray(actions) ? actions : [],
     }));

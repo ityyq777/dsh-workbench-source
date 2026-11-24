@@ -624,7 +624,7 @@ var require_locale2 = __commonJS({
         role_hint: "\u2191\u2193 \u9009\u62E9 \xB7 Enter \u786E\u8BA4 \xB7 Esc \u5173\u95ED",
         role_step_basic: "\u57FA\u672C\u4FE1\u606F",
         role_step_instructions: "\u89D2\u8272\u6307\u4EE4",
-        role_step_actions: "\u5141\u8BB8\u7684\u52A8\u4F5C",
+        role_step_actions: "\u53C2\u8003\u52A8\u4F5C",
         role_step_confirm: "\u786E\u8BA4\u4E0E\u4FDD\u5B58",
         role_step_label: "\u521B\u5EFA\u6B65\u9AA4",
         role_wizard_new: "\u65B0\u5EFA\u89D2\u8272",
@@ -638,22 +638,23 @@ var require_locale2 = __commonJS({
         role_preview: "\u9884\u89C8",
         role_preview_empty: "\u8FD8\u6CA1\u6709\u5185\u5BB9",
         role_chars: "{n} \u5B57",
-        role_actions_title: "\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C",
+        role_actions_title: "\u53C2\u8003\u52A8\u4F5C\uFF08\u4E0D\u9650\u5236\u6743\u9650\uFF09",
         role_actions_selected: "\u5DF2\u9009 {n} \u9879",
+        role_actions_hint: "\u8FD9\u91CC\u53EA\u7528\u4E8E\u5C55\u793A\u4E0E\u6309\u52A8\u4F5C\u540D\u68C0\u7D22\uFF1A\u9009\u4E86\u89D2\u8272\u4E5F\u80FD\u8C03\u4EFB\u610F\u52A8\u4F5C\uFF0C\u89D2\u8272\u8BE5\u505A\u4EC0\u4E48\u7531\u4E0A\u9762\u7684\u89D2\u8272\u6307\u4EE4\u7EA6\u675F\u3002",
         role_actions_search: "\u7B5B\u9009\u52A8\u4F5C\u540D\u6216\u8BF4\u660E",
         role_actions_select_all: "\u5168\u9009",
         role_actions_clear: "\u6E05\u7A7A\u672C\u57DF",
-        role_actions_manual: "\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09",
-        role_actions_manual_hint: "\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C",
-        role_unknown_title: "\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5B58\u5728\uFF1A",
-        role_unknown_hint: "\u8BF7\u6539\u6210\u771F\u5B9E\u52A8\u4F5C\u540D\u540E\u518D\u7EE7\u7EED\uFF0C\u5426\u5219\u89D2\u8272\u6BCF\u6B21\u8C03\u7528\u90FD\u4F1A\u88AB\u62D2\u3002",
+        role_actions_manual: "\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF0C\u4EC5\u4F5C\u53C2\u8003\uFF09",
+        role_actions_manual_hint: "\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C\uFF1B\u5199\u5728\u8FD9\u91CC\u4E0D\u5F71\u54CD\u6743\u9650",
+        role_unknown_title: "\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5728\u76EE\u5F55\u91CC\uFF1A",
+        role_unknown_hint: "\u53EA\u5F71\u54CD\u5C55\u793A\u4E0E\u68C0\u7D22\uFF1A\u89D2\u8272\u80FD\u505A\u4EC0\u4E48\u7531\u4E0A\u9762\u7684\u89D2\u8272\u6307\u4EE4\u7EA6\u675F\uFF0C\u5BBF\u4E3B\u4E0D\u518D\u6309\u52A8\u4F5C\u540D\u5355\u62E6\u622A\u3002",
         role_back: "\u4E0A\u4E00\u6B65",
         role_next_step: "\u4E0B\u4E00\u6B65",
         role_save: "\u4FDD\u5B58",
         role_cancel: "\u53D6\u6D88",
         role_summary_name: "\u540D\u79F0",
         role_summary_description: "\u804C\u8D23\u7B80\u4ECB",
-        role_summary_actions: "\u5141\u8BB8\u7684\u52A8\u4F5C",
+        role_summary_actions: "\u53C2\u8003\u52A8\u4F5C",
         role_summary_actions_value: "\u5DF2\u9009 {n} \u9879",
         role_summary_instructions: "\u6307\u4EE4\u957F\u5EA6",
         role_summary_chars: "{n} \u5B57",
@@ -1023,7 +1024,7 @@ var require_locale2 = __commonJS({
         role_hint: "\u2191\u2193 select \xB7 Enter confirm \xB7 Esc close",
         role_step_basic: "Basics",
         role_step_instructions: "Instructions",
-        role_step_actions: "Actions",
+        role_step_actions: "Reference actions",
         role_step_confirm: "Review",
         role_step_label: "Setup steps",
         role_wizard_new: "New role",
@@ -1037,22 +1038,23 @@ var require_locale2 = __commonJS({
         role_preview: "Preview",
         role_preview_empty: "Nothing to preview",
         role_chars: "{n} chars",
-        role_actions_title: "Allowed workbench actions",
+        role_actions_title: "Reference actions (not a permission list)",
         role_actions_selected: "{n} selected",
+        role_actions_hint: "Display and search only: a selected role can still call any action, and what it should do is defined by its instructions.",
         role_actions_search: "Filter actions by name or description",
         role_actions_select_all: "All",
         role_actions_clear: "Clear domain",
-        role_actions_manual: "Extra action names (one per line)",
-        role_actions_manual_hint: "For actions that are valid but not listed",
-        role_unknown_title: "These actions do not exist:",
-        role_unknown_hint: "Fix the names before continuing, otherwise every call from this role will be rejected.",
+        role_actions_manual: "Extra action names (one per line, reference only)",
+        role_actions_manual_hint: "Valid actions missing from the catalog; listing them grants no permission",
+        role_unknown_title: "Not in the action catalog:",
+        role_unknown_hint: "Display and search only: what the role may do is defined by its instructions, the host no longer blocks actions by this list.",
         role_back: "Back",
         role_next_step: "Next",
         role_save: "Save",
         role_cancel: "Cancel",
         role_summary_name: "Name",
         role_summary_description: "Description",
-        role_summary_actions: "Allowed actions",
+        role_summary_actions: "Reference actions",
         role_summary_actions_value: "{n} selected",
         role_summary_instructions: "Instruction length",
         role_summary_chars: "{n} chars",
@@ -2078,7 +2080,9 @@ var require_styles = __commonJS({
 .wbr-check:has(input:checked){border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}
 .wbr-check:focus-within{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-check code{font-size:11.5px}
-.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-danger)}
+.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-warn)}
+.wbr-unknown-line{margin:0;font-size:12px;color:var(--wb-warn)}
+.wbr-actions-hint{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
 .wbr-unknown small{color:var(--wb-muted)}
 .wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
 .wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}
@@ -12651,11 +12655,9 @@ var require_catalog_editor = __commonJS({
         }) : text;
       };
     }
-    function firstFailing(draft, catalog) {
+    function firstFailing(draft) {
       if (!String(draft.name || "").trim()) return 0;
       if (!String(draft.instructions || "").trim()) return 1;
-      var picked = (draft.actions || []).concat(groups.parseManual(draft.manual));
-      if (groups.validateActions(picked, catalog).unknown.length) return 2;
       return -1;
     }
     function Editor(props) {
@@ -12713,7 +12715,7 @@ var require_catalog_editor = __commonJS({
         return t("role_unknown_hint");
       }
       function next() {
-        var blocked = firstFailing(draft, catalog);
+        var blocked = firstFailing(draft);
         if (blocked >= 0 && blocked <= step) {
           mark(blocked, true);
           setStatus(blockedText(blocked));
@@ -12733,7 +12735,7 @@ var require_catalog_editor = __commonJS({
         }
       }
       function submit() {
-        var blocked = firstFailing(draft, catalog);
+        var blocked = firstFailing(draft);
         if (blocked >= 0) {
           mark(blocked, true);
           setStatus(blockedText(blocked));
@@ -12838,6 +12840,7 @@ var require_catalog_editor = __commonJS({
               h2("strong", null, t("role_actions_title")),
               h2("span", { className: "wbr-count" }, t("role_actions_selected", { n: effective.length }))
             ),
+            h2("p", { className: "wbr-actions-hint" }, t("role_actions_hint")),
             props.catalogError ? h2(Notice, { h: h2, kind: "warn", text: props.catalogError }) : null,
             h2("input", {
               ref: searchRef,
@@ -12893,7 +12896,7 @@ var require_catalog_editor = __commonJS({
             ),
             unknown.length ? h2(
               "div",
-              { className: "wbr-unknown", role: "alert" },
+              { className: "wbr-unknown", role: "status" },
               h2("strong", null, t("role_unknown_title")),
               h2("span", null, unknown.join("\u3001")),
               h2("small", null, t("role_unknown_hint"))
@@ -12928,7 +12931,7 @@ var require_catalog_editor = __commonJS({
           })) : null,
           unknown.length ? h2(
             "p",
-            { className: "wbr-field-error", role: "alert" },
+            { className: "wbr-unknown-line", role: "status" },
             t("role_unknown_title") + " " + unknown.join("\u3001")
           ) : null
         );

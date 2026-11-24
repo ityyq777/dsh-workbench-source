@@ -26,7 +26,7 @@ export function createRoleCatalog(db: DatabaseSync, domains: Map<string, Registe
   }
   function list(): Entry[] {
     const plugins: Entry[] = [...domains.values()].filter(rec => rec.error === null).flatMap(rec =>
-      (rec.def.roles ?? []).map(role => ({ ...role, actions: [...role.actions], id: rec.def.id + "/" + role.id, domain: rec.def.id, source: "plugin" as const })));
+      (rec.def.roles ?? []).map(role => ({ ...role, actions: [...(role.actions ?? [])], id: rec.def.id + "/" + role.id, domain: rec.def.id, source: "plugin" as const })));
     return plugins.concat(db.prepare("SELECT id, version, definition FROM user_role ORDER BY rowid").all().map(fromRow));
   }
   function mutate(input: unknown) {

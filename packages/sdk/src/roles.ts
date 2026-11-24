@@ -8,8 +8,12 @@ export interface DomainRoleDef {
   version: string;
   /** 仅当用户选择此角色时，宿主才向模型提供这些业务规则。 */
   instructions: string;
-  /** 所需工作台动作的精确名称。空数组表示这个角色不调用工作台动作。 */
-  actions: string[];
+  /**
+   * 本角色**参考**用的工作台动作名，只供角色管理页展示与按动作名检索。
+   * 它不构成权限：选了角色也能调任意 action，真正约束该做什么的是 instructions。
+   * 省略即空数组，插件可以只为角色写指令。
+   */
+  actions?: string[];
 }
 
 const ROLE_ID = /^[a-z][a-z0-9_-]*$/;
@@ -32,8 +36,9 @@ export function parseDomainRoles(domainId: string, value: unknown): DomainRoleDe
     if (!ROLE_ID.test(id)) throw new Error(path + ".id 必须是域内小写标识，且以字母开头");
     if (ids.has(id)) throw new Error(path + ".id 重复：" + id);
     ids.add(id);
-    if (!Array.isArray(role.actions)) throw new Error(path + ".actions 必须是数组");
-    const actions = Array.from(role.actions, (action) => {
+    // actions 可选：只为展示与检索保留，缺省按空数组处理，不阻止注册。
+    if (role.actions !== undefined && !Array.isArray(role.actions)) throw new Error(path + ".actions 必须是数组");
+    const actions = Array.from(role.actions ?? [], (action) => {
       if (typeof action !== "string" || !ACTION_NAME.test(action) || action.trim() !== action) {
         throw new Error(path + ".actions 需要完整的动作名，如 tasks.list");
       }

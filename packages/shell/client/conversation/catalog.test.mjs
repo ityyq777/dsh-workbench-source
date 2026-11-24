@@ -144,14 +144,16 @@ setField("instructions", "- 只做归档");
 await click("下一步");
 tree();
 
-// 第三步：手动补一个不存在的动作名 → 红字点名且拦住继续
+// 第三步：手动补一个目录里没有的动作名 → 只提示（参考动作不构成权限），不拦继续
 setField("manual", "tasks.nope");
 tree();
 const unknown = tree().find((node) => hasClass(node, "wbr-unknown"));
-assert.ok(textOf(unknown).includes("tasks.nope"), "不存在的动作名要红字点名");
+assert.ok(textOf(unknown).includes("tasks.nope"), "目录外的动作名要提示");
+assert.match(textOf(unknown), /不再按动作名单拦截|只影响展示与检索/, "提示要说明它不构成权限");
 await click("下一步");
 tree();
-assert.equal(paneName("manual").length, 1, "还有坏动作名时应留在动作步");
+assert.equal(paneName("manual").length, 0, "目录外的动作名不再拦继续");
+assert.equal(buttons("保存")[0].props.disabled, false, "有目录外动作也应允许保存");
 
 // 回跳到第一步改简介，再跳回来：草稿要跨 step 保留
 await jump(0);
