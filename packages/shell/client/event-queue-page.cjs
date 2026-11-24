@@ -20,6 +20,10 @@ var STATUS_LABEL = {
   dead: "死信",
 };
 
+var MODE_LABEL = { broadcast: "广播", targeted: "定向" };
+
+var MODE_LABEL_EN = { broadcast: "broadcast", targeted: "targeted" };
+
 var STATUS_LABEL_EN = {
   queued: "queued",
   pending: "pending",
@@ -31,6 +35,16 @@ var STATUS_LABEL_EN = {
 function statusText(lang, status) {
   var table = lang === "en" ? STATUS_LABEL_EN : STATUS_LABEL;
   return table[status] || status;
+}
+
+function modeText(lang, mode) {
+  var table = lang === "en" ? MODE_LABEL_EN : MODE_LABEL;
+  return table[mode] || table.broadcast;
+}
+
+function modeBadge(jsx, lang, mode) {
+  var m = mode === "targeted" ? "targeted" : "broadcast";
+  return jsx.jsx("span", { className: "wbq-mode m-" + m, children: modeText(lang, m) });
 }
 
 function pad2(x) {
@@ -176,6 +190,10 @@ function queuePage(deps) {
   var filterState = React.useState("");
   var filter = filterState[0];
   var setFilter = filterState[1];
+  // 状态与投递方式是两维过滤：广播/定向是正交选项，不能和状态挤在一个枚举里。
+  var modeState = React.useState("");
+  var modeFilter = modeState[0];
+  var setModeFilter = modeState[1];
   var pageState = React.useState(1);
   var page = pageState[0];
   var setPage = pageState[1];
@@ -190,8 +208,8 @@ function queuePage(deps) {
   var setUpdatedAt = clockState[1];
 
   var overview = useLoader(React, api, "wb.eventOverview", {}, []);
-  var events = useLoader(React, api, "wb.eventList", { status: filter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, page]);
-  var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, page]);
+  var events = useLoader(React, api, "wb.eventList", { status: filter || undefined, mode: modeFilter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, modeFilter, page]);
+  var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || undefined, mode: modeFilter || undefined, page: page, pageSize: PAGE_SIZE }, [filter, modeFilter, page]);
   var subs = useLoader(React, api, "wb.eventSubscriptionList", {}, []);
   var domainsView = useLoader(React, api, "wb.eventDomains", {}, []);
   var active =
@@ -199,6 +217,7 @@ function queuePage(deps) {
 
   React.useEffect(function () {
     setFilter("");
+    setModeFilter("");
     setPage(1);
   }, [tab]);
 
@@ -263,6 +282,7 @@ function queuePage(deps) {
     ["subscriptions", t("queue_tab_subscriptions")],
   ];
   var filters = tab === "events" ? ["queued", "done", "dead"] : tab === "deliveries" ? ["pending", "running", "done", "dead"] : [];
+  var modes = tab === "events" || tab === "deliveries" ? ["", "broadcast", "targeted"] : [];
 
   // 旧宿主的总览只返回出现过的状态键，这里统一兜底成 0，别让空队列把整页读崩。
   var eventCounts = stats.events || {};
@@ -374,6 +394,19 @@ function queuePage(deps) {
             });
           }) })
         : null,
+      modes.length
+        ? jsx.jsx("div", { className: "wbq-filters wbq-mode-filters", children: modes.map(function (m) {
+            var on = modeFilter === m;
+            return jsx.jsx("button", {
+              key: m || "all",
+              type: "button",
+              className: "wbq-filter kw" + (on ? " on" : ""),
+              "aria-pressed": on,
+              onClick: function () { setModeFilter(m); setPage(1); },
+              children: m ? modeText(lang, m) : t("queue_all_modes"),
+            });
+          }) })
+        : null,
     ] }),
   );
   if (note) body.push(jsx.jsx("div", { className: "wbq-note", role: "status", children: note }));
@@ -388,6 +421,7 @@ function queuePage(deps) {
     else body.push(list.length
       ? jsx.jsx("div", { className: "wbq-domains", children: list.map(function (d) {
           var pub = d.publishes || [];
+          var recv = d.receives || [];
           var lis = d.listens || [];
           return jsx.jsxs("article", { key: d.domain, className: "wbq-domain" + (d.error ? " has-error" : ""), children: [
             jsx.jsxs("header", { className: "wbq-domain-head", children: [
@@ -401,10 +435,25 @@ function queuePage(deps) {
                 ? jsx.jsx("div", { className: "wbq-chips", children: pub.map(function (p) {
                     return jsx.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
                       jsx.jsx("code", { children: p.type }),
+                      modeBadge(jsx, lang, p.mode),
+                      p.mode === "targeted" && (p.targets || []).length
+                        ? jsx.jsx("em", { className: "wbq-chip-meta", children: (p.targets || []).join(", ") })
+                        : null,
                       jsx.jsx("em", { className: "wbq-chip-meta", children: t("queue_sent") + " " + String(p.sent || 0) }),
                     ] });
                   }) })
                 : jsx.jsx("span", { className: "wbq-hint", children: t("queue_no_publish") }),
+            ] }),
+            jsx.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_receives") }),
+              recv.length
+                ? jsx.jsx("div", { className: "wbq-chips", children: recv.map(function (r) {
+                    return jsx.jsxs("span", { key: r.type + "@" + r.from, className: "wbq-chip", children: [
+                      jsx.jsx("code", { children: r.type }),
+                      jsx.jsx("em", { className: "wbq-chip-meta", children: r.from + " · " + String(r.delivered || 0) }),
+                    ] });
+                  }) })
+                : jsx.jsx("span", { className: "wbq-hint", children: t("queue_no_receive") }),
             ] }),
             jsx.jsxs("div", { className: "wbq-domain-row", children: [
               jsx.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
@@ -442,6 +491,7 @@ function queuePage(deps) {
     else body.push(rows.length
       ? tableWrap(jsx, [
           jsx.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx.jsx("th", { key: "m", children: t("queue_mode") }),
           jsx.jsx("th", { key: "d", children: t("queue_domain") }),
           jsx.jsx("th", { key: "a", children: t("queue_action") }),
           jsx.jsx("th", { key: "s", children: t("queue_status") }),
@@ -452,6 +502,7 @@ function queuePage(deps) {
         ], rows.map(function (r, i) {
           return jsx.jsxs("tr", { className: r.status === "dead" ? "is-dead" : "", children: [
             jsx.jsx("td", { children: jsx.jsx("code", { children: r.event_type || "—" }) }),
+            jsx.jsx("td", { children: modeBadge(jsx, lang, r.delivery_mode) }),
             jsx.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
             jsx.jsx("td", { children: jsx.jsx("code", { children: r.action }) }),
             jsx.jsx("td", { children: statusBadge(jsx, lang, r.status) }),
@@ -470,6 +521,7 @@ function queuePage(deps) {
       ? tableWrap(jsx, [
           jsx.jsx("th", { key: "t", children: t("queue_event_type") }),
           jsx.jsx("th", { key: "s", children: t("queue_source") }),
+          jsx.jsx("th", { key: "m", children: t("queue_mode") }),
           jsx.jsx("th", { key: "st", children: t("queue_status") }),
           jsx.jsx("th", { key: "c", children: t("queue_created") }),
           jsx.jsx("th", { key: "p", children: t("queue_payload") }),
@@ -477,6 +529,7 @@ function queuePage(deps) {
           return jsx.jsxs("tr", { children: [
             jsx.jsx("td", { children: jsx.jsx("code", { children: r.type }) }),
             jsx.jsx("td", { className: "wbq-cell-strong", children: r.source }),
+            jsx.jsx("td", { children: modeBadge(jsx, lang, r.mode) }),
             jsx.jsx("td", { children: statusBadge(jsx, lang, r.status) }),
             jsx.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: agoText(t, r.created_at, now) }),
             jsx.jsx("td", { className: "wbq-payload", children: jsx.jsx("code", { title: r.payload || "", children: r.payload || "—" }) }),

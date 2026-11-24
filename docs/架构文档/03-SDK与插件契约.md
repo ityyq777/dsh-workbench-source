@@ -18,13 +18,13 @@ flowchart LR
 | --- | --- | --- |
 | 装载业务域 | `WorkbenchHost.registerDomain(def)`、`DomainDef` | 插件给出稳定域 id、版本、视图等声明。宿主创建域记录，向 `setup` 提供运行时服务，并返回反注册函数。 |
 | 实现业务动作 | `DomainSetupApi.action`、`DomainActionDef` | 插件定义 `input`、`execute`、`origins`。执行时由宿主填入 `DomainActionContext.origin`，调用方可读取结构化 `result`。 |
-| 接入事件队列 | `DomainEventDecl`、`DomainEventBus`、`DomainEventDeliveryArgs` | 声明允许的类型、注册本域 `*.onEvent`，再 `subscribe(type)`。宿主分配 `eventId` 与 `deliveryId`，消费方用 `type` 分派。 |
+| 接入事件队列 | `DomainEventDecl`、`DomainEventBus`、`DomainEventPushOptions`、`DomainEventDeliveryArgs` | 声明允许的类型、注册本域 `*.onEvent`，再 `subscribe(type)`（广播）；要点名下发就在声明里写 `mode: "targeted"` + `targets`，push 时传 `options.targets`，此时不订阅。宿主分配 `eventId` 与 `deliveryId`，消费方用 `type` 分派、用 `deliveryMode` 分辨投递语义。 |
 | 持久化、导入与同步 | `DomainSyncDef`、`DomainSyncTable`、`DomainDataContext`、`DomainImportReport` | 域说明哪些表参与同步及其合并策略，通过导入导出钩子约定业务数据格式与处理结果。 |
 | 注册网页能力 | `WbHostBridge`、`WbClientModule`、`WbSlotContribution`、`WbItemRef` | 视图与插槽贡献携带真正的组件，宿主将域与导航、语言和 API 绑定。条目引用使用带命名空间的 `kind`。 |
 
 ## 从一个事件看类型与运行时的分工
 
-以保险箱解锁触发收件为例，`DomainDef.events` 写明 `vault.unlocked` 的发布和监听意图。邮件的 `setup(api)` 注册 `mail.onEvent` 后调用 `api.events.subscribe('vault.unlocked')`。订阅方法接收事件类型，返回可用于清理的退订函数。队列送达时，`DomainEventDeliveryArgs` 包括 `eventId`、`deliveryId`、`type`、`source`、`payload`、`createdAt`。具体载荷仍由事件双方约定，插件读到 `payload: unknown` 时需先判形状。[保险箱发布端](../../packages/addons/vault/lib/domain/actions.js) · [邮件注册端](../../packages/addons/mail/lib/index.js) · [队列实现](../../packages/shell/src/infra/event-queue.ts)
+以保险箱解锁触发收件为例，`DomainDef.events` 写明 `vault.unlocked` 的发布和监听意图。邮件的 `setup(api)` 注册 `mail.onEvent` 后调用 `api.events.subscribe('vault.unlocked')`。订阅方法接收事件类型，返回可用于清理的退订函数。队列送达时，`DomainEventDeliveryArgs` 包括 `eventId`、`deliveryId`、`type`、`source`、`payload`、`createdAt` 与 `deliveryMode`（`broadcast`/`targeted`）。定向类型无法订阅，收件人由发布方在 `push` 时按白名单点名。具体载荷仍由事件双方约定，插件读到 `payload: unknown` 时需先判形状。[保险箱发布端](../../packages/addons/vault/lib/domain/actions.js) · [邮件注册端](../../packages/addons/mail/lib/index.js) · [队列实现](../../packages/shell/src/infra/event-queue.ts)
 
 编译能检查 TypeScript 调用者是否按 `subscribe(type)` 传参。仓库中还有直接执行的 JavaScript 插件，实际来源、域内注册的消费入口、允许监听的事件清单都由宿主在运行时检查。`origins` 声明的是动作支持的来源上界，`originsDefault` 指定默认开启的子集，当前机器上的有效集合由权限实现计算。[宿主组装 API](../../packages/shell/src/index.ts) · [来源权限](../../packages/shell/src/actions/origin-access.ts)
 

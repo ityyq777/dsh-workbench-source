@@ -12,7 +12,8 @@ const EVENT_STATUS = ["queued", "done", "dead"];
 const DELIVERY_STATUS = ["pending", "running", "done", "dead"];
 const MAX_PREVIEW = 200;
 
-const EVENT_COLUMNS = "id, type, source, status, created_at, payload";
+const EVENT_COLUMNS = "id, type, source, mode, status, created_at, payload";
+const MODES = ["broadcast", "targeted"];
 const DELIVERY_COLUMNS =
   "id, event_id, domain, action, status, attempts, next_at, started_at, last_error, updated_at";
 
@@ -36,13 +37,17 @@ function paging(total: number, page: number, pageSize: number) {
   return { page, pageSize, total, pages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
-function whereOf(filters: Array<[string, unknown]>, allowed: string[]): { sql: string; params: unknown[] } {
+function whereOf(
+  filters: Array<[string, unknown]>,
+  allowed: string[],
+  prefix = "",
+): { sql: string; params: unknown[] } {
   const parts: string[] = [];
   const params: unknown[] = [];
   for (const [column, value] of filters) {
     if (value === undefined || value === null || value === "") continue;
     if (!allowed.includes(column)) continue;
-    parts.push(column + " = ?");
+    parts.push(prefix + column + " = ?");
     params.push(String(value));
   }
   return { sql: parts.length ? " WHERE " + parts.join(" AND ") : "", params };
@@ -66,6 +71,10 @@ function overview(db: any) {
     .all() as any[]) {
     deliveries[row.status] = row.n;
   }
+  const modes: Record<string, number> = { broadcast: 0, targeted: 0 };
+  for (const row of db.prepare("SELECT mode, COUNT(*) AS n FROM host_event GROUP BY mode").all() as any[]) {
+    modes[row.mode] = row.n;
+  }
   const subs = db.prepare("SELECT COUNT(*) AS n FROM host_event_subscription").get() as any;
   const types = db
     .prepare("SELECT type, COUNT(*) AS n FROM host_event GROUP BY type ORDER BY n DESC LIMIT 12")
@@ -73,6 +82,7 @@ function overview(db: any) {
   return {
     events,
     deliveries,
+    modes,
     subscriptions: subs?.n ?? 0,
     types: types.map((row) => ({ type: row.type, count: row.n })),
   };
@@ -85,8 +95,9 @@ function listEvents(db: any, args: any) {
       ["status", args.status],
       ["type", args.type],
       ["source", args.source],
+      ["mode", args.mode],
     ],
-    ["status", "type", "source"],
+    ["status", "type", "source", "mode"],
   );
   const total =
     (db.prepare("SELECT COUNT(*) AS n FROM host_event" + filter.sql).get(...filter.params) as any)?.n ?? 0;
@@ -105,26 +116,36 @@ function listEvents(db: any, args: any) {
 
 function listDeliveries(db: any, args: any) {
   const pageSize = sizeOf(args.pageSize);
+  // 投递方式存在事件行上：过滤要连事件表，所以投递表自己的列必须带 d. 前缀，否则 status 有歧义。
   const filter = whereOf(
     [
       ["status", args.status],
       ["domain", args.domain],
     ],
     ["status", "domain"],
+    "d.",
   );
-  const total =
-    (db.prepare("SELECT COUNT(*) AS n FROM host_event_delivery" + filter.sql).get(...filter.params) as any)?.n ?? 0;
+  const mode = (MODES as string[]).includes(String(args.mode)) ? String(args.mode) : "";
+  const where = filter.sql
+    ? filter.sql + (mode ? " AND e.mode = ?" : "")
+    : mode
+      ? " WHERE e.mode = ?"
+      : "";
+  const params = mode ? [...filter.params, mode] : filter.params;
+  const from = " FROM host_event_delivery d LEFT JOIN host_event e ON e.id = d.event_id";
+  const total = (db.prepare("SELECT COUNT(*) AS n" + from + where).get(...params) as any)?.n ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const page = clampPage(args.page, pages);
   const rows = db
     .prepare(
       "SELECT d." +
         DELIVERY_COLUMNS.replace(/\s*,\s*/g, ", d.") +
-        ", e.type AS event_type FROM host_event_delivery d LEFT JOIN host_event e ON e.id = d.event_id" +
-        filter.sql.replace(/\b(status|domain)\b/g, "d.$1") +
+        ", e.type AS event_type, e.mode AS delivery_mode" +
+        from +
+        where +
         " ORDER BY d.updated_at DESC LIMIT ? OFFSET ?",
     )
-    .all(...filter.params, pageSize, (page - 1) * pageSize) as any[];
+    .all(...params, pageSize, (page - 1) * pageSize) as any[];
   return { items: rows, ...paging(total, page, pageSize) };
 }
 
@@ -206,6 +227,7 @@ function domainsPayload(domains: Map<string, any>, queueRef: { value: any }) {
         title: rec.def.title || rec.def.id,
         description: rec.def.description || "",
         publishes: info.publishes,
+        receives: info.receives || [],
         listens: info.listens,
         subscriptions: info.subscriptions,
         error: rec.error || "",
@@ -241,13 +263,14 @@ export function createHostEventActions(
       "wb.eventList",
       {
         description:
-          "分页列出事件（type/source/status/时间/payload 预览），可按状态、类型、来源过滤，按时间倒序。",
+          "分页列出事件（type/source/mode/status/时间/payload 预览），可按状态、类型、来源、投递方式过滤，按时间倒序。",
         input: {
           type: "object",
           properties: {
             status: { type: "string", enum: EVENT_STATUS, description: "事件状态" },
             type: { type: "string", description: "事件类型，精确匹配" },
             source: { type: "string", description: "推送方：域 id 或 host" },
+            mode: { type: "string", enum: MODES, description: "投递方式：broadcast 广播 / targeted 定向" },
             page: { type: "number", description: "页码，从 1 开始，越界自动夹取" },
             pageSize: { type: "number", enum: PAGE_SIZES, description: "每页条数，默认 50" },
           },
@@ -261,12 +284,13 @@ export function createHostEventActions(
       "wb.eventDeliveryList",
       {
         description:
-          "分页列出投递（按订阅拆出的下游任务）：状态、尝试次数、下次重试时间、最近错误，可按状态与域过滤。",
+          "分页列出投递（按收件人拆出的下游任务）：状态、投递方式、尝试次数、下次重试时间、最近错误，可按状态、域、投递方式过滤。",
         input: {
           type: "object",
           properties: {
             status: { type: "string", enum: DELIVERY_STATUS, description: "投递状态" },
-            domain: { type: "string", description: "订阅方域 id" },
+            domain: { type: "string", description: "收件域 id" },
+            mode: { type: "string", enum: MODES, description: "投递方式：broadcast 广播 / targeted 定向" },
             page: { type: "number", description: "页码，从 1 开始，越界自动夹取" },
             pageSize: { type: "number", enum: PAGE_SIZES, description: "每页条数，默认 50" },
           },
@@ -291,7 +315,7 @@ export function createHostEventActions(
       "wb.eventDomains",
       {
         description:
-          "按插件列出事件授权清单与运行对账：声明发布的类型及实发统计、声明监听的类型与是否已登记、真实订阅与投递计数。",
+          "按插件列出事件授权清单与运行对账：声明发布的类型（含投递方式与定向白名单）及实发统计、定向收到的事件、声明监听的类型与是否已登记、真实订阅与投递计数。",
         input: { type: "object", properties: {} },
         examples: [{}],
         execute: () => domainsPayload(domains, queueRef),
@@ -301,7 +325,11 @@ export function createHostEventActions(
               (d: any) =>
                 d.title +
                 "：" +
-                (d.publishes.map((p: any) => "发布 " + p.type).join("、") || "无发布") +
+                (d.publishes
+                  .map((p: any) => "发布 " + p.type + (p.mode === "targeted" ? "(定向→" + (p.targets || []).join(",") + ")" : ""))
+                  .join("、") || "无发布") +
+                " / " +
+                (d.receives.map((r: any) => "定向收件 " + r.type + "(来自 " + r.from + ")").join("、") || "无定向收件") +
                 " / " +
                 (d.listens.map((l: any) => "监听 " + l.type + (l.registered ? "" : "(未登记)")).join("、") || "无监听"),
             )

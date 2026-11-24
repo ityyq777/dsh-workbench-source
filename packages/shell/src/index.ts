@@ -198,10 +198,23 @@ export function apply(ctx: any): void {
 
   // 宿主事件队列：push 写库即返回，订阅方的消费 action 由后台 drain 异步分发。
   // 必须在 createActions 之后建，因为分发要用它固定 plugin 来源的 invoke。
-  const eventQueue = createEventQueue({ db: state.db, invoke, log });
+  const eventQueue = createEventQueue({
+    db: state.db,
+    invoke,
+    log,
+    // 定向投递只按「已安装的域 + 它的 onEvent 入口」投，未安装的直接跳过（不落死信）。
+    hasDomain: (id: string) => domains.has(id),
+    resolveOnEvent: (id: string) => {
+      const rec = domains.get(id);
+      if (!rec) return null;
+      const hit = [...rec.actions.keys()].find((name) => name.endsWith(".onEvent"));
+      return hit ? { domain: id, action: hit } : null;
+    },
+  });
   queueRef.value = eventQueue;
   const hostEvents = {
-    push: (type: string, payload?: unknown) => eventQueue.push(type, payload, "host"),
+    push: (type: string, payload?: unknown, options?: { targets?: string[] }) =>
+      eventQueue.push(type, payload, "host", undefined, options),
     stats: () => eventQueue.stats(),
   };
 
@@ -231,6 +244,8 @@ export function apply(ctx: any): void {
     def = { ...def, roles: parseDomainRoles(def.id, def.roles) };
     const rec: RegisteredDomain = { def, category: category.id, actions: new Map(), hooks: new Map(), error: null, dispose: null };
     domains.set(def.id, rec);
+    // 声明即登记：定向类型从这里能被认出（订阅拒绝、观测面回传 mode/targets 都要用）。
+    eventQueue.declare(def.id, def.events?.publishes);
 
     const setupApi: DomainSetupApi = {
       addon: { id: def.id, version: def.version, dir: "" },
@@ -264,8 +279,8 @@ export function apply(ctx: any): void {
       emit: (event: string, data?: unknown) => emit("domain-event", { domainId: def.id, event, data: data ?? null }),
       events: {
         // 发布与订阅都以 DomainDef.events 的声明为授权清单：没声明直接报错。
-        push: (type: string, payload?: unknown) =>
-          eventQueue.push(type, payload, def.id, def.events?.publishes),
+        push: (type: string, payload?: unknown, options?: { targets?: string[] }) =>
+          eventQueue.push(type, payload, def.id, def.events?.publishes, options),
         // 订阅不用指定 action：宿主统一投到本域唯一的 `<前缀>.onEvent`，插件按事件的
         // type 自己分派。前缀不等同于 domain id（wb-addon-message → message.onEvent），
         // 所以从本域 action 表里找出那个 onEvent。

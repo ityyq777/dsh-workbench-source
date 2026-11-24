@@ -86,6 +86,8 @@ CREATE TABLE IF NOT EXISTS host_event (
   type TEXT NOT NULL,
   source TEXT NOT NULL,
   payload TEXT,
+  -- 投递方式：broadcast=按订阅登记表推送；targeted=按发布方点名的收件人直投
+  mode TEXT NOT NULL DEFAULT 'broadcast',
   status TEXT NOT NULL DEFAULT 'queued',
   created_at INTEGER NOT NULL
 );

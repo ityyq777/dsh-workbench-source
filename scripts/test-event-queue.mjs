@@ -1,7 +1,8 @@
 /**
  * 宿主事件队列自测：不启动 DSH，直接建临时库 + 注入假的 invoke。
  * 覆盖：发布/订阅的声明授权、订阅校验（必须本域已注册 + 仅 plugin 来源）、push 立即返回、
- * 成功投递、失败退避重试与死信、无订阅事件收尾、通配订阅与 plugin 来源。
+ * 成功投递、失败退避重试与死信、无订阅事件收尾、通配订阅与 plugin 来源，
+ * 以及定向投递（白名单授权、目标必填、未安装跳过、禁止订阅、入参 deliveryMode、mode 落库）。
  */
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -47,6 +48,8 @@ async function main() {
   const { openDb } = await import("../packages/core/lib/db.js");
   const { createEventQueue } = await import("../packages/shell/lib/infra/event-queue.js");
   conn = openDb(join(home, "workbench.db"));
+  // 已安装的域：vault 有 onEvent 入口，mail 已安装但没提供消费入口，gone 完全没装。
+  const installed = new Set(["wb-addon-tasks", "wb-addon-vault", "wb-addon-mail"]);
   queue = createEventQueue({
     db: conn,
     invoke: async (action, args, origin) => {
@@ -58,6 +61,9 @@ async function main() {
     maxAttempts: 3,
     sweepIntervalMs: 3600_000,
     deliveryTimeoutMs: 1000,
+    hasDomain: (domain) => installed.has(domain),
+    resolveOnEvent: (domain) =>
+      domain === "wb-addon-vault" ? { domain, action: "vault.onEvent" } : null,
   });
   queue.start();
 
@@ -166,6 +172,76 @@ async function main() {
   ).n;
   assert(ownDeliveries === 0, "取消订阅后不应再为该域生成投递（通配订阅者仍应收货）");
   assert(afterUnsub.deliveries === 1, "只剩通配订阅者时投递数应为 1，实际 " + afterUnsub.deliveries);
+
+  // 定向投递：发布方点名收件人，只按白名单直投目标域的 onEvent，不看订阅登记表
+  const VAULT_PUB = [
+    { type: "vault.unlocked", mode: "targeted", targets: ["wb-addon-tasks", "wb-addon-vault", "wb-addon-gone"] },
+  ];
+  queue.declare("wb-addon-vault", VAULT_PUB);
+
+  // 目标必填：定向类型不带收件人清单直接拒绝，且零落库
+  const eventsBefore = row("SELECT COUNT(*) AS n FROM host_event").n;
+  mustThrow(
+    () => queue.push("vault.unlocked", { id: "v0" }, "wb-addon-vault", VAULT_PUB),
+    "定向事件必须指定收件人",
+    "定向事件必须显式指定收件人",
+  );
+  assert(row("SELECT COUNT(*) AS n FROM host_event").n === eventsBefore, "校验失败的定向推送不应落库");
+
+  // 白名单即授权边界：点名未授权的域同样拒绝且零落库
+  mustThrow(
+    () => queue.push("vault.unlocked", {}, "wb-addon-vault", VAULT_PUB, { targets: ["wb-addon-sites"] }),
+    "不在发布方声明的白名单内",
+    "白名单外的目标",
+  );
+  assert(row("SELECT COUNT(*) AS n FROM host_event").n === eventsBefore, "越界定向推送不应落库");
+
+  // 定向类型不接受订阅：收件人只能由发布方指定
+  mustThrow(
+    () => queue.subscribe("wb-addon-tasks", "vault.unlocked", [{ type: "vault.unlocked" }], { origins: ["plugin"] }),
+    "定向事件不接受订阅",
+    "定向类型禁止订阅",
+  );
+
+  // 成功投递：点名两个目标，一个已安装且有入口，另一个点名了但没入口 → 只投有的那条
+  const targetedHits = [];
+  handler = async (action, args) => {
+    targetedHits.push({ action, args });
+  };
+  const targeted = queue.push("vault.unlocked", { vault: "main" }, "wb-addon-vault", VAULT_PUB, {
+    targets: ["wb-addon-vault", "wb-addon-tasks"],
+  });
+  assert(targeted.deliveries === 1, "已安装但无 onEvent 入口的域名应被跳过，实际投递 " + targeted.deliveries);
+  const modeRow = row("SELECT mode FROM host_event WHERE id = ?", targeted.id);
+  assert(modeRow.mode === "targeted", "定向事件的 mode 应落库为 targeted，实际 " + modeRow.mode);
+  await waitFor(
+    () => row("SELECT status FROM host_event_delivery WHERE event_id = ?", targeted.id)?.status === "done",
+    "定向投递完成",
+  );
+  const targetedOnly = targetedHits.filter((hit) => hit.args.type === "vault.unlocked");
+  assert(targetedOnly.length === 1 && targetedOnly[0].action === "vault.onEvent", "应投到目标的 onEvent，实际：" + JSON.stringify(targetedHits));
+  assert(targetedOnly[0].args.deliveryMode === "targeted", "定向投递入参应带 deliveryMode=targeted");
+  assert(calls.at(-1).origin === "plugin", "定向投递同样以 plugin 来源调用");
+
+  // 广播事件照旧：mode 落库为 broadcast，入参 deliveryMode=broadcast
+  const broadcastArgs = [];
+  handler = async (action, args) => {
+    broadcastArgs.push(args);
+  };
+  const plain = queue.push("mail.received", { id: "m2" }, "wb-addon-mail", MAIL_PUB);
+  assert(row("SELECT mode FROM host_event WHERE id = ?", plain.id).mode === "broadcast", "广播事件 mode 应为 broadcast");
+  await waitFor(
+    () => row("SELECT status FROM host_event_delivery WHERE event_id = ?", plain.id)?.status === "done",
+    "广播投递完成",
+  );
+  assert(broadcastArgs.some((args) => args.deliveryMode === "broadcast"), "广播投递入参应带 deliveryMode=broadcast");
+
+  // 定向目标全部未安装：事件直接 done，不落死信
+  const ghost = queue.push("vault.unlocked", { id: "v2" }, "wb-addon-vault", VAULT_PUB, {
+    targets: ["wb-addon-gone"],
+  });
+  assert(ghost.deliveries === 0, "目标未安装时不应生成投递");
+  assert(row("SELECT status FROM host_event WHERE id = ?", ghost.id).status === "done", "目标全未安装的事件应直接 done");
 
   const stats = queue.stats();
   assert(stats.subscriptions === 1 && stats.events.done >= 3, "统计应反映订阅与事件状态：" + JSON.stringify(stats));

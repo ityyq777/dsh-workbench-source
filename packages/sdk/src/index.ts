@@ -51,9 +51,23 @@ export interface DomainEvent {
   createdAt: number;
 }
 
-/** 消费 action 的实际入参：事件本身 + 本次投递 id。 */
+/** 事件投递方式：广播看订阅登记表，定向看发布方指定的收件人。 */
+export type EventDeliveryMode = "broadcast" | "targeted";
+
+/** 消费 action 的实际入参：事件本身 + 本次投递 id + 投递方式。 */
 export interface DomainEventDeliveryArgs extends DomainEvent {
   deliveryId: string;
+  /** 本次投递是「自己订阅的广播」还是「别人定向发给我的」，便于插件记日志与做幂等 */
+  deliveryMode: EventDeliveryMode;
+}
+
+/**
+ * 定向投递选项：只有声明成 mode=targeted 的类型才允许传，且必须非空、
+ * 是声明 targets 的子集（白名单即授权边界）。
+ */
+export interface DomainEventPushOptions {
+  /** 本次投递的目标域清单；定向事件的收件人只来自这里，不看订阅登记表 */
+  targets?: string[];
 }
 
 /**
@@ -61,24 +75,29 @@ export interface DomainEventDeliveryArgs extends DomainEvent {
  * 订阅方必须提供一个 `origins: ["plugin"]` 的 action 来消费。
  */
 export interface DomainEventBus {
-  /** 推一条事件：同步落库后立刻返回，不等任何订阅方执行。 */
-  push(type: string, payload?: unknown): { id: string; deliveries: number };
+  /**
+   * 推一条事件：同步落库后立刻返回，不等任何订阅方执行。
+   *
+   * 声明成 `mode: "targeted"` 的类型必须在 options.targets 里给出收件域，
+   * 且每个都必须在发布方声明的白名单内；广播类型不接受 targets。
+   */
+  push(type: string, payload?: unknown, options?: DomainEventPushOptions): { id: string; deliveries: number };
   /**
    * 订阅事件类型（"*" 表示全部），返回退订函数。
    *
    * 消费入口固定是本域的 `<domain>.onEvent`：插件不必为每种事件各开一个 action，
    * 宿主投递时把 `type` 一起带进来，由插件自己分派。`onEvent` 必须已注册且
    * `origins` 恰好是 ["plugin"]，类型也必须先在 `DomainDef.events.subscriptions`
-   * 里声明，否则订阅立即抛错。
+   * 里声明，否则订阅立即抛错。定向类型不能订阅：收件人由发布方指定。
    */
   subscribe(type: string): () => void;
   /** 队列现状（事件/投递/订阅计数），给诊断与测试用。 */
   stats(): EventQueueStats;
 }
 
-/** 宿主侧队列句柄：宿主只负责 push，不给自己登记消费 action。 */
+/** 宿主侧队列句柄：宿主不给自己登记消费 action，但可以定向推送给指定域。 */
 export interface HostEventPublisher {
-  push(type: string, payload?: unknown): { id: string; deliveries: number };
+  push(type: string, payload?: unknown, options?: DomainEventPushOptions): { id: string; deliveries: number };
   stats(): EventQueueStats;
 }
 
@@ -91,12 +110,21 @@ export interface EventQueueStats {
 /**
  * 事件声明：插件在 DomainDef.events 里主动告诉宿主「我会发布 / 我会监听哪些事件」。
  * 这是授权清单而不是展示文案——没声明的类型推不出去、也订阅不上。
+ *
+ * 两种投递语义（一个类型只能选一种，避免同一事件既走订阅又走定向造成双投）：
+ *  - broadcast（缺省）：收件人 = 订阅登记表；没订阅就收不到。
+ *  - targeted：收件人 = push 时 options.targets 指定的域，逐个调用其 onEvent，
+ *    即便对方从未订阅该类型；targets 是发布方声明的收件人白名单，push 只能取子集。
  */
 export interface DomainEventDecl {
   /** 事件类型，如 mail.messages-synced */
   type: string;
   /** 一句话说明这条事件什么时候发、载荷大概长什么样 */
   description?: string;
+  /** 投递方式，缺省 broadcast */
+  mode?: EventDeliveryMode;
+  /** mode=targeted 时的收件域白名单：必填、非空，push 只能从里面选子集 */
+  targets?: string[];
 }
 
 /** 域事件的声明与运行对账（宿主「事件队列」页的插件一栏用）。 */
@@ -106,9 +134,18 @@ export interface DomainEventsInfo {
   publishes: {
     type: string;
     description?: string;
+    mode: EventDeliveryMode;
+    targets?: string[];
     sent: number;
     lastAt?: number;
     lastStatus?: string;
+  }[];
+  /** 定向收到的事件（收件人不是靠订阅，而是别人按白名单点名的） */
+  receives: {
+    type: string;
+    from: string;
+    delivered: number;
+    lastAt?: number;
   }[];
   /** 声明监听的类型；registered=false 表示声明了但这次没真正 subscribe（例如条件不满足） */
   listens: {

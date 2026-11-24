@@ -52,6 +52,12 @@ var require_locale = __commonJS({
         queue_tab_domains: "\u63D2\u4EF6",
         queue_domain_publishes: "\u53D1\u5E03",
         queue_domain_listens: "\u76D1\u542C",
+        queue_domain_receives: "\u5B9A\u5411\u6536\u4EF6",
+        queue_no_receive: "\u6CA1\u6709\u6536\u5230\u5B9A\u5411\u4E8B\u4EF6",
+        queue_mode: "\u6295\u9012\u65B9\u5F0F",
+        queue_all_modes: "\u5168\u90E8\u65B9\u5F0F",
+        queue_mode_broadcast: "\u5E7F\u64AD",
+        queue_mode_targeted: "\u5B9A\u5411",
         queue_sent: "\u5DF2\u53D1",
         queue_not_registered: "\u58F0\u660E\u4F46\u672A\u767B\u8BB0",
         queue_no_publish: "\u4E0D\u53D1\u5E03\u4E8B\u4EF6",
@@ -400,6 +406,12 @@ var require_locale = __commonJS({
         queue_tab_domains: "Plugins",
         queue_domain_publishes: "Publishes",
         queue_domain_listens: "Listens",
+        queue_domain_receives: "Targeted inbox",
+        queue_no_receive: "No targeted events received",
+        queue_mode: "Mode",
+        queue_all_modes: "All modes",
+        queue_mode_broadcast: "Broadcast",
+        queue_mode_targeted: "Targeted",
         queue_sent: "sent",
         queue_not_registered: "declared, not registered",
         queue_no_publish: "Publishes nothing",
@@ -1597,6 +1609,9 @@ var require_styles2 = __commonJS({
       ".wbq-filter.s-queued.on,.wbq-badge.s-queued{color:var(--wb-accent)}",
       ".wbq-badge{display:inline-flex;align-items:center;gap:6px;padding:1px 9px;border-radius:999px;border:1px solid currentColor;font-size:11px;line-height:1.7;white-space:nowrap;background:color-mix(in oklab,currentColor 6%,transparent)}",
       ".wbq-badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}",
+      ".wbq-mode{display:inline-flex;align-items:center;padding:0 8px;border-radius:999px;border:1px solid var(--wb-line);font-size:10.5px;line-height:1.7;color:var(--wb-muted);white-space:nowrap}",
+      ".wbq-mode.m-targeted{color:var(--wb-accent);border-color:color-mix(in oklab,var(--wb-accent) 45%,var(--wb-line));background:color-mix(in oklab,var(--wb-accent) 8%,transparent)}",
+      ".wbq-mode-filters{flex:0 0 auto;justify-content:flex-start}",
       ".wbq-table-wrap{overflow:auto;max-height:62vh;border:1px solid var(--wb-line);border-radius:12px;background:var(--wb-card);backdrop-filter:blur(14px) saturate(1.1);min-width:0}",
       ".wbq-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px}",
       ".wbq-table thead th{position:sticky;top:0;z-index:1;text-align:left;font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--wb-muted);padding:9px 10px;border-bottom:1px solid var(--wb-line);white-space:nowrap;background:color-mix(in oklab,var(--wb-card) 82%,var(--wb-surface,#0e1116));backdrop-filter:blur(4px)}",
@@ -4260,6 +4275,8 @@ var require_event_queue_page = __commonJS({
       done: "\u5DF2\u5B8C\u6210",
       dead: "\u6B7B\u4FE1"
     };
+    var MODE_LABEL = { broadcast: "\u5E7F\u64AD", targeted: "\u5B9A\u5411" };
+    var MODE_LABEL_EN = { broadcast: "broadcast", targeted: "targeted" };
     var STATUS_LABEL_EN = {
       queued: "queued",
       pending: "pending",
@@ -4270,6 +4287,14 @@ var require_event_queue_page = __commonJS({
     function statusText(lang, status) {
       var table = lang === "en" ? STATUS_LABEL_EN : STATUS_LABEL;
       return table[status] || status;
+    }
+    function modeText(lang, mode) {
+      var table = lang === "en" ? MODE_LABEL_EN : MODE_LABEL;
+      return table[mode] || table.broadcast;
+    }
+    function modeBadge(jsx2, lang, mode) {
+      var m = mode === "targeted" ? "targeted" : "broadcast";
+      return jsx2.jsx("span", { className: "wbq-mode m-" + m, children: modeText(lang, m) });
     }
     function pad2(x) {
       return x < 10 ? "0" + x : String(x);
@@ -4397,6 +4422,9 @@ var require_event_queue_page = __commonJS({
       var filterState = React.useState("");
       var filter = filterState[0];
       var setFilter = filterState[1];
+      var modeState = React.useState("");
+      var modeFilter = modeState[0];
+      var setModeFilter = modeState[1];
       var pageState = React.useState(1);
       var page = pageState[0];
       var setPage = pageState[1];
@@ -4410,13 +4438,14 @@ var require_event_queue_page = __commonJS({
       var updatedAt = clockState[0];
       var setUpdatedAt = clockState[1];
       var overview = useLoader(React, api, "wb.eventOverview", {}, []);
-      var events = useLoader(React, api, "wb.eventList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
-      var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || void 0, page, pageSize: PAGE_SIZE }, [filter, page]);
+      var events = useLoader(React, api, "wb.eventList", { status: filter || void 0, mode: modeFilter || void 0, page, pageSize: PAGE_SIZE }, [filter, modeFilter, page]);
+      var deliveries = useLoader(React, api, "wb.eventDeliveryList", { status: filter || void 0, mode: modeFilter || void 0, page, pageSize: PAGE_SIZE }, [filter, modeFilter, page]);
       var subs = useLoader(React, api, "wb.eventSubscriptionList", {}, []);
       var domainsView = useLoader(React, api, "wb.eventDomains", {}, []);
       var active = tab === "events" ? events : tab === "deliveries" ? deliveries : tab === "domains" ? domainsView : subs;
       React.useEffect(function() {
         setFilter("");
+        setModeFilter("");
         setPage(1);
       }, [tab]);
       React.useEffect(function() {
@@ -4465,6 +4494,7 @@ var require_event_queue_page = __commonJS({
         ["subscriptions", t("queue_tab_subscriptions")]
       ];
       var filters = tab === "events" ? ["queued", "done", "dead"] : tab === "deliveries" ? ["pending", "running", "done", "dead"] : [];
+      var modes = tab === "events" || tab === "deliveries" ? ["", "broadcast", "targeted"] : [];
       var eventCounts = stats.events || {};
       var deliveryCounts = stats.deliveries || {};
       var countOf = function(bucket, key) {
@@ -4566,6 +4596,20 @@ var require_event_queue_page = __commonJS({
               },
               children: label
             });
+          }) }) : null,
+          modes.length ? jsx2.jsx("div", { className: "wbq-filters wbq-mode-filters", children: modes.map(function(m) {
+            var on = modeFilter === m;
+            return jsx2.jsx("button", {
+              key: m || "all",
+              type: "button",
+              className: "wbq-filter kw" + (on ? " on" : ""),
+              "aria-pressed": on,
+              onClick: function() {
+                setModeFilter(m);
+                setPage(1);
+              },
+              children: m ? modeText(lang, m) : t("queue_all_modes")
+            });
           }) }) : null
         ] })
       );
@@ -4578,6 +4622,7 @@ var require_event_queue_page = __commonJS({
         if (showing) body.push(loadingRows(jsx2, t, 2));
         else body.push(list.length ? jsx2.jsx("div", { className: "wbq-domains", children: list.map(function(d) {
           var pub = d.publishes || [];
+          var recv = d.receives || [];
           var lis = d.listens || [];
           return jsx2.jsxs("article", { key: d.domain, className: "wbq-domain" + (d.error ? " has-error" : ""), children: [
             jsx2.jsxs("header", { className: "wbq-domain-head", children: [
@@ -4590,9 +4635,20 @@ var require_event_queue_page = __commonJS({
               pub.length ? jsx2.jsx("div", { className: "wbq-chips", children: pub.map(function(p) {
                 return jsx2.jsxs("span", { key: p.type, className: "wbq-chip", title: p.description || "", children: [
                   jsx2.jsx("code", { children: p.type }),
+                  modeBadge(jsx2, lang, p.mode),
+                  p.mode === "targeted" && (p.targets || []).length ? jsx2.jsx("em", { className: "wbq-chip-meta", children: (p.targets || []).join(", ") }) : null,
                   jsx2.jsx("em", { className: "wbq-chip-meta", children: t("queue_sent") + " " + String(p.sent || 0) })
                 ] });
               }) }) : jsx2.jsx("span", { className: "wbq-hint", children: t("queue_no_publish") })
+            ] }),
+            jsx2.jsxs("div", { className: "wbq-domain-row", children: [
+              jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_receives") }),
+              recv.length ? jsx2.jsx("div", { className: "wbq-chips", children: recv.map(function(r) {
+                return jsx2.jsxs("span", { key: r.type + "@" + r.from, className: "wbq-chip", children: [
+                  jsx2.jsx("code", { children: r.type }),
+                  jsx2.jsx("em", { className: "wbq-chip-meta", children: r.from + " \xB7 " + String(r.delivered || 0) })
+                ] });
+              }) }) : jsx2.jsx("span", { className: "wbq-hint", children: t("queue_no_receive") })
             ] }),
             jsx2.jsxs("div", { className: "wbq-domain-row", children: [
               jsx2.jsx("span", { className: "wbq-domain-label", children: t("queue_domain_listens") }),
@@ -4624,6 +4680,7 @@ var require_event_queue_page = __commonJS({
         if (showing) body.push(loadingRows(jsx2, t, 8));
         else body.push(rows.length ? tableWrap(jsx2, [
           jsx2.jsx("th", { key: "t", children: t("queue_event_type") }),
+          jsx2.jsx("th", { key: "m", children: t("queue_mode") }),
           jsx2.jsx("th", { key: "d", children: t("queue_domain") }),
           jsx2.jsx("th", { key: "a", children: t("queue_action") }),
           jsx2.jsx("th", { key: "s", children: t("queue_status") }),
@@ -4634,6 +4691,7 @@ var require_event_queue_page = __commonJS({
         ], rows.map(function(r, i) {
           return jsx2.jsxs("tr", { className: r.status === "dead" ? "is-dead" : "", children: [
             jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.event_type || "\u2014" }) }),
+            jsx2.jsx("td", { children: modeBadge(jsx2, lang, r.delivery_mode) }),
             jsx2.jsx("td", { className: "wbq-cell-strong", children: r.domain }),
             jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.action }) }),
             jsx2.jsx("td", { children: statusBadge(jsx2, lang, r.status) }),
@@ -4650,6 +4708,7 @@ var require_event_queue_page = __commonJS({
         else body.push(rows.length ? tableWrap(jsx2, [
           jsx2.jsx("th", { key: "t", children: t("queue_event_type") }),
           jsx2.jsx("th", { key: "s", children: t("queue_source") }),
+          jsx2.jsx("th", { key: "m", children: t("queue_mode") }),
           jsx2.jsx("th", { key: "st", children: t("queue_status") }),
           jsx2.jsx("th", { key: "c", children: t("queue_created") }),
           jsx2.jsx("th", { key: "p", children: t("queue_payload") })
@@ -4657,6 +4716,7 @@ var require_event_queue_page = __commonJS({
           return jsx2.jsxs("tr", { children: [
             jsx2.jsx("td", { children: jsx2.jsx("code", { children: r.type }) }),
             jsx2.jsx("td", { className: "wbq-cell-strong", children: r.source }),
+            jsx2.jsx("td", { children: modeBadge(jsx2, lang, r.mode) }),
             jsx2.jsx("td", { children: statusBadge(jsx2, lang, r.status) }),
             jsx2.jsx("td", { className: "wbq-cell-time", title: timeText(r.created_at), children: agoText(t, r.created_at, now) }),
             jsx2.jsx("td", { className: "wbq-payload", children: jsx2.jsx("code", { title: r.payload || "", children: r.payload || "\u2014" }) })

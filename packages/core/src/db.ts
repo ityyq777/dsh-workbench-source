@@ -28,6 +28,10 @@ function migrateLocalDb(db: DatabaseSync): void {
     if (!hasColumn(db, "conflict_shadow", "local_updated_at")) {
       db.exec("ALTER TABLE conflict_shadow ADD COLUMN local_updated_at INTEGER");
     }
+    // 事件队列定向投递：老库的事件一律视为广播，补列后对外语义不变。
+    if (!hasColumn(db, "host_event", "mode")) {
+      db.exec("ALTER TABLE host_event ADD COLUMN mode TEXT NOT NULL DEFAULT 'broadcast'");
+    }
     // 旧记录开关退出。仅在检测到过渡版本的列时删除无角色偏好，保留已选角色及其版本。
     if (hasColumn(db, "session_role", "enabled")) {
       db.exec("DELETE FROM session_role WHERE role_id IS NULL");
