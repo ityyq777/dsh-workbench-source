@@ -20,6 +20,7 @@ flowchart LR
 | 实现业务动作 | `DomainSetupApi.action`、`DomainActionDef` | 插件定义 `input`、`execute`、`origins`。执行时由宿主填入 `DomainActionContext.origin`，调用方可读取结构化 `result`。 |
 | 接入事件队列 | `DomainEventDecl`、`DomainEventBus`、`DomainEventPushOptions`、`DomainEventDeliveryArgs` | 声明允许的类型、注册本域 `*.onEvent`，再 `subscribe(type)`（广播）；要点名下发就在声明里写 `mode: "targeted"` + `targets`，push 时传 `options.targets`，此时不订阅。宿主分配 `eventId` 与 `deliveryId`，消费方用 `type` 分派、用 `deliveryMode` 分辨投递语义。 |
 | 接入内置自动化 | `BuiltinAutomationDecl`、`DomainDef.automations` | 插件声明自己的定时/事件规则，宿主注册域时即建规则并调度：id 固定为 `auto:<domain>:<key>`，可重复注册（按 key 幂等）。规则只能调本域 action，`event` 触发的事件必须已在 `events.subscriptions` 里声明；声明消失时规则停用但不删运行记录。用户可启停、可按 `editableArgs` 改参数，不能改触发与 action。 |
+| 接入会话角色 | `DomainRoleDef`、`DomainDef.roles` | 插件声明会话角色（`id`/`name`/`description`/`version`/`instructions`/`actions`）。宿主拼出 `<域 id>/<角色 id>`，用户选中后每轮注入 `instructions` 并按 `actions` 收窄可调用动作；`version` 变更会让已绑定旧版本的会话失效并要求重选。运行时行为、存储与排障见 [13 会话角色](13-会话角色.md)。 |
 | 持久化、导入与同步 | `DomainSyncDef`、`DomainSyncTable`、`DomainDataContext`、`DomainImportReport` | 域说明哪些表参与同步及其合并策略，通过导入导出钩子约定业务数据格式与处理结果。 |
 | 注册网页能力 | `WbHostBridge`、`WbClientModule`、`WbSlotContribution`、`WbItemRef` | 视图与插槽贡献携带真正的组件，宿主将域与导航、语言和 API 绑定。条目引用使用带命名空间的 `kind`。 |
 
