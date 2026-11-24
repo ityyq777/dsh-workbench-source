@@ -1,55 +1,23 @@
 /**
- * 内置自动化规则：子插件在 DomainDef.automations 里声明，宿主注册后自动建成
- * 可调度规则（声明即授权），并区分 user / plugin 两种来源。
+ * 内置自动化规则：声明校验、用户覆盖持久化与来源状态。
+ *
+ * 规则定义**只活在内存**（registry.ts），不写 automation_rule、不参与云同步；
+ * 用户对内置规则的启停与参数覆盖属于「本机偏好」，只写 automation_meta
+ * （宿主域的 sync.tables 已把它排除在同步之外）。
  *
  * 三条红线：
- * 1. 内置规则只允许调用**声明方本域**的 action；跨域声明在注册阶段直接报错、零落库。
+ * 1. 内置规则只允许调用**声明方本域**的 action；跨域声明在注册阶段直接报错、零写入。
  *    理由：内置规则可豁免用户白名单，跨域就等于任何插件都能点燃别的插件。
  * 2. trigger.kind=event 的事件类型必须已在 DomainDef.events.subscriptions 声明，不新开口子。
  * 3. 内置规则的 trigger / action / condition 由代码决定，用户只能启停（editableArgs 时还能改参数）。
- *
- * 模块只做纯数据操作，调度由 engine 按 origin 分叉。
  */
 
 import { metaGet, metaSet, now as dbNow, parseJson, type AutomationRule } from "./db.js";
-import { bad, nextAt, normalizeCondition, normalizeTrigger, plainObject } from "./rule.js";
+import { bad, normalizeCondition, normalizeTrigger, plainObject } from "./rule.js";
 import { validActionName } from "./whitelist.js";
+import * as registry from "./registry.js";
 
-/** 内置规则的 id 前缀：auto:{domainId}:{key}。 */
-export function builtinRuleId(domainId: string, key: string): string {
-  return "auto:" + domainId + ":" + key;
-}
-
-/** 声明登记（automation_meta 的 builtin:<domain>）：keys 用于识别「声明已被删除」。 */
-interface BuiltinRegistry {
-  version: string;
-  keys: string[];
-  /** key → { editableArgs, args } —— 导出覆盖与「参数是否被用户改过」都要用。 */
-  decls: Record<string, { editableArgs: boolean; args: string }>;
-  /** 因声明消失被停用的 key → 原来的启用状态（声明回来时恢复）。 */
-  paused: Record<string, boolean>;
-  updatedAt: number;
-}
-
-/** 读声明登记；没有返回 null。 */
-export function readRegistry(db: any, domainId: string): BuiltinRegistry | null {
-  const raw = metaGet(db, "builtin:" + domainId);
-  if (!raw) return null;
-  const parsed = parseJson<any>(raw, null);
-  if (!plainObject(parsed) || !Array.isArray(parsed.keys)) return null;
-  return {
-    version: String(parsed.version || ""),
-    keys: parsed.keys.map(String),
-    decls: plainObject(parsed.decls) ? parsed.decls : {},
-    paused: plainObject(parsed.paused) ? parsed.paused : {},
-    updatedAt: Number(parsed.updatedAt) || 0,
-  };
-}
-
-/** 写声明登记。 */
-function writeRegistry(db: any, domainId: string, reg: BuiltinRegistry): void {
-  metaSet(db, "builtin:" + domainId, JSON.stringify(reg));
-}
+export { builtinRuleId, isBuiltinId } from "./registry.js";
 
 /** 声明方的本域前缀：wb-addon-mail → mail.（同时接受带 wb-addon- 的完整前缀）。 */
 function ownDomainPrefixes(domainId: string): string[] {
@@ -67,19 +35,8 @@ export function actionBelongsTo(domainId: string, action: string): boolean {
 
 const KEY_RE = /^[a-z][a-z0-9_-]{0,40}$/i;
 
-/** 单条声明的规范化结果。 */
-interface NormalizedDecl {
-  key: string;
-  title: string;
-  description: string;
-  triggerType: string;
-  triggerConfig: any;
-  actionName: string;
-  actionArgs: Record<string, unknown>;
-  condition: unknown;
-  enabled: boolean;
-  editableArgs: boolean;
-}
+/** 单条声明的规范化结果（内存定义，与 registry.BuiltinDeclRuntime 同形）。 */
+type NormalizedDecl = registry.BuiltinDeclRuntime;
 
 /**
  * 校验并规范化一条声明；任何不合规都抛错（调用方决定是否整域跳过）。
@@ -132,7 +89,7 @@ function normalizeDecl(raw: any, domainId: string, subs: string[]): NormalizedDe
     );
   }
   // 内置规则由插件自己声明，等价于插件调用自己，因此豁免白名单与硬底线；
-  // 但仍然校验参数结构与体积，避免把脏数据写进规则表。
+  // 但仍然校验参数结构与体积，避免把脏数据塞进内存。
   const actionArgs = actionInput.args == null ? {} : actionInput.args;
   if (!plainObject(actionArgs)) throw bad("内置规则 action.args 必须是对象：" + key);
   if (JSON.stringify(actionArgs).length > 20000) throw bad("内置规则 action.args 超过 20KB：" + key);
@@ -146,9 +103,51 @@ function normalizeDecl(raw: any, domainId: string, subs: string[]): NormalizedDe
     actionName,
     actionArgs: actionArgs as Record<string, unknown>,
     condition,
-    enabled: raw.defaultEnabled !== false,
+    defaultEnabled: raw.defaultEnabled !== false,
     editableArgs: raw.editableArgs === true,
   };
+}
+
+/** 一个域的用户覆盖：key → { enabled?, args? }。 */
+export type BuiltinOverrides = Record<string, { enabled?: boolean; args?: Record<string, unknown> }>;
+
+const OVERRIDE_PREFIX = "builtin-overrides:";
+/** 老版本的 meta 键：内存化之后不再使用，迁移时清掉。 */
+const LEGACY_META_PREFIX = ["builtin:", "builtin-edited:", "builtin-pending:"];
+
+/** 读某域的用户覆盖（本机偏好）。 */
+export function readOverrides(db: any, domainId: string): BuiltinOverrides {
+  const parsed = parseJson<any>(metaGet(db, OVERRIDE_PREFIX + domainId), null);
+  if (!plainObject(parsed)) return {};
+  const out: BuiltinOverrides = {};
+  for (const key of Object.keys(parsed)) {
+    const item = parsed[key];
+    if (!plainObject(item)) continue;
+    const next: { enabled?: boolean; args?: Record<string, unknown> } = {};
+    if (item.enabled !== undefined) next.enabled = Boolean(item.enabled);
+    if (plainObject(item.args)) next.args = item.args as Record<string, unknown>;
+    if (next.enabled !== undefined || next.args) out[key] = next;
+  }
+  return out;
+}
+
+/** 写某域的用户覆盖；空对象时删除该键，别在 meta 里留空壳。 */
+export function writeOverrides(db: any, domainId: string, overrides: BuiltinOverrides): void {
+  const key = OVERRIDE_PREFIX + domainId;
+  if (!Object.keys(overrides).length) {
+    db.prepare("DELETE FROM automation_meta WHERE key=?").run(key);
+    return;
+  }
+  metaSet(db, key, JSON.stringify(overrides));
+}
+
+/** 记一条用户覆盖（启停或参数）。 */
+function patchOverride(db: any, domainId: string, key: string, patch: { enabled?: boolean; args?: Record<string, unknown> }): void {
+  const overrides = readOverrides(db, domainId);
+  const current = overrides[key] || {};
+  const next = Object.assign({}, current, patch);
+  overrides[key] = next;
+  writeOverrides(db, domainId, overrides);
 }
 
 /** 注册结果：新建/更新的键与因声明消失被停用的键。 */
@@ -158,10 +157,10 @@ export interface BuiltinRegisterResult {
 }
 
 /**
- * 注册一个域的全部内置规则（幂等）。
+ * 注册一个域的全部内置规则（幂等、只写内存）。
  *
- * 重复注册只更新定义与 origin_version，不动 id 与运行计数；声明消失的旧规则
- * enabled=0 并记进 registry.paused（声明回来时恢复原来的启用状态），不物理删除。
+ * 重复注册只刷新定义与 origin_version，不动 id 与运行计数；声明消失的旧规则
+ * 停用并记进 paused（声明回来时恢复原来的启用状态），不物理删除。
  */
 export function registerBuiltinRules(input: {
   db: any;
@@ -175,144 +174,30 @@ export function registerBuiltinRules(input: {
   const db = input.db;
   const now = input.now || dbNow;
   const domainId = String(input.domainId || "");
-  const version = String(input.domainVersion || "");
   const subs = (Array.isArray(input.subscriptions) ? input.subscriptions : []).map((row: any) =>
     typeof row === "string" ? row : String((row && row.type) || ""),
   );
   const list = Array.isArray(input.decls) ? input.decls : [];
-  const previous = readRegistry(db, domainId);
-  const reg: BuiltinRegistry = {
-    version,
-    keys: [],
-    decls: {},
-    paused: previous ? previous.paused : {},
-    updatedAt: now(),
-  };
-  const registered: string[] = [];
-  const paused: string[] = [];
+  const decls: NormalizedDecl[] = [];
   const seen = new Set<string>();
-
   for (const raw of list) {
     const decl = normalizeDecl(raw, domainId, subs);
     if (seen.has(decl.key)) throw bad("内置规则 key 重复：" + decl.key);
     seen.add(decl.key);
-    reg.keys.push(decl.key);
-    reg.decls[decl.key] = { editableArgs: decl.editableArgs, args: JSON.stringify(decl.actionArgs) };
-    upsertBuiltinRule(db, domainId, version, decl, previous, now);
-    registered.push(decl.key);
+    decls.push(decl);
   }
-
-  // 声明消失：停用但不删除，运行记录仍可追溯。
-  const existing = db
-    .prepare("SELECT id, rule_key, enabled FROM automation_rule WHERE origin='plugin' AND owner_domain=? AND deleted_at IS NULL")
-    .all(domainId) as any[];
-  for (const row of existing) {
-    const key = String(row.rule_key || "");
-    if (seen.has(key)) continue;
-    paused.push(key);
-    if (!Object.prototype.hasOwnProperty.call(reg.paused, key)) reg.paused[key] = Boolean(row.enabled);
-    if (row.enabled) {
-      db.prepare("UPDATE automation_rule SET enabled=0, next_run_at=NULL, updated_at=?, rev=rev+1 WHERE id=?").run(
-        now(),
-        row.id,
-      );
-    }
-  }
-  writeRegistry(db, domainId, reg);
-  return { registered, paused };
+  return registry.registerDomain({
+    domainId,
+    version: String(input.domainVersion || ""),
+    decls,
+    overrides: readOverrides(db, domainId),
+    now: now(),
+  });
 }
 
-/** 单条内置规则的 upsert：id 稳定，用户改过的参数不被覆盖。 */
-function upsertBuiltinRule(
-  db: any,
-  domainId: string,
-  version: string,
-  decl: NormalizedDecl,
-  previous: BuiltinRegistry | null,
-  now: () => number,
-): void {
-  const id = builtinRuleId(domainId, decl.key);
-  const row = db
-    .prepare("SELECT * FROM automation_rule WHERE origin='plugin' AND owner_domain=? AND rule_key=?")
-    .get(domainId, decl.key) as any;
-  const ts = now();
-  const condition = decl.condition ? JSON.stringify(decl.condition) : "";
-  const argsJson = JSON.stringify(decl.actionArgs);
-  if (!row) {
-    const next = decl.enabled ? nextAt(decl.triggerType, decl.triggerConfig, ts) : null;
-    db.prepare(
-      "INSERT INTO automation_rule(id,name,enabled,trigger_type,trigger_config,condition,action_name,action_args," +
-        "next_run_at,created_at,updated_at,exec_mode,origin,owner_domain,rule_key,origin_version) " +
-        "VALUES(?,?,?,?,?,?,?,?,?,?,?,'action','plugin',?,?,?)",
-    ).run(
-      id,
-      decl.title,
-      decl.enabled ? 1 : 0,
-      decl.triggerType,
-      JSON.stringify(decl.triggerConfig),
-      condition,
-      decl.actionName,
-      argsJson,
-      next,
-      ts,
-      ts,
-      domainId,
-      decl.key,
-      version,
-    );
-    return;
-  }
-  // 用户改过参数（editableArgs）时保留用户版本，只刷新定义元信息。
-  const userEditedArgs = isArgsEdited(db, domainId, decl.key);
-  const enabled = resolveEnabled(row.enabled, decl, previous);
-  const next = enabled ? nextAt(decl.triggerType, decl.triggerConfig, ts) : null;
-  db.prepare(
-    "UPDATE automation_rule SET name=?, enabled=?, trigger_type=?, trigger_config=?, condition=?, action_name=?, " +
-      "action_args=?, next_run_at=?, origin_version=?, updated_at=?, rev=rev+1 WHERE id=?",
-  ).run(
-    decl.title,
-    enabled ? 1 : 0,
-    decl.triggerType,
-    JSON.stringify(decl.triggerConfig),
-    condition,
-    decl.actionName,
-    userEditedArgs ? row.action_args : argsJson,
-    next,
-    version,
-    ts,
-    row.id,
-  );
-}
-
-/** 启用状态：默认沿用已有；曾被我们因声明消失停用过的，声明回来时恢复原状。 */
-function resolveEnabled(current: number, decl: NormalizedDecl, previous: BuiltinRegistry | null): boolean {
-  const wasPaused = previous && Object.prototype.hasOwnProperty.call(previous.paused, decl.key);
-  if (wasPaused) return Boolean(previous!.paused[decl.key]);
-  return Boolean(current);
-}
-
-/** 用户是否覆盖过参数（记在 registry 的 __edited 集合里，避免多加一列）。 */
-function isArgsEdited(db: any, domainId: string, key: string): boolean {
-  const raw = metaGet(db, "builtin-edited:" + domainId);
-  const list = parseJson<string[]>(raw, []);
-  return Array.isArray(list) && list.indexOf(key) >= 0;
-}
-
-/** 标记用户覆盖过参数（editableArgs=true 的内置规则）。 */
-export function markArgsEdited(db: any, domainId: string, key: string): void {
-  const raw = metaGet(db, "builtin-edited:" + domainId);
-  const list = Array.isArray(parseJson<string[]>(raw, [])) ? parseJson<string[]>(raw, []) : [];
-  if (list.indexOf(key) < 0) list.push(key);
-  metaSet(db, "builtin-edited:" + domainId, JSON.stringify(list));
-}
-
-/** 该内置规则是否允许用户改参数。 */
-export function builtinEditableArgs(db: any, rule: AutomationRule): boolean {
-  if (rule.origin !== "plugin") return false;
-  const reg = readRegistry(db, rule.ownerDomain);
-  if (!reg) return false;
-  const decl = reg.decls[rule.ruleKey];
-  return Boolean(decl && decl.editableArgs);
+/** 域卸载：停调度并标「插件已卸载」，规则与运行计数保留（重装后幂等接回）。 */
+export function unregisterBuiltinRules(_db: any, domainId: string): void {
+  registry.unregisterDomain(domainId);
 }
 
 /** 内置规则的当前状态；用户规则恒为 active。 */
@@ -328,82 +213,98 @@ export const ORIGIN_STATE_TEXT: Record<BuiltinOriginState, string> = {
 
 /**
  * 计算内置规则状态：
- * - uninstalled：声明域已不在宿主（卸载/未加载），停调度；
+ * - uninstalled：声明域已卸载（或还没在本次进程里注册过），停调度；
  * - stale：域在，但本次注册没有这个 key（声明被删除），停调度；
  * - updated：域版本与规则记录的 origin_version 不一致（提示去看变更），照常跑；
  * - active：正常。
  */
-export function builtinStateOf(
-  db: any,
-  rule: AutomationRule,
-  hasDomain: (id: string) => boolean,
-): BuiltinOriginState {
+export function builtinStateOf(rule: AutomationRule, hasDomain: (id: string) => boolean): BuiltinOriginState {
   if (rule.origin !== "plugin") return "active";
-  if (!hasDomain(rule.ownerDomain)) return "uninstalled";
-  const reg = readRegistry(db, rule.ownerDomain);
-  if (!reg || reg.keys.indexOf(rule.ruleKey) < 0) return "stale";
-  if (reg.version && rule.originVersion && reg.version !== rule.originVersion) return "updated";
+  if (!hasDomain(rule.ownerDomain) || registry.isUninstalled(rule.ownerDomain)) return "uninstalled";
+  const keys = registry.declaredKeys(rule.ownerDomain);
+  if (keys.indexOf(rule.ruleKey) < 0) return "stale";
+  const version = registry.declaredVersion(rule.ownerDomain);
+  if (version && rule.originVersion && version !== rule.originVersion) return "updated";
   return "active";
 }
 
 /** 内置规则是否还应该被调度（卸载/声明消失的都不跑）。 */
-export function builtinSchedulable(db: any, rule: AutomationRule, hasDomain: (id: string) => boolean): boolean {
+export function builtinSchedulable(rule: AutomationRule, hasDomain: (id: string) => boolean): boolean {
   if (rule.origin !== "plugin") return true;
-  const state = builtinStateOf(db, rule, hasDomain);
+  if (!registry.schedulable(rule)) return false;
+  const state = builtinStateOf(rule, hasDomain);
   return state === "active" || state === "updated";
 }
 
 /** 给规则对象补上来源状态（页面用；不落库）。 */
-export function decorateOrigin(db: any, rule: any, hasDomain: (id: string) => boolean): any {
+export function decorateOrigin(rule: any, hasDomain: (id: string) => boolean): any {
   if (!rule) return rule;
-  const state = builtinStateOf(db, rule, hasDomain);
+  const state = builtinStateOf(rule, hasDomain);
   return Object.assign({}, rule, { originState: state, originStateText: ORIGIN_STATE_TEXT[state] });
 }
 
 /** 某域当前的内置规则条数（能力目录用）。 */
-export function countBuiltinRules(db: any, domainId: string): number {
-  try {
-    const row = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE origin='plugin' AND owner_domain=? AND deleted_at IS NULL")
-      .get(domainId);
-    return (row && row.n) || 0;
-  } catch {
-    return 0;
-  }
+export function countBuiltinRules(_db: any, domainId: string): number {
+  return registry.countRules(domainId);
 }
 
-/** 域卸载：只记录状态，规则行保留（重装后同 key 幂等接回）。 */
-export function unregisterBuiltinRules(db: any, domainId: string, now: () => number = dbNow): void {
-  db.prepare("UPDATE automation_rule SET next_run_at=NULL, updated_at=? WHERE origin='plugin' AND owner_domain=? AND deleted_at IS NULL").run(
-    now(),
-    domainId,
-  );
+/** 该内置规则是否允许用户改参数（声明了 editableArgs）。 */
+export function builtinEditableArgs(rule: AutomationRule): boolean {
+  if (rule.origin !== "plugin") return false;
+  return registry.editableArgsOf(rule.ownerDomain, rule.ruleKey);
 }
 
-/** 导出内置规则的「用户覆盖」：启用状态与参数覆盖；规则定义属于代码，不进备份。 */
+/** 用户改启停：改内存状态并写本机覆盖。 */
+export function setBuiltinEnabled(db: any, rule: AutomationRule, enabled: boolean, now: number = dbNow()): void {
+  registry.setEnabled(rule.id, enabled);
+  patchOverride(db, rule.ownerDomain, rule.ruleKey, { enabled: Boolean(enabled) });
+  registry.patchRuntime(rule.id, { nextRunAt: enabled ? now : 0 });
+}
+
+/** 用户改参数（仅 editableArgs 的规则；调用方已做权限校验）。 */
+export function setBuiltinArgs(
+  db: any,
+  rule: AutomationRule,
+  args: Record<string, unknown>,
+  now: number = dbNow(),
+): void {
+  registry.setArgs(rule.id, args, true);
+  patchOverride(db, rule.ownerDomain, rule.ruleKey, { args });
+  registry.patchRuntime(rule.id, { lastStatus: rule.lastStatus, nextRunAt: now });
+}
+
+/** 导出内置规则的「用户覆盖」：启用状态与参数；规则定义属于代码，不进备份。 */
 export function exportBuiltinOverrides(db: any): any[] {
-  const rows = db
-    .prepare("SELECT * FROM automation_rule WHERE origin='plugin' AND deleted_at IS NULL ORDER BY owner_domain, rule_key")
-    .all() as any[];
   const out: any[] = [];
+  const rows = db
+    .prepare("SELECT key,value FROM automation_meta WHERE key LIKE ?")
+    .all(OVERRIDE_PREFIX + "%") as { key: string; value: string }[];
   for (const row of rows) {
-    const reg = readRegistry(db, row.owner_domain);
-    const declArgs = reg && reg.decls[row.rule_key] ? reg.decls[row.rule_key].args : "";
-    const edited = isArgsEdited(db, row.owner_domain, row.rule_key);
-    const item: any = { ownerDomain: row.owner_domain, ruleKey: row.rule_key, enabled: Boolean(row.enabled) };
-    if (edited && declArgs && declArgs !== row.action_args) item.actionArgs = parseJson(row.action_args, {});
-    out.push(item);
+    const domainId = String(row.key).slice(OVERRIDE_PREFIX.length);
+    if (!domainId) continue;
+    const overrides = parseJson<BuiltinOverrides>(row.value, {});
+    if (!plainObject(overrides)) continue;
+    for (const key of Object.keys(overrides)) {
+      const item = overrides[key];
+      if (!plainObject(item)) continue;
+      const entry: any = { ownerDomain: domainId, ruleKey: key };
+      if (item.enabled !== undefined) entry.enabled = Boolean(item.enabled);
+      if (item.args) entry.actionArgs = item.args;
+      if (entry.enabled === undefined && !entry.actionArgs) continue;
+      out.push(entry);
+    }
   }
+  out.sort((a, b) =>
+    a.ownerDomain === b.ownerDomain ? String(a.ruleKey).localeCompare(String(b.ruleKey)) : String(a.ownerDomain).localeCompare(String(b.ownerDomain)),
+  );
   return out;
 }
 
-/** 导入内置规则覆盖；插件没装时覆盖先记着，等插件回来再落地。 */
-export function importBuiltinOverrides(
-  db: any,
-  list: unknown,
-  hasDomain: (id: string) => boolean,
-  now: () => number = dbNow,
-): number {
+/**
+ * 导入内置规则覆盖：写成本机偏好；插件已注册时立刻生效，没注册的等它回来再套。
+ * 返回记录下来的覆盖条数（定义本身不迁移，所以这里不是「新建了几条规则」）。
+ */
+export function importBuiltinOverrides(db: any, list: unknown): number {
   const rows = Array.isArray(list) ? list : [];
   let applied = 0;
   for (const raw of rows.slice(0, 500)) {
@@ -411,47 +312,52 @@ export function importBuiltinOverrides(
     const domainId = String(raw.ownerDomain || "");
     const key = String(raw.ruleKey || "");
     if (!domainId || !key) continue;
-    const row = db
-      .prepare("SELECT * FROM automation_rule WHERE origin='plugin' AND owner_domain=? AND rule_key=?")
-      .get(domainId, key) as any;
-    if (!row) {
-      // 插件未安装：先记成待生效覆盖，声明回来时由 registerBuiltinRules 读取。
-      const pendingRaw = metaGet(db, "builtin-pending:" + domainId);
-      const pending = parseJson<any[]>(pendingRaw, []);
-      const next = (Array.isArray(pending) ? pending : []).filter((item: any) => item && item.ruleKey !== key);
-      next.push(raw);
-      metaSet(db, "builtin-pending:" + domainId, JSON.stringify(next));
-      continue;
-    }
-    const enabled = raw.enabled === undefined ? Boolean(row.enabled) : Boolean(raw.enabled);
-    const args = plainObject(raw.actionArgs) ? raw.actionArgs : null;
-    if (args) {
-      db.prepare("UPDATE automation_rule SET action_args=?, updated_at=?, rev=rev+1 WHERE id=?").run(
-        JSON.stringify(args),
-        now(),
-        row.id,
-      );
-      markArgsEdited(db, domainId, key);
-    }
-    db.prepare("UPDATE automation_rule SET enabled=?, next_run_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(
-      enabled ? 1 : 0,
-      enabled ? nextAt(row.trigger_type, parseJson(row.trigger_config, {}), now()) : null,
-      now(),
-      row.id,
-    );
+    const patch: { enabled?: boolean; args?: Record<string, unknown> } = {};
+    if (raw.enabled !== undefined) patch.enabled = Boolean(raw.enabled);
+    if (plainObject(raw.actionArgs)) patch.args = raw.actionArgs as Record<string, unknown>;
+    if (patch.enabled === undefined && !patch.args) continue;
+    patchOverride(db, domainId, key, patch);
+    registry.applyOverride(domainId, key, patch);
     applied += 1;
-    if (!hasDomain(domainId)) continue;
   }
   return applied;
 }
 
-/** 应用某域待生效的覆盖（registerBuiltinRules 之后调用）。 */
-export function applyPendingOverrides(db: any, domainId: string, now: () => number = dbNow): number {
-  const raw = metaGet(db, "builtin-pending:" + domainId);
-  const pending = parseJson<any[]>(raw, []);
-  if (!Array.isArray(pending) || !pending.length) return 0;
-  const accepted = pending.filter((item) => item && item.ruleKey);
-  metaSet(db, "builtin-pending:" + domainId, "[]");
-  const applied = importBuiltinOverrides(db, accepted, () => true, now);
-  return applied;
+/**
+ * 把内置规则从数据库迁到内存（旧版本写过 automation_rule 的 plugin 行）。
+ *
+ * 幂等：plugin 行先读成用户覆盖（启用状态与参数），再删除；老的 meta 登记
+ * （builtin:/builtin-edited:/builtin-pending:）一并清掉。返回清理的行数。
+ */
+export function migrateLegacyBuiltins(db: any, log?: (...args: unknown[]) => void): number {
+  let rows: any[] = [];
+  try {
+    rows = db
+      .prepare("SELECT * FROM automation_rule WHERE origin='plugin'")
+      .all() as any[];
+  } catch {
+    return 0;
+  }
+  for (const row of rows) {
+    const domainId = String(row.owner_domain || "");
+    const key = String(row.rule_key || "");
+    if (!domainId || !key) continue;
+    const patch: { enabled?: boolean; args?: Record<string, unknown> } = {};
+    if (row.enabled !== undefined) patch.enabled = Boolean(row.enabled);
+    const args = parseJson<any>(row.action_args, null);
+    if (plainObject(args)) patch.args = args;
+    if (patch.enabled !== undefined || patch.args) patchOverride(db, domainId, key, patch);
+  }
+  if (rows.length) {
+    db.prepare("DELETE FROM automation_rule WHERE origin='plugin'").run();
+    log?.("[automation] 已把 " + rows.length + " 条内置规则从数据库迁到内存注册表（启用状态与参数转为本机偏好）");
+  }
+  for (const prefix of LEGACY_META_PREFIX) {
+    try {
+      db.prepare("DELETE FROM automation_meta WHERE key LIKE ?").run(prefix + "%");
+    } catch {
+      /* 老库没有 meta 表：忽略 */
+    }
+  }
+  return rows.length;
 }

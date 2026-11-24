@@ -31,21 +31,24 @@ import {
   normalizeTrigger,
   plainObject,
 } from "./rule.js";
-import { checkAction, normalizeAllowedList } from "./whitelist.js";
+import { normalizeAllowedList } from "./whitelist.js";
+import { computeStats, type AutomationStats } from "./stats.js";
+export type { AutomationStats } from "./stats.js";
 import {
-  applyPendingOverrides,
   builtinEditableArgs,
   builtinSchedulable,
-  builtinStateOf,
   countBuiltinRules,
   decorateOrigin,
   exportBuiltinOverrides,
   importBuiltinOverrides,
-  markArgsEdited,
+  migrateLegacyBuiltins,
   registerBuiltinRules,
+  setBuiltinArgs,
+  setBuiltinEnabled,
   unregisterBuiltinRules,
   type BuiltinRegisterResult,
 } from "./builtin.js";
+import * as registry from "./registry.js";
 
 /** 本机配置默认值（与源码完全一致）。 */
 const DEFAULT_CONFIG = { maxRules: 50, perHour: 60, allowedActions: [] as string[] };
@@ -60,26 +63,6 @@ export interface AutomationConfig {
 /** 规则 + 最近一次运行（列表页口径）。 */
 export interface AutomationRuleWithLastRun extends AutomationRule {
   lastRun: AutomationRun | null;
-}
-
-/** 首页卡片统计。 */
-export interface AutomationStats {
-  total: number;
-  enabled: number;
-  today: Record<string, number>;
-  config: AutomationConfig;
-  staleCount: number;
-  agentRules: number;
-  agentEnabled: number;
-  /** 用户自定义规则条数 */
-  userRules: number;
-  /** 插件内置规则条数 */
-  builtinRules: number;
-  builtinEnabled: number;
-  builtinDisabled: number;
-  /** 声明已消失 / 插件已卸载的内置规则条数 */
-  builtinStale: number;
-  builtinUninstalled: number;
 }
 
 /** 导入结果。 */
@@ -144,7 +127,7 @@ export interface AutomationEngine {
     decls: unknown;
     subscriptions?: any[];
   }): BuiltinRegisterResult;
-  /** 域注销：内置规则停止调度（行保留，重装后同 key 接回）。 */
+  /** 域注销：内置规则停止调度（定义留在内存，重装后同 key 接回）。 */
   unregisterBuiltin(domainId: string): void;
   /** 某域内置规则条数（能力目录用）。 */
   builtinCount(domainId: string): number;
@@ -167,7 +150,25 @@ export function createAutomation({
   const agent = createAgentBridge({ getSchedule, log });
 
   // execMode=action 的执行器（条件/频率/并发闸门 + 运行记录）。
-  const actionExecutor = createActionExecutor({ db, invoke, log, config, now: nowFn, audit });
+  const actionExecutor = createActionExecutor({
+    db,
+    invoke,
+    log,
+    config,
+    now: nowFn,
+    audit,
+    // 内置规则的运行状态只在内存里记账（它们不落 automation_rule）。
+    track: (rule, patch) => {
+      registry.patchRuntime(rule.id, patch);
+    },
+  });
+
+  // 老库升级：把旧版本写进 automation_rule 的内置规则迁到内存（幂等）。
+  try {
+    migrateLegacyBuiltins(db, log);
+  } catch (error) {
+    log("内置规则迁移失败（不影响用户规则）：" + (error && (error as Error).message));
+  }
 
   // 「交给 AI」规则的宿主登记与对账单独成模块，规则引擎只负责 action 模式。
   const agentRules = createAgentRules({ db, agent, log, getRule, listRules, now: nowFn });
@@ -192,21 +193,38 @@ export function createAutomation({
     return next as AutomationConfig;
   }
 
+  function lastRunOf(id: string): AutomationRun | null {
+    const last = db.prepare("SELECT * FROM automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT 1").get(id);
+    return last ? runRow(last) : null;
+  }
+
   function getRule(id: unknown): AutomationRule | null {
-    const row = db.prepare("SELECT * FROM automation_rule WHERE id=? AND deleted_at IS NULL").get(String(id || ""));
-    return row ? decorateOrigin(db, ruleRow(row), hasDomain) : null;
+    const raw = String(id || "");
+    // 内置规则只在内存注册表里，库里没有它们的行。
+    if (registry.isBuiltinId(raw)) {
+      const rule = registry.getRule(raw);
+      return rule ? decorateOrigin(rule, hasDomain) : null;
+    }
+    const row = db.prepare("SELECT * FROM automation_rule WHERE id=? AND deleted_at IS NULL").get(raw);
+    return row ? decorateOrigin(ruleRow(row), hasDomain) : null;
   }
 
   function listRules(): AutomationRuleWithLastRun[] {
     const rows = db
       .prepare("SELECT * FROM automation_rule WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 200")
-      .all();
-    return rows.map((row: any) => {
-      const last = db
-        .prepare("SELECT * FROM automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT 1")
-        .get(row.id);
-      return decorateOrigin(db, Object.assign(ruleRow(row), { lastRun: last ? runRow(last) : null }), hasDomain);
-    });
+      .all() as any[];
+    const userRules = rows.map((row: any) =>
+      decorateOrigin(Object.assign(ruleRow(row), { lastRun: lastRunOf(String(row.id)) }), hasDomain),
+    );
+    const builtinRules = registry
+      .listRules()
+      .map((rule: AutomationRule) =>
+        decorateOrigin(Object.assign({}, rule, { lastRun: lastRunOf(rule.id) }), hasDomain),
+      );
+    // 两条来源合并后按更新时间倒序，页面不需要知道规则存在哪。
+    return [...builtinRules, ...userRules]
+      .sort((a: any, b: any) => Number(b.updatedAt) - Number(a.updatedAt) || String(a.id).localeCompare(String(b.id)))
+      .slice(0, 200);
   }
 
   async function createRule(input: any): Promise<AutomationRule | null> {
@@ -256,32 +274,27 @@ export function createAutomation({
       if (!Object.prototype.hasOwnProperty.call(data, key) || data[key] === undefined) continue;
       if (JSON.stringify(data[key]) !== JSON.stringify(current)) {
         throw bad("内置规则由插件声明，不能修改 " + key + "（只能启用/停用" +
-          (builtinEditableArgs(db, existing) ? "或调整参数" : "") + "）");
+          (builtinEditableArgs(existing) ? "或调整参数" : "") + "）");
       }
     }
     const enabled = data.enabled === undefined ? existing.enabled : data.enabled !== false;
-    const editable = builtinEditableArgs(db, existing);
+    const editable = builtinEditableArgs(existing);
     if (data.actionArgs !== undefined && !editable) {
       throw bad("该内置规则不允许修改参数（插件未声明 editableArgs）");
     }
     const ts = nowFn();
-    const next = enabled ? nextAt(existing.triggerType, existing.triggerConfig, ts) : null;
+    // 规则定义在内存：启停与参数都只改注册表，并把「用户覆盖」写成本机偏好；
+    // 下次注册（重启）时按覆盖恢复，不会因为升级插件而丢。
     if (data.actionArgs !== undefined) {
       const args = plainObject(data.actionArgs) ? data.actionArgs : {};
       if (JSON.stringify(args).length > 20000) throw bad("actionArgs 超过 20KB");
-      db.prepare("UPDATE automation_rule SET action_args=?, updated_at=?, rev=rev+1 WHERE id=?").run(
-        JSON.stringify(args),
-        ts,
-        existing.id,
-      );
-      markArgsEdited(db, existing.ownerDomain, existing.ruleKey);
+      setBuiltinArgs(db, existing, args, ts);
     }
-    db.prepare("UPDATE automation_rule SET enabled=?, next_run_at=?, updated_at=?, rev=rev+1 WHERE id=?").run(
-      enabled ? 1 : 0,
-      next,
-      ts,
-      existing.id,
-    );
+    if (data.enabled !== undefined || data.actionArgs === undefined) {
+      setBuiltinEnabled(db, existing, enabled, ts);
+    }
+    const next = enabled ? Number(nextAt(existing.triggerType, existing.triggerConfig, ts)) || 0 : 0;
+    registry.patchRuntime(existing.id, { nextRunAt: next });
     return getRule(existing.id);
   }
 
@@ -370,78 +383,30 @@ export function createAutomation({
     return row ? runRow(row) : null;
   }
 
-  function stats(): AutomationStats {
-    const total = db.prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL").get().n;
-    const enabled = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND enabled=1")
-      .get().n;
-    const today = nowFn() - 86400000;
-    const runs = db
-      .prepare("SELECT status, COUNT(*) AS n FROM automation_run WHERE started_at>=? GROUP BY status")
-      .all(today);
-    const map: Record<string, number> = {};
-    for (const row of runs) map[row.status] = row.n;
-    const cfg = config();
-    const stale = db
-      .prepare("SELECT action_name FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='action'")
-      .all()
-      .filter((row: any) => checkAction(row.action_name, cfg.allowedActions)).length;
-    const agentRuleCount = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='agent'")
-      .get().n;
-    const agentEnabled = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='agent' AND enabled=1")
-      .get().n;
-    // 来源拆分：用户自定义与插件内置分开计数，概览按来源展示。
-    const userRules = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND origin='user'")
-      .get().n;
-    const builtinRows = db
-      .prepare("SELECT * FROM automation_rule WHERE deleted_at IS NULL AND origin='plugin'")
-      .all() as any[];
-    let builtinEnabled = 0;
-    let builtinDisabled = 0;
-    let builtinStale = 0;
-    let builtinUninstalled = 0;
-    for (const row of builtinRows) {
-      const state = builtinStateOf(db, ruleRow(row), hasDomain);
-      if (state === "stale") builtinStale += 1;
-      else if (state === "uninstalled") builtinUninstalled += 1;
-      else if (row.enabled) builtinEnabled += 1;
-      else builtinDisabled += 1;
-    }
-    return {
-      total,
-      enabled,
-      today: map,
-      config: cfg,
-      staleCount: stale,
-      agentRules: agentRuleCount,
-      agentEnabled,
-      userRules,
-      builtinRules: builtinRows.length,
-      builtinEnabled,
-      builtinDisabled,
-      builtinStale,
-      builtinUninstalled,
-    };
+  function stats(): AutomationStats<AutomationConfig> {
+    return computeStats({ db, now: nowFn, config, hasDomain });
   }
 
   async function tick(): Promise<void> {
     if (ticking) return;
     ticking = true;
     try {
-      const due = db
-        .prepare(
-          "SELECT * FROM automation_rule WHERE deleted_at IS NULL AND enabled=1 AND exec_mode='action' AND next_run_at IS NOT NULL AND next_run_at<=? ORDER BY next_run_at ASC LIMIT 3",
-        )
-        .all(nowFn());
-      // 卸载/声明消失的内置规则不调度，避免插件不在时仍打点。
-      const runnable = due
-        .map((row: any) => ruleRow(row))
-        .filter((rule: AutomationRule) => builtinSchedulable(db, rule, hasDomain))
+      const at = nowFn();
+      const userDue = (
+        db
+          .prepare(
+            "SELECT * FROM automation_rule WHERE deleted_at IS NULL AND enabled=1 AND exec_mode='action' AND next_run_at IS NOT NULL AND next_run_at<=? ORDER BY next_run_at ASC LIMIT 3",
+          )
+          .all(at) as any[]
+      ).map((row: any) => ruleRow(row));
+      // 内置规则只在内存里：同一 tick 里与用户规则按下次时间合流，再取前 3 条。
+      const builtinDue = registry
+        .dueRules(at, 3)
+        .filter((rule: AutomationRule) => builtinSchedulable(rule, hasDomain));
+      const runnable = [...userDue, ...builtinDue]
+        .sort((a, b) => Number(a.nextRunAt) - Number(b.nextRunAt))
         .slice(0, 3);
-      for (const rule of runnable) await actionExecutor.execute(rule, "schedule", { at: nowFn() });
+      for (const rule of runnable) await actionExecutor.execute(rule, "schedule", { at });
     } finally {
       ticking = false;
     }
@@ -456,10 +421,14 @@ export function createAutomation({
       .all();
     for (const row of rows) {
       const rule = ruleRow(row);
-      if (!builtinSchedulable(db, rule, hasDomain)) continue;
       if (rule.triggerConfig.domainId === event.domainId && rule.triggerConfig.event === event.event) {
         void actionExecutor.execute(rule, "event", event.data || {});
       }
+    }
+    // 事件触发的内置规则：定义在内存，域与事件名已在注册时校验过订阅声明。
+    for (const rule of registry.eventRules(String(event.domainId), String(event.event))) {
+      if (!builtinSchedulable(rule, hasDomain)) continue;
+      void actionExecutor.execute(rule, "event", event.data || {});
     }
   }
 
@@ -499,9 +468,8 @@ export function createAutomation({
     }
     const rules = data && Array.isArray(data.rules) ? data.rules : [];
     // 内置规则的覆盖先应用（插件没装时记成待生效，装回来再落地）。
-    const builtinApplied = data && data.builtin !== undefined
-      ? importBuiltinOverrides(db, data.builtin, hasDomain, nowFn)
-      : 0;
+    // 内置规则的定义不进备份，只恢复用户的启停与参数覆盖（本机偏好）。
+    const builtinApplied = data && data.builtin !== undefined ? importBuiltinOverrides(db, data.builtin) : 0;
     let imported = 0;
     let skipped = 0;
     let failed = 0;
@@ -549,15 +517,14 @@ export function createAutomation({
       log,
       now: nowFn,
     });
-    const applied = applyPendingOverrides(db, input.domainId, nowFn);
-    if (applied) log("内置规则的用户覆盖已生效", input.domainId, applied);
+    // 用户覆盖（启停/参数）在注册时已按本机偏好套用，这里无需二次落地。
     if (out.registered.length) log("内置自动化规则已注册", input.domainId, out.registered.join(","));
     if (out.paused.length) log("内置自动化规则声明已消失，已停用", input.domainId, out.paused.join(","));
     return out;
   }
 
   function unregisterBuiltin(domainId: string): void {
-    unregisterBuiltinRules(db, domainId, nowFn);
+    unregisterBuiltinRules(db, domainId);
   }
 
   return {

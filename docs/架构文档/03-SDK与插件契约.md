@@ -28,7 +28,7 @@ flowchart LR
 
 以保险箱解锁触发收件为例，`DomainDef.events` 写明 `vault.unlocked` 的发布和监听意图。邮件的 `setup(api)` 注册 `mail.onEvent` 后调用 `api.events.subscribe('vault.unlocked')`。订阅方法接收事件类型，返回可用于清理的退订函数。队列送达时，`DomainEventDeliveryArgs` 包括 `eventId`、`deliveryId`、`type`、`source`、`payload`、`createdAt` 与 `deliveryMode`（`broadcast`/`targeted`）。定向类型无法订阅，收件人由发布方在 `push` 时按白名单点名。具体载荷仍由事件双方约定，插件读到 `payload: unknown` 时需先判形状。[保险箱发布端](../../packages/addons/vault/lib/domain/actions.js) · [邮件注册端](../../packages/addons/mail/lib/index.js) · [队列实现](../../packages/shell/src/infra/event-queue.ts)
 
-内置自动化规则的来源模型和事件声明同构：`DomainDef.automations` 是**授权清单**，注册阶段就校验，跨域 action 直接报错且不落库。规则表用 `origin`（`user`/`plugin`）+ `owner_domain` + `rule_key` 区分来源，页面与能力目录按来源展示，备份只导出用户覆盖（启用状态、改过的参数）。[内置规则实现](../../packages/shell/src/infra/automation/builtin.ts) · [示例声明](../../packages/addons/mail/lib/index.js)
+内置自动化规则的来源模型和事件声明同构：`DomainDef.automations` 是**授权清单**，注册阶段就校验，跨域 action 直接报错且不落库。**内置规则的定义只存在宿主进程内存里**（`packages/shell/src/infra/automation/registry.ts`），`automation_rule` 只存用户自建规则；用户对内置规则的启停与参数覆盖是本机偏好，写在 `automation_meta` 的 `builtin-overrides:<domain>`，不参与云同步。页面与能力目录按来源展示（`origin='plugin'` 带 `owner_domain` + `rule_key`），备份与导出只带覆盖（启用状态、改过的参数）。[内置规则实现](../../packages/shell/src/infra/automation/builtin.ts) · [示例声明](../../packages/addons/mail/lib/index.js)
 
 编译能检查 TypeScript 调用者是否按 `subscribe(type)` 传参。仓库中还有直接执行的 JavaScript 插件，实际来源、域内注册的消费入口、允许监听的事件清单都由宿主在运行时检查。`origins` 声明的是动作支持的来源上界，`originsDefault` 指定默认开启的子集，当前机器上的有效集合由权限实现计算。[宿主组装 API](../../packages/shell/src/index.ts) · [来源权限](../../packages/shell/src/actions/origin-access.ts)
 

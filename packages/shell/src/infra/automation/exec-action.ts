@@ -34,6 +34,17 @@ export interface ActionExecutorDeps {
   now?: () => number;
   /** 内置规则豁免白名单，调用必须留痕 */
   audit?: (entry: { action: string; domain: string; ok: boolean; args?: unknown; error?: string }) => void;
+  /**
+   * 内置规则的状态回写：它们不落 automation_rule（定义在内存注册表），
+   * 所以「最近运行/计数/下次时间」不能直接 UPDATE 表，交给引擎写内存。
+   */
+  track?: (rule: AutomationRule, patch: {
+    lastRunAt?: number;
+    lastStatus?: string;
+    runCountDelta?: number;
+    errorCountDelta?: number;
+    nextRunAt?: number;
+  }) => void;
 }
 
 /** 一次执行的返回值（与源码一致）。 */
@@ -55,6 +66,7 @@ export function createActionExecutor({
   config,
   now = dbNow,
   audit = () => {},
+  track = () => {},
 }: ActionExecutorDeps): ActionExecutor {
   /** 正在执行的 action 数；源码上限为 2。 */
   let active = 0;
@@ -81,6 +93,16 @@ export function createActionExecutor({
       String(result || "").slice(0, 4000),
       String(error || "").slice(0, 1000),
     );
+    if (rule.origin === "plugin") {
+      // 内置规则只在内存里记账；跳过的运行不算计数（与用户规则口径一致）。
+      track(rule, {
+        lastRunAt: finished,
+        lastStatus: status,
+        runCountDelta: status === "skipped" ? 0 : 1,
+        errorCountDelta: status === "error" ? 1 : 0,
+      });
+      return;
+    }
     if (status === "skipped") {
       db.prepare("UPDATE automation_rule SET last_run_at=?, last_status=? WHERE id=?").run(
         finished,
@@ -98,10 +120,12 @@ export function createActionExecutor({
   /** 定时触发后把下一次运行时间推到未来。 */
   function setNext(rule: AutomationRule): void {
     if (rule.triggerType !== "schedule") return;
-    db.prepare("UPDATE automation_rule SET next_run_at=? WHERE id=?").run(
-      nextAt(rule.triggerType, rule.triggerConfig, now()),
-      rule.id,
-    );
+    const next = nextAt(rule.triggerType, rule.triggerConfig, now());
+    if (rule.origin === "plugin") {
+      track(rule, { nextRunAt: Number(next) || 0 });
+      return;
+    }
+    db.prepare("UPDATE automation_rule SET next_run_at=? WHERE id=?").run(next, rule.id);
   }
 
   async function execute(rule: AutomationRule, trigger: string, payload?: any): Promise<ActionExecuteResult> {

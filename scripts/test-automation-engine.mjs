@@ -10,12 +10,16 @@ import assert from "node:assert/strict";
 
 const { openDb } = await import("../packages/core/lib/index.js");
 const { createAutomation } = await import("../packages/shell/lib/infra/automation/index.js");
+// 内置规则定义只活在内存注册表：测试里直接操作它来模拟「到点」与重启。
+const registry = await import("../packages/shell/lib/infra/automation/registry.js");
 
 const DEFAULT_ALLOW = ["message.send", "tasks.create", "tags.create", "sites.create", "connector.sourceRun"];
 
 // 允许清单默认空，测试按需显式启用，避免依赖隐式授权。
 function make(allow = DEFAULT_ALLOW, options = {}) {
   // 宿主平台表由 core schema 建：自动化三张表已内化进 @wb/core。
+  // 内置规则注册表是进程级内存，测试之间要清空，否则会互相看到对方的声明。
+  registry.reset();
   const db = openDb(":memory:");
   const calls = [];
   const invoke = async (action, args) => {
@@ -333,7 +337,9 @@ test("内置规则注册即建规则：稳定 id、标记来源、重复注册�
 
   registerMail(ctx);
   assert.equal(ctx.engine.listRules().length, 1);
-  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 1);
+  // 定义在内存，不上表：automation_rule 里不应出现内置规则行。
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 0);
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_meta WHERE key LIKE 'builtin%'").get().n, 0);
 });
 
 test("内置规则只能调用本域 action：跨域声明直接报错且不落库", () => {
@@ -435,12 +441,12 @@ test("插件卸载后内置规则不再调度并标「插件已卸载」", async
   });
   registerMail({ engine });
   const rule = engine.listRules()[0];
-  // 把下次运行时间改到过去，触发一次 tick
-  ctx.db.prepare("UPDATE automation_rule SET next_run_at=0 WHERE id=?").run(rule.id);
+  // 把下次运行时间改到过去，触发一次 tick（内置规则只在内存里排队）
+  registry.patchRuntime(rule.id, { nextRunAt: Date.now() - 1000 });
   await engine.tick();
   assert.equal(ctx.calls.length, 1);
   installed = false;
-  ctx.db.prepare("UPDATE automation_rule SET next_run_at=0 WHERE id=?").run(rule.id);
+  registry.patchRuntime(rule.id, { nextRunAt: Date.now() - 1000 });
   await engine.tick();
   assert.equal(ctx.calls.length, 1, "卸载后不应再调度");
   const off = engine.listRules()[0];
@@ -463,7 +469,8 @@ test("备份只导出内置规则的定义外覆盖：启用状态与参数可�
   const fresh = openDb(":memory:");
   const engine2 = createAutomation({ db: fresh, invoke: async () => ({ result: {} }), hasDomain: () => true });
   const result = await engine2.importData({ rules: [], builtin: dump.builtin });
-  assert.equal(result.builtinApplied, 0);
+  // 覆盖先记进本机偏好（插件还没注册），注册后自动套上。
+  assert.equal(result.builtinApplied, 1);
   registerMail({ engine: engine2 });
   const restored = engine2.listRules()[0];
   assert.equal(restored.enabled, false);
