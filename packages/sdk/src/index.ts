@@ -129,14 +129,16 @@ export interface DomainEventDecl {
 
 /**
  * 内置自动化规则的触发声明（声明即授权，与 events.publishes 同构）：
- *  - interval：每 everyMinutes 分钟一次；
+ *  - interval：每 everyMinutes 分钟一次，或用 everySeconds 指定秒级间隔；
  *  - dailyAt：每天 time（HH:MM，按 tz）触发，weekdays 缺省周一到周日；
  *  - event：本域事件触发，事件类型必须已在 `events.subscriptions` 声明。
  */
 export interface BuiltinAutomationTrigger {
   kind: "interval" | "dailyAt" | "event";
-  /** kind=interval：1–10080 分钟 */
+  /** kind=interval：1–10080 分钟（与 everySeconds 二选一） */
   everyMinutes?: number;
+  /** kind=interval：5–604800 秒，给高频抓取一类场景用；优先级高于 everyMinutes */
+  everySeconds?: number;
   /** kind=dailyAt：HH:MM */
   time?: string;
   /** kind=dailyAt：IANA 时区，缺省 Asia/Shanghai */

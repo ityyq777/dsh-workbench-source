@@ -113,6 +113,14 @@ export function normalizeTrigger(input: any): NormalizedTrigger {
   const config = plainObject(input.triggerConfig) ? input.triggerConfig : {};
   const kind = config.kind || input.triggerType || "manual";
   if (kind === "interval") {
+    // 秒级间隔给「每 15 秒抓一次」这类高频场景留口子；与分钟级二选一，默认仍走分钟。
+    if (config.everySeconds !== undefined) {
+      const everySeconds = Number(config.everySeconds);
+      if (!Number.isInteger(everySeconds) || everySeconds < 5 || everySeconds > 604800) {
+        throw bad("间隔需为 5–604800 秒");
+      }
+      return { triggerType: "schedule", config: { kind: "interval", everySeconds } };
+    }
     const every = Number(config.everyMinutes);
     if (!Number.isInteger(every) || every < 1 || every > 10080) throw bad("间隔需为 1–10080 分钟");
     return { triggerType: "schedule", config: { kind: "interval", everyMinutes: every } };
@@ -174,7 +182,10 @@ export function normalizeAction(name: unknown, args: unknown, allowed: unknown):
 /** 计算下次运行时间；事件/手动触发返回 null。 */
 export function nextAt(triggerType: string, config: any, from: number): number | null {
   if (triggerType === "schedule") {
-    if (config.kind === "interval") return from + config.everyMinutes * 60000;
+    if (config.kind === "interval") {
+      if (config.everySeconds) return from + config.everySeconds * 1000;
+      return from + config.everyMinutes * 60000;
+    }
     if (config.kind === "dailyAt") return nextDailyAt(from, config.time, config.tz, config.weekdays);
   }
   return null;

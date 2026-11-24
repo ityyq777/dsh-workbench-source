@@ -68,7 +68,7 @@ function normalizeDecl(raw: any, domainId: string, subs: string[]): NormalizedDe
       triggerType: "schedule",
       triggerConfig:
         kind === "interval"
-          ? { kind: "interval", everyMinutes: triggerInput.everyMinutes }
+          ? { kind: "interval", everyMinutes: triggerInput.everyMinutes, everySeconds: triggerInput.everySeconds }
           : { kind: "dailyAt", time: triggerInput.time, tz: triggerInput.tz, weekdays: triggerInput.weekdays },
     });
     triggerType = normalized.triggerType;

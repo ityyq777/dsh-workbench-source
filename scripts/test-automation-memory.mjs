@@ -152,6 +152,22 @@ test("三种触发都能到点执行，运行记录落合成 id", async () => {
   assert.ok(calls.length >= 3, "事件触发的内置规则也应执行");
 });
 
+test("秒级间隔：everySeconds 声明能算出 20 秒后的下次时间", () => {
+  registry.reset();
+  const db = openDb(":memory:");
+  const { engine } = makeEngine(db);
+  const before = Date.now();
+  register(engine, [{ ...DECL, key: "fast-fetch", trigger: { kind: "interval", everySeconds: 20 } }]);
+  const rule = engine.getRule("auto:wb-addon-mail:fast-fetch");
+  assert.ok(rule.nextRunAt >= before + 15000, "下次时间应在 20 秒后");
+  assert.ok(rule.nextRunAt <= before + 25000);
+  // 越界值直接拒绝，不落注册表。
+  assert.throws(
+    () => register(engine, [{ ...DECL, key: "too-fast", trigger: { kind: "interval", everySeconds: 1 } }]),
+    /间隔需为 5–604800 秒/,
+  );
+});
+
 test("云同步面看不到内置规则：自动化表不进任何插件的同步清单", async () => {
   const fs = await import("node:fs");
   const networkTs = fs.readFileSync(new URL("../packages/shell/src/infra/network.ts", import.meta.url), "utf8");
