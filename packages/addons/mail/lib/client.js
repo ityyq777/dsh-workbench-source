@@ -1422,6 +1422,29 @@ var require_vault_lock = __commonJS({
   }
 });
 
+// packages/addons/lib/disclosure-styles.cjs
+var require_disclosure_styles = __commonJS({
+  "packages/addons/lib/disclosure-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wb-disc{min-width:0;border:0;padding:0;margin:0}",
+      // 原生 details/summary 保留键盘与无障碍语义，这里只接管观感：去掉默认三角并铺满整行。
+      ".wb-disc>summary{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:600;line-height:1.6;color:inherit;user-select:none;list-style:none;padding:2px 8px 2px 2px;margin:-2px -8px -2px -2px;border-radius:7px}",
+      ".wb-disc>summary::-webkit-details-marker{display:none}",
+      '.wb-disc>summary::marker{content:""}',
+      ".wb-disc>summary:hover{background:color-mix(in oklab,currentColor 6%,transparent)}",
+      ".wb-disc>summary:focus-visible{outline:2px solid var(--wb-accent,var(--dsw-alias-brand-primary,Highlight));outline-offset:2px}",
+      ".wb-disc-chev{flex:0 0 auto;width:14px;height:14px;transition:transform 160ms ease}",
+      ".wb-disc[open]>summary .wb-disc-chev{transform:rotate(90deg)}",
+      ".wb-disc-title{min-width:0;overflow-wrap:anywhere}",
+      ".wb-disc-meta{font-weight:400;font-size:12px;color:var(--wb-muted,var(--dsw-alias-label-tertiary,GrayText))}",
+      ".wb-disc-body{margin-top:8px;min-width:0;animation:wb-disc-in 160ms ease}",
+      "@keyframes wb-disc-in{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}",
+      "@media(prefers-reduced-motion:reduce){.wb-disc-chev{transition:none}.wb-disc-body{animation:none}}"
+    ].join("\n");
+  }
+});
+
 // packages/addons/mail/client/ui/styles.cjs
 var require_styles = __commonJS({
   "packages/addons/mail/client/ui/styles.cjs"(exports2, module2) {
@@ -1580,7 +1603,7 @@ var require_styles = __commonJS({
       "@media(max-width:760px){.wbml-cfg-row{grid-template-columns:1fr}.wbml-cfg-ctl{justify-content:flex-start}.wbml-cfg-group{padding:4px 10px}}",
       // 窄屏：同步按钮与搜索各自成行，提示文字单独一行，避免按钮被挤成半截。
       "@media (max-width:600px){.wbml-body-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:stretch}.wbml-body-tools>.wbml-muted{grid-column:1/-1;font-size:12px;line-height:1.5}.wbml-body-tools>.wbml-btn{width:100%;justify-content:center}.wbml-search{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end}.wbml-search .wbml-field{grid-column:1/-1;min-width:0}.wbml-search .wbml-input{width:100%}.wbml-search>.wbml-btn{width:100%;justify-content:center}}"
-    ]).concat(SW.styles).concat(NF.styles).concat(require_icon_label().styles).join("\n");
+    ]).concat(SW.styles).concat(NF.styles).concat(require_icon_label().styles).concat(require_disclosure_styles()).join("\n");
   }
 });
 
@@ -3327,6 +3350,57 @@ var require_detail_tools = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
+var chevron_right_exports = {};
+__export(chevron_right_exports, {
+  __iconData: () => __iconData24,
+  default: () => ChevronRight
+});
+var __iconData24, ChevronRight;
+var init_chevron_right = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
+    init_createLucideIcon();
+    __iconData24 = {
+      name: "chevron-right",
+      size: 24,
+      node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
+    };
+    __iconData24.node;
+    ChevronRight = createLucideIcon(__iconData24);
+  }
+});
+
+// packages/addons/lib/disclosure.cjs
+var require_disclosure = __commonJS({
+  "packages/addons/lib/disclosure.cjs"(exports2, module2) {
+    "use strict";
+    var ChevronRight2 = (init_chevron_right(), __toCommonJS(chevron_right_exports)).default;
+    function createDisclosure(React) {
+      var h = React.createElement;
+      function Disclosure(props) {
+        var attrs = Object.assign({ className: ("wb-disc " + (props.className || "")).trim() }, props.attrs || {});
+        if (props.open !== void 0) attrs.open = !!props.open;
+        else if (props.defaultOpen !== void 0) attrs.open = !!props.defaultOpen;
+        if (props.onToggle) attrs.onToggle = props.onToggle;
+        return h(
+          "details",
+          attrs,
+          h(
+            "summary",
+            null,
+            h(ChevronRight2, { className: "wb-disc-chev", "aria-hidden": true, focusable: false }),
+            h("span", { className: "wb-disc-title" }, props.title),
+            props.meta != null && props.meta !== "" ? h("span", { className: "wb-disc-meta" }, props.meta) : null
+          ),
+          h("div", { className: "wb-disc-body" }, props.children)
+        );
+      }
+      return { Disclosure, css: require_disclosure_styles() };
+    }
+    module2.exports = { createDisclosure, css: require_disclosure_styles() };
+  }
+});
+
 // packages/addons/mail/client/ui/reader-styles.cjs
 var require_reader_styles = __commonJS({
   "packages/addons/mail/client/ui/reader-styles.cjs"(exports2, module2) {
@@ -3358,7 +3432,9 @@ var require_reader_styles = __commonJS({
 var require_detail_pane = __commonJS({
   "packages/addons/mail/client/views/detail-pane.cjs"(exports2, module2) {
     "use strict";
+    var React = require("react");
     var C = require_common();
+    var Disclosure = require_disclosure().createDisclosure(React).Disclosure;
     var styles = require_reader_styles();
     module2.exports = function detailPane(h, options, tools, content) {
       const { current, back, toggle, previous, next, expanded, accountLabel, time } = options;
@@ -3392,9 +3468,8 @@ var require_detail_pane = __commonJS({
             h("div", null, "\u6536\u4EF6\u8D26\u6237\uFF1A" + accountLabel),
             h("div", { className: "wbml-read-stamp" }, time, current.mailbox ? " \xB7 " + current.mailbox : ""),
             current.to && !current.cc && current.to.length <= 64 && !/[,;\n]/.test(current.to.replace(/"(?:\\.|[^"\\])*"/g, "")) ? h("div", null, "\u6536\u4EF6\u4EBA\uFF1A" + current.to) : current.to || current.cc ? h(
-              "details",
-              null,
-              h("summary", null, current.cc ? "\u6536\u4EF6\u4EBA\u548C\u6284\u9001" : "\u6536\u4EF6\u4EBA"),
+              Disclosure,
+              { title: current.cc ? "\u6536\u4EF6\u4EBA\u548C\u6284\u9001" : "\u6536\u4EF6\u4EBA" },
               current.to ? h("div", null, "\u6536\u4EF6\u4EBA\uFF1A" + current.to) : null,
               current.cc ? h("div", null, "\u6284\u9001\uFF1A" + current.cc) : null
             ) : null
@@ -3411,7 +3486,9 @@ var require_detail_pane = __commonJS({
 var require_bulk = __commonJS({
   "packages/addons/mail/client/views/bulk.cjs"(exports2, module2) {
     "use strict";
+    var React = require("react");
     var C = require_common();
+    var Disclosure = require_disclosure().createDisclosure(React).Disclosure;
     var icons = require_icons2();
     var labels = { trash: "\u79FB\u5165\u5E9F\u7EB8\u7BD3", read: "\u6807\u4E3A\u5DF2\u8BFB" };
     var remote = (m) => Boolean(m?.id && m.accountId && m.mailbox && m.uid > 0 && m.uidValidity > 0);
@@ -3465,10 +3542,10 @@ var require_bulk = __commonJS({
       }
       return [...counts.values()].map(({ name, count }) => `${name} ${count} \u5C01`).join("\u3001");
     }
-    function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
-      const [, setRev] = React.useState(0);
-      const ref = React.useRef(null), mounted = React.useRef(true);
-      React.useEffect(() => {
+    function useBulk({ React: React2, h, api, items, scope, accounts, blocked, refresh }) {
+      const [, setRev] = React2.useState(0);
+      const ref = React2.useRef(null), mounted = React2.useRef(true);
+      React2.useEffect(() => {
         mounted.current = true;
         return () => {
           mounted.current = false;
@@ -3548,10 +3625,9 @@ var require_bulk = __commonJS({
         { className: "wbml-bulk-report", role: "status" },
         `${labels[report.kind]}\uFF1A\u6210\u529F ${report.done} \u5C01\uFF0C\u5931\u8D25 ${report.failed.length} \u5C01`,
         report.failed.length > 0 && h(
-          "details",
-          null,
-          h("summary", null, "\u67E5\u770B\u5931\u8D25\u539F\u56E0"),
-          ...report.failed.map(({ item, error }) => h("div", { key: item.id }, `${item.accountName} \xB7 ${item.subject}\uFF1A${error}`))
+          Disclosure,
+          { title: "\u67E5\u770B\u5931\u8D25\u539F\u56E0" },
+          report.failed.map(({ item, error }) => h("div", { key: item.id }, `${item.accountName} \xB7 ${item.subject}\uFF1A${error}`))
         ),
         report.failed.length > 0 && button("\u4EC5\u91CD\u8BD5\u5931\u8D25\u9879", () => {
           state.plan = { kind: report.kind, targets: report.failed.map((f) => f.item), done: report.done };
@@ -5661,14 +5737,14 @@ var require_account_card = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData24,
+  __iconData: () => __iconData25,
   default: () => Eye
 });
-var __iconData24, Eye;
+var __iconData25, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData24 = {
+    __iconData25 = {
       name: "eye",
       size: 24,
       node: [
@@ -5682,22 +5758,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData24.node;
-    Eye = createLucideIcon(__iconData24);
+    __iconData25.node;
+    Eye = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData26,
   default: () => EyeOff
 });
-var __iconData25, EyeOff;
+var __iconData26, EyeOff;
 var init_eye_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData26 = {
       name: "eye-off",
       size: 24,
       node: [
@@ -5719,8 +5795,8 @@ var init_eye_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData25.node;
-    EyeOff = createLucideIcon(__iconData25);
+    __iconData26.node;
+    EyeOff = createLucideIcon(__iconData26);
   }
 });
 
@@ -7177,12 +7253,8 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy{border:1px solid var(--wb-border,#e3e5e9);border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer}",
         "." + P + "-copy:hover{background:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
-        "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
-        "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
-        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        // 折叠头观感已收口到共享控件 disclosure-styles.cjs（.wb-disc），这里不再重复定义 details>summary。
         "." + P + "-params{min-width:0}",
-        "." + P + "-params>summary{user-select:none;max-width:100%}",
-        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -7192,7 +7264,7 @@ var require_action_schema_style = __commonJS({
         // 中等宽度（521–760px）三个筛选项正好排成一行，避免第三项独占一行显得参差。
         "@media(min-width:521px) and (max-width:760px){." + P + "-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}}",
         "@media(max-width:420px){." + P + "-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}." + P + "-card{padding:10px}." + P + "-table tr{padding:8px 0}}"
-      ].join("\n");
+      ].join("\n") + "\n" + require_disclosure_styles();
       return function injectCss() {
         if (typeof document === "undefined") return;
         var id = "wb-addon-" + DOMAIN + "-actions-css";
@@ -7217,6 +7289,7 @@ var require_action_schema_view = __commonJS({
     "use strict";
     var React = require("react");
     var createHighlight = require_highlight()(React);
+    var Disclosure = require_disclosure().createDisclosure(React).Disclosure;
     var h = React.createElement;
     var COPY = {
       zh: {
@@ -7701,10 +7774,12 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h(
-              "details",
+              Disclosure,
               {
                 className: P + "-params",
-                "data-params-fold": action.name,
+                title: t.params,
+                meta: required ? t.requiredCount(required) : "",
+                attrs: { "data-params-fold": action.name },
                 open,
                 // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
                 // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
@@ -7718,7 +7793,6 @@ var require_action_schema_view = __commonJS({
                   });
                 }
               },
-              h("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
               h(
                 "table",
                 { className: P + "-table" },
@@ -7755,9 +7829,8 @@ var require_action_schema_view = __commonJS({
               }) : h("div", { className: P + "-none" }, t.noExamples)
             ),
             h(
-              "details",
-              null,
-              h("summary", null, t.raw),
+              Disclosure,
+              { title: t.raw },
               h("pre", { className: P + "-pre" }, JSON.stringify(action.input || {}, null, 2))
             )
           );

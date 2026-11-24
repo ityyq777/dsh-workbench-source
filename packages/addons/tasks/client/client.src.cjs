@@ -47,6 +47,8 @@
     bodyStyles: require("../../lib/body-styles.cjs"),
     bodyCopy: require("../../lib/body-copy.cjs"),
     useConfig: configView.useConfig,
+    // 折叠面板共享控件：命令页的提示词模板与宿主其它面板保持同一观感。
+    Disclosure: require("../../lib/disclosure.cjs").createDisclosure(React).Disclosure,
   });
   // 标签页标题左侧图标：宿主统一按 size 14 渲染，两边都传 14 兜底。
   function tabIcon(name) { return function TasksTabIcon() { return React.createElement(Icon, { name: name, size: 14 }); }; }

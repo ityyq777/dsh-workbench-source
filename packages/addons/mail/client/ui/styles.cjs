@@ -162,4 +162,4 @@ module.exports = require("../../../lib/client-base-styles.cjs")("wbml").concat(r
     + ".wbml-search .wbml-field{grid-column:1/-1;min-width:0}"
     + ".wbml-search .wbml-input{width:100%}"
     + ".wbml-search>.wbml-btn{width:100%;justify-content:center}}",
-]).concat(SW.styles).concat(NF.styles).concat(require("../../../lib/icon-label.cjs").styles).join("\n");
+]).concat(SW.styles).concat(NF.styles).concat(require("../../../lib/icon-label.cjs").styles).concat(require("../../../lib/disclosure-styles.cjs")).join("\n");

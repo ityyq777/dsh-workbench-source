@@ -37,7 +37,8 @@
    `tag-filter.cjs`，统计图表用 `stats-charts.cjs`，图标用 `icons.cjs`，对话框外壳用
    `overlay.cjs`，图标按钮与骨架屏用 `button.cjs`/`skeleton.cjs`，布尔开关用
    `switch.cjs`（多选清单仍用原生 checkbox），数字输入用 `number-field.cjs`（范围只作
-   提示、非法红字且不提交，禁止 `type="number"` 与输入期夹取）。两个以上插件出现的同类 UI 必须抽到
+   提示、非法红字且不提交，禁止 `type="number"` 与输入期夹取），折叠面板用
+   `disclosure.cjs`（禁止再手写 `<details>`）。两个以上插件出现的同类 UI 必须抽到
    `packages/addons/lib/`，禁止整段复制后只改 CSS 前缀。共享组件用 `domain`、`prefix`、
    `tables`、`Icon` 等参数接收上下文，不得 import 具体业务域；业务专属
    布局留在插件内，通过参数或样式追加扩展。例外：lucide 图标必须由各插件自己 require，

@@ -19,6 +19,8 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const VIEW_SRC = resolve(ROOT, "packages/addons/lib/action-schema-view.cjs");
 const STYLE_SRC = resolve(ROOT, "packages/addons/lib/action-schema-style.cjs");
 const HIGHLIGHT_SRC = resolve(ROOT, "packages/addons/lib/highlight.cjs");
+const DISCLOSURE_SRC = resolve(ROOT, "packages/addons/lib/disclosure.cjs");
+const DISCLOSURE_STYLE_SRC = resolve(ROOT, "packages/addons/lib/disclosure-styles.cjs");
 
 function loadFactory(React) {
   const sandbox = createContext({ console, Promise, Set, Map, JSON, Object, Array, String, Number, Error, RegExp, Date });
@@ -27,6 +29,10 @@ function loadFactory(React) {
     if (name === "react") return React;
     if (name === "./action-schema-style.cjs") return loadOnce(STYLE_SRC);
     if (name === "./highlight.cjs") return loadOnce(HIGHLIGHT_SRC);
+    if (name === "./disclosure.cjs") return loadOnce(DISCLOSURE_SRC);
+    if (name === "./disclosure-styles.cjs") return loadOnce(DISCLOSURE_STYLE_SRC);
+    // 共享折叠面板只用一个 chevron 图标，这里给个空组件顶替。
+    if (name === "lucide-react/icons/chevron-right") return { default: function Chevron() { return null; } };
     throw new Error("Unexpected runtime dependency: " + name);
   };
   function loadOnce(file) {
@@ -47,8 +53,11 @@ function loadFactory(React) {
   return mod.exports;
 }
 
+// 渲染器把函数组件的展开结果放在 node.children，props.children 仍是未展开的原始元素；
+// 共享折叠面板是函数组件，遍历必须走 children，否则看不到它渲染出的 details。
 const kids = (node) => {
-  const c = node && node.props ? node.props.children : null;
+  const raw = node && Array.isArray(node.children) && node.children.length ? node.children : null;
+  const c = raw || (node && node.props ? node.props.children : null);
   return c == null ? [] : Array.isArray(c) ? c.flat(Infinity).filter((x) => x != null) : [c];
 };
 const walk = (n) => (n && typeof n === "object" ? [n, ...kids(n).flatMap(walk)] : []);
@@ -168,10 +177,17 @@ assert.match(text(keyRow), /枚举 "a" \/ "b"/);
 // ── 参数折叠面板：默认收起、摘要带必填数，表格仍在面板内可展开 ────────
 const foldOf = (t) => find(t, (n) => n.type === "details" && hasClass(n, "wbt-as-params"));
 const paramFold = foldOf(tree);
+if (!paramFold) {
+  DBG("DETAILS", findAll(tree, (n) => n.type === "details").map((n) => JSON.stringify(n.props && n.props.className)));
+  DBG("CARDS", findAll(tree, (n) => hasClass(n, "wbt-as-card")).length);
+  DBG("PARAMS", findAll(tree, (n) => hasClass(n, "wbt-as-params")).map((n) => typeof n.type + ":" + String(n.type && n.type.name)));
+  DBG("TABLEPARENT", findAll(tree, (n) => n.type === "table").length);
+}
 assert.ok(paramFold, "有参数的 action 应渲染参数折叠面板");
 assert.equal(paramFold.props.open, false, "没有搜索/筛选时参数区默认收起");
 assert.equal(paramFold.props["data-params-fold"], "tasks.list", "折叠面板应带 action 名标记");
-assert.equal(text(find(paramFold, (n) => n.type === "summary")).trim(), "参数 · 必填 1", "摘要只写参数与必填数");
+const summaryText = text(find(paramFold, (n) => n.type === "summary")).replace(/\s+/g, " ").trim();
+assert.ok(summaryText.includes("参数") && summaryText.includes("必填 1"), "摘要只写参数与必填数：" + summaryText);
 assert.ok(find(paramFold, (n) => n.type === "table"), "折叠面板内部仍是完整参数表");
 assert.equal(findAll(tree, (n) => n.type === "details" && hasClass(n, "wbt-as-params")).length, 1, "无参数 action 不渲染折叠面板");
 // 手动开合：点了就记住，不被普通重渲染重置。
@@ -320,7 +336,7 @@ delete globalThis.document;
 const css = styleEls[0].textContent;
 assert.match(css, /@media\(max-width:760px\)/, "应有窄屏断点");
 assert.match(css, /grid-template-areas:"name type need"/, "窄屏参数行应按名称/类型/必填排成一行");
-assert.ok(css.includes(".wbt-as-params[open]>summary{"), "展开后的参数摘要应留出与表格的间距");
+assert.ok(css.includes(".wb-disc[open]>summary .wb-disc-chev{"), "折叠头观感应来自共享控件 disclosure-styles.cjs");
 assert.ok(!/\.wbt-as-table td\{display:block;border-top:0/.test(css), "不能退回丢掉列名的纯竖向堆叠");
 ["pname", "ptype", "pneed", "pextra", "pdesc"].forEach((name) => {
   assert.ok(css.includes(".wbt-as-" + name + "{"), "窄屏样式应覆盖 .wbt-as-" + name);

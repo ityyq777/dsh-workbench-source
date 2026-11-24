@@ -5,6 +5,8 @@
 "use strict";
 module.exports = function (deps) {
   var React = deps.React, h = React.createElement;
+  // 折叠面板统一走共享控件 disclosure.cjs，由客户端入口注入（本视图保持零 require）。
+  var Disclosure = deps.Disclosure;
   // 共享正文渲染与配置钩子由客户端入口注入：本视图保持零 require，便于测试装载。
   var Icon = deps.Icon, Body = deps.Body, BodyMode = deps.BodyMode;
   var bodyCopy = deps.bodyCopy || { zh: {}, en: {} };
@@ -62,8 +64,9 @@ module.exports = function (deps) {
     ".wbt-cmd-examples li{overflow-wrap:anywhere}",
     ".wbt-cmd-empty,.wbt-cmd-error{padding:12px;border:1px dashed var(--wb-border);border-radius:var(--wb-radius-sm);font-size:12.5px}",
     ".wbt-cmd-error{border-style:solid;color:var(--dsw-alias-status-danger,inherit)}",
-    ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px;display:flex;flex-direction:column;gap:8px}",
-    ".wbt-cmd-template>summary{cursor:pointer;font-size:12.5px;font-weight:600;list-style:revert}",
+    // 折叠头由共享控件 disclosure-styles.cjs 提供，这里只保留面板外框与展开后的纵向排布。
+    ".wbt-cmd-template{border-top:1px dashed var(--wb-border);padding-top:8px}",
+    ".wbt-cmd-template>.wb-disc-body{display:flex;flex-direction:column;gap:8px}",
     ".wbt-cmd-template-head{padding-left:0;margin:0}",
     ".wbt-cmd-bar{display:inline-flex;align-items:center;gap:6px}",
     ".wbt-cmd-body{max-height:340px;overflow:auto;background:var(--dsw-alias-bg-layer-1,color-mix(in oklab,currentColor 4%,transparent));border-radius:var(--wb-radius-sm);padding:10px}",
@@ -98,8 +101,7 @@ module.exports = function (deps) {
     var text = typeof c.template === "string" ? c.template : "";
     var s = React.useState(props.mode === "text" ? "text" : "markdown"), mode = s[0], setMode = s[1];
     if (!text.trim()) return null;
-    return h("details", { className: "wbt-cmd-template" },
-      h("summary", null, t.template),
+    return h(Disclosure, { className: "wbt-cmd-template", title: t.template },
       h("span", { className: "wbt-cmd-hint" }, t.templateHint),
       h("div", { className: "wb-body-heading wbt-cmd-template-head" },
         h("span", { className: "wb-body-label" }, t.template),

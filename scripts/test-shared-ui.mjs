@@ -39,6 +39,8 @@ const SHARED = {
   'lib/stepper.cjs': '步骤条',
   'lib/staged-dialog.cjs': '分阶段对话框外壳',
   'lib/inject-styles.cjs': '样式注入（数组/字符串规范化）',
+  'lib/disclosure.cjs': '折叠面板',
+  'lib/disclosure-styles.cjs': '折叠面板样式',
 };
 
 // 允许保留自研对话框的四处，理由写在 docs/AGENTS规范/04-UI规范.md「控件复用审计」里。
@@ -81,6 +83,10 @@ for (const plugin of PLUGINS) {
   for (const s of sources) {
     if (/function\s+(Button|Skeleton|Modal)\s*\(/.test(s.text)) {
       problems.push(s.rel + '：重复实现 Button/Skeleton/Modal，应改用 lib/button.cjs、lib/skeleton.cjs、lib/overlay.cjs');
+    }
+    // 折叠面板只能走共享控件：各写一套 <details> 就是又分叉出一份折叠头观感。
+    if (/h\(\s*"details"/.test(s.text)) {
+      problems.push(s.rel + '：手写 <details> 折叠面板，应改用 lib/disclosure.cjs');
     }
     if (/role:\s*"dialog"/.test(s.text) && !DIALOG_EXCEPTIONS.has(s.rel)) {
       problems.push(s.rel + '：自写 role="dialog" 外壳，应改用 lib/overlay.cjs（确属特例请写进例外表与文档）');

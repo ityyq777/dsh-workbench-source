@@ -5,6 +5,7 @@ var NF = require("../../../lib/number-field.cjs");
 
 module.exports = function (React) {
   var h = React.createElement;
+  var Disclosure = require("../../../lib/disclosure.cjs").createDisclosure(React).Disclosure;
   // lang 为可选第 5 参：仅影响提示文案语言，缺省按中文。
   return function difficultyField(t, value, onChange, id, lang) {
     var n = Number(value) || 0, full = Math.floor(n), half = n - full >= 0.5;
@@ -23,6 +24,6 @@ module.exports = function (React) {
         h("span", { className: "wbt-stars", "aria-hidden": true }, n > 0 ? stars : t.difficultyUnset),
         h("b", null, n.toFixed(1))),
       h("small", { id: id + "-hint" }, t.difficultyUnsetHint),
-      h("details", null, h("summary", null, t.difficultyGuideTitle), h("p", null, t.difficultyGuide)));
+      h(Disclosure, { title: t.difficultyGuideTitle }, h("p", null, t.difficultyGuide)));
   };
 };

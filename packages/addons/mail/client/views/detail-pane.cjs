@@ -1,5 +1,7 @@
 "use strict";
+const React = require("react");
 const C = require("../ui/common.cjs");
+const Disclosure = require("../../../lib/disclosure.cjs").createDisclosure(React).Disclosure;
 const styles = require("../ui/reader-styles.cjs");
 
 module.exports = function detailPane(h, options, tools, content) {
@@ -22,8 +24,7 @@ module.exports = function detailPane(h, options, tools, content) {
         h("div", { className: "wbml-read-stamp" }, time, current.mailbox ? " · " + current.mailbox : ""),
         current.to && !current.cc && current.to.length <= 64 && !/[,;\n]/.test(current.to.replace(/"(?:\\.|[^"\\])*"/g, ''))
           ? h("div", null, "收件人：" + current.to)
-          : current.to || current.cc ? h("details", null,
-          h("summary", null, current.cc ? "收件人和抄送" : "收件人"),
+          : current.to || current.cc ? h(Disclosure, { title: current.cc ? "收件人和抄送" : "收件人" },
           current.to ? h("div", null, "收件人：" + current.to) : null,
           current.cc ? h("div", null, "抄送：" + current.cc) : null) : null),
       tools, content));

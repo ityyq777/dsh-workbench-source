@@ -1,5 +1,8 @@
 "use strict";
+const React = require("react");
 const C = require("../ui/common.cjs");
+// 失败原因折叠走共享控件（原生 details + 统一折叠头）。
+const Disclosure = require("../../../lib/disclosure.cjs").createDisclosure(React).Disclosure;
 const icons = require("../ui/icons.cjs");
 const labels = { trash: "移入废纸篓", read: "标为已读" };
 const remote = m => Boolean(m?.id && m.accountId && m.mailbox && m.uid > 0 && m.uidValidity > 0);
@@ -106,8 +109,8 @@ function useBulk({ React, h, api, items, scope, accounts, blocked, refresh }) {
   ];
   const reportNode = report ? h("div", { className: "wbml-bulk-report", role: "status" },
     `${labels[report.kind]}：成功 ${report.done} 封，失败 ${report.failed.length} 封`,
-    report.failed.length > 0 && h("details", null, h("summary", null, "查看失败原因"),
-      ...report.failed.map(({item, error}) => h("div", { key: item.id }, `${item.accountName} · ${item.subject}：${error}`))),
+    report.failed.length > 0 && h(Disclosure, { title: "查看失败原因" },
+      report.failed.map(({item, error}) => h("div", { key: item.id }, `${item.accountName} · ${item.subject}：${error}`))),
     report.failed.length > 0 && button("仅重试失败项", () => { state.plan = { kind: report.kind, targets: report.failed.map(f => f.item), done: report.done }; redraw(); }, blocked),
     button("收起结果", () => { state.report = null; redraw(); })) : null;
   const toolbar = (confirm || reportNode) ? h("div", { className: "wbml-bulk" }, ...(confirm || []), reportNode) : null;

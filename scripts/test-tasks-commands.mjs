@@ -197,6 +197,8 @@ function loadDeps(React, opts) {
     Icon: function StubIcon(props) { return React.createElement("span", { "data-icon": props.name }); },
     Body: markdown.createBody(React),
     BodyMode: require(resolve(ROOT, "packages/addons/lib/body-toggle.cjs"))(React),
+    // 折叠面板共享控件：与客户端入口注入的一致性（视图本身保持零 require）。
+    Disclosure: require(resolve(ROOT, "packages/addons/lib/disclosure.cjs")).createDisclosure(React).Disclosure,
     bodyStyles: require(resolve(ROOT, "packages/addons/lib/body-styles.cjs")),
     bodyCopy: require(resolve(ROOT, "packages/addons/lib/body-copy.cjs")),
     useConfig: () => ({

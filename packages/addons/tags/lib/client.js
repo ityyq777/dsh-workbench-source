@@ -4363,6 +4363,80 @@ var require_highlight = __commonJS({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
+var chevron_right_exports = {};
+__export(chevron_right_exports, {
+  __iconData: () => __iconData14,
+  default: () => ChevronRight
+});
+var __iconData14, ChevronRight;
+var init_chevron_right = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
+    init_createLucideIcon();
+    __iconData14 = {
+      name: "chevron-right",
+      size: 24,
+      node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
+    };
+    __iconData14.node;
+    ChevronRight = createLucideIcon(__iconData14);
+  }
+});
+
+// packages/addons/lib/disclosure-styles.cjs
+var require_disclosure_styles = __commonJS({
+  "packages/addons/lib/disclosure-styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = [
+      ".wb-disc{min-width:0;border:0;padding:0;margin:0}",
+      // 原生 details/summary 保留键盘与无障碍语义，这里只接管观感：去掉默认三角并铺满整行。
+      ".wb-disc>summary{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;font-weight:600;line-height:1.6;color:inherit;user-select:none;list-style:none;padding:2px 8px 2px 2px;margin:-2px -8px -2px -2px;border-radius:7px}",
+      ".wb-disc>summary::-webkit-details-marker{display:none}",
+      '.wb-disc>summary::marker{content:""}',
+      ".wb-disc>summary:hover{background:color-mix(in oklab,currentColor 6%,transparent)}",
+      ".wb-disc>summary:focus-visible{outline:2px solid var(--wb-accent,var(--dsw-alias-brand-primary,Highlight));outline-offset:2px}",
+      ".wb-disc-chev{flex:0 0 auto;width:14px;height:14px;transition:transform 160ms ease}",
+      ".wb-disc[open]>summary .wb-disc-chev{transform:rotate(90deg)}",
+      ".wb-disc-title{min-width:0;overflow-wrap:anywhere}",
+      ".wb-disc-meta{font-weight:400;font-size:12px;color:var(--wb-muted,var(--dsw-alias-label-tertiary,GrayText))}",
+      ".wb-disc-body{margin-top:8px;min-width:0;animation:wb-disc-in 160ms ease}",
+      "@keyframes wb-disc-in{from{opacity:0;transform:translateY(-2px)}to{opacity:1;transform:none}}",
+      "@media(prefers-reduced-motion:reduce){.wb-disc-chev{transition:none}.wb-disc-body{animation:none}}"
+    ].join("\n");
+  }
+});
+
+// packages/addons/lib/disclosure.cjs
+var require_disclosure = __commonJS({
+  "packages/addons/lib/disclosure.cjs"(exports2, module2) {
+    "use strict";
+    var ChevronRight2 = (init_chevron_right(), __toCommonJS(chevron_right_exports)).default;
+    function createDisclosure(React2) {
+      var h2 = React2.createElement;
+      function Disclosure(props) {
+        var attrs = Object.assign({ className: ("wb-disc " + (props.className || "")).trim() }, props.attrs || {});
+        if (props.open !== void 0) attrs.open = !!props.open;
+        else if (props.defaultOpen !== void 0) attrs.open = !!props.defaultOpen;
+        if (props.onToggle) attrs.onToggle = props.onToggle;
+        return h2(
+          "details",
+          attrs,
+          h2(
+            "summary",
+            null,
+            h2(ChevronRight2, { className: "wb-disc-chev", "aria-hidden": true, focusable: false }),
+            h2("span", { className: "wb-disc-title" }, props.title),
+            props.meta != null && props.meta !== "" ? h2("span", { className: "wb-disc-meta" }, props.meta) : null
+          ),
+          h2("div", { className: "wb-disc-body" }, props.children)
+        );
+      }
+      return { Disclosure, css: require_disclosure_styles() };
+    }
+    module2.exports = { createDisclosure, css: require_disclosure_styles() };
+  }
+});
+
 // packages/addons/lib/action-schema-style.cjs
 var require_action_schema_style = __commonJS({
   "packages/addons/lib/action-schema-style.cjs"(exports2, module2) {
@@ -4412,12 +4486,8 @@ var require_action_schema_style = __commonJS({
         "." + P + "-copy{border:1px solid var(--wb-border,#e3e5e9);border-radius:7px;background:transparent;color:inherit;font:inherit;font-size:11.5px;padding:2px 8px;cursor:pointer}",
         "." + P + "-copy:hover{background:var(--dsw-alias-interactive-bg-hover,color-mix(in oklab,currentColor 5%,transparent))}",
         "." + P + "-copy:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
-        "." + P + " details>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary,inherit);width:max-content}",
-        "." + P + " details>summary:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f6ef7);outline-offset:2px}",
-        // 参数折叠面板：折叠时只留一行「参数 · 必填 n」，展开后与表格之间留一点气口。
+        // 折叠头观感已收口到共享控件 disclosure-styles.cjs（.wb-disc），这里不再重复定义 details>summary。
         "." + P + "-params{min-width:0}",
-        "." + P + "-params>summary{user-select:none;max-width:100%}",
-        "." + P + "-params[open]>summary{margin-bottom:6px}",
         "." + P + "-empty{padding:24px;text-align:center;border:1px dashed var(--wb-border,#e3e5e9);border-radius:10px;color:var(--dsw-alias-label-tertiary,inherit)}",
         "." + P + "-error{padding:12px;border:1px solid var(--dsw-alias-state-error-primary,#d9534f);border-radius:10px;color:var(--dsw-alias-state-error-primary,#d9534f);display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}",
         "." + P + "-toast{position:sticky;bottom:8px;align-self:flex-start;border-radius:999px;padding:3px 10px;background:var(--dsw-alias-bg-skeleton,#f2f3f5);font-size:11.5px;max-width:100%}",
@@ -4427,7 +4497,7 @@ var require_action_schema_style = __commonJS({
         // 中等宽度（521–760px）三个筛选项正好排成一行，避免第三项独占一行显得参差。
         "@media(min-width:521px) and (max-width:760px){." + P + "-toolbar{grid-template-columns:repeat(3,minmax(0,1fr))}}",
         "@media(max-width:420px){." + P + "-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}." + P + "-card{padding:10px}." + P + "-table tr{padding:8px 0}}"
-      ].join("\n");
+      ].join("\n") + "\n" + require_disclosure_styles();
       return function injectCss() {
         if (typeof document === "undefined") return;
         var id = "wb-addon-" + DOMAIN + "-actions-css";
@@ -4452,6 +4522,7 @@ var require_action_schema_view = __commonJS({
     "use strict";
     var React2 = require("react");
     var createHighlight = require_highlight()(React2);
+    var Disclosure = require_disclosure().createDisclosure(React2).Disclosure;
     var h2 = React2.createElement;
     var COPY = {
       zh: {
@@ -4936,10 +5007,12 @@ var require_action_schema_view = __commonJS({
             ),
             action.description ? h2("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
             rows.length ? h2(
-              "details",
+              Disclosure,
               {
                 className: P + "-params",
-                "data-params-fold": action.name,
+                title: t.params,
+                meta: required ? t.requiredCount(required) : "",
+                attrs: { "data-params-fold": action.name },
                 open,
                 // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
                 // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
@@ -4953,7 +5026,6 @@ var require_action_schema_view = __commonJS({
                   });
                 }
               },
-              h2("summary", null, t.params + (required ? " \xB7 " + t.requiredCount(required) : "")),
               h2(
                 "table",
                 { className: P + "-table" },
@@ -4990,9 +5062,8 @@ var require_action_schema_view = __commonJS({
               }) : h2("div", { className: P + "-none" }, t.noExamples)
             ),
             h2(
-              "details",
-              null,
-              h2("summary", null, t.raw),
+              Disclosure,
+              { title: t.raw },
               h2("pre", { className: P + "-pre" }, JSON.stringify(action.input || {}, null, 2))
             )
           );

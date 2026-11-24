@@ -8,6 +8,8 @@
 // 示例与原始 JSON Schema 只展示不高亮，避免在代码块里插标签破坏可复制性。
 var React = require("react");
 var createHighlight = require("./highlight.cjs")(React);
+// 折叠面板走共享控件：观感统一由 disclosure-styles.cjs 负责，这里只传受控开合。
+var Disclosure = require("./disclosure.cjs").createDisclosure(React).Disclosure;
 var h = React.createElement;
 
 var COPY = {
@@ -479,9 +481,11 @@ module.exports = function createActionSchemaView(options) {
           originsChips(action)),
         action.description ? h("p", { className: P + "-desc" }, Highlight.hit(action.description, kw)) : null,
         rows.length
-          ? h("details", {
+          ? h(Disclosure, {
             className: P + "-params",
-            "data-params-fold": action.name,
+            title: t.params,
+            meta: required ? t.requiredCount(required) : "",
+            attrs: { "data-params-fold": action.name },
             open: open,
             // 原生 details 自带键盘与无障碍语义，这里只记下用户的开合；
             // 筛选变化引起的程序性开合也会触发 toggle，记下的值与当次默认一致，随后由 resetFolds 清掉。
@@ -495,7 +499,6 @@ module.exports = function createActionSchemaView(options) {
               });
             },
           },
-            h("summary", null, t.params + (required ? " · " + t.requiredCount(required) : "")),
             h("table", { className: P + "-table" },
               h("thead", null, h("tr", null,
                 h("th", null, t.colName),
@@ -521,8 +524,7 @@ module.exports = function createActionSchemaView(options) {
               return h("pre", { className: P + "-pre", key: index }, JSON.stringify(example, null, 2));
             })
             : h("div", { className: P + "-none" }, t.noExamples)),
-        h("details", null,
-          h("summary", null, t.raw),
+        h(Disclosure, { title: t.raw },
           h("pre", { className: P + "-pre" }, JSON.stringify(action.input || {}, null, 2))));
     }
 
