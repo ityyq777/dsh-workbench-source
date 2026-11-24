@@ -20,6 +20,7 @@ function StatsBody(props) {
   var h = props.h;
   var t = props.t;
   var icon = props.icon;
+  var s = props.s;
   return h("div", { className: "wba-panel" },
     h("div", { className: "wba-cards" }, kpiRows(props.s).map(function (k) {
       return h("div", { key: k[0], className: "wba-card" },

@@ -317,16 +317,7 @@ var require_locale = __commonJS({
         "auto_editor_ex_task_description": "\u89C4\u5219 {{rule.name}} \u89E6\u53D1",
         "auto_editor_ex_tag_name": "\u81EA\u52A8\u5316",
         "auto_page_title": "\u81EA\u52A8\u5316",
-        "auto_page_desc": "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF0C\u5E76\u67E5\u770B\u8FD0\u884C\u8BB0\u5F55\u3002",
-        "auto_tab_actions": "Action",
-        "auto_actions_title": "\u53EF\u7528\u7684 Action",
-        "auto_actions_hint": "\u5BBF\u4E3B\u4E3A\u81EA\u52A8\u5316\u6CE8\u518C\u7684 action \u6E05\u5355\u4E0E\u8F93\u5165\u53C2\u6570\uFF0C\u65B0\u5EFA\u89C4\u5219\u65F6\u53EF\u4ECE\u4E2D\u6311\u9009\u3002",
-        "auto_actions_empty": "\u5BBF\u4E3B\u5C1A\u672A\u6CE8\u518C\u81EA\u52A8\u5316 action\u3002",
-        "auto_actions_col_name": "Action",
-        "auto_actions_col_desc": "\u8BF4\u660E",
-        "auto_actions_col_params": "\u8F93\u5165\u53C2\u6570",
-        "auto_data_hint": "\u89C4\u5219\u4E0E\u8FD0\u884C\u8BB0\u5F55\u5DF2\u5E76\u5165\u5BBF\u4E3B\u5E73\u53F0\u8868\uFF0C\u53EF\u5728\u5BBF\u4E3B\u300C\u6570\u636E\u300D\u9875\u67E5\u770B automation_rule / automation_run / automation_meta\u3002",
-        "auto_data_open": "\u6253\u5F00\u300C\u6570\u636E\u300D\u9875"
+        "auto_page_desc": "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF0C\u5E76\u67E5\u770B\u8FD0\u884C\u8BB0\u5F55\u3002"
       },
       en: {
         "auto_common_save": "Save",
@@ -600,16 +591,7 @@ var require_locale = __commonJS({
         "auto_editor_ex_task_description": "Triggered by rule {{rule.name}}",
         "auto_editor_ex_tag_name": "automation",
         "auto_page_title": "Automation",
-        "auto_page_desc": "Run actions or AI rules on a schedule or event, and review the run history.",
-        "auto_tab_actions": "Actions",
-        "auto_actions_title": "Available actions",
-        "auto_actions_hint": "Actions the host exposes for automation, with their input parameters; pick from them when editing a rule.",
-        "auto_actions_empty": "The host has not registered any automation action yet.",
-        "auto_actions_col_name": "Action",
-        "auto_actions_col_desc": "Description",
-        "auto_actions_col_params": "Input parameters",
-        "auto_data_hint": "Rules and runs now live in the host platform tables: see automation_rule / automation_run / automation_meta on the host Data tab.",
-        "auto_data_open": "Open Data tab"
+        "auto_page_desc": "Run actions or AI rules on a schedule or event, and review the run history."
       }
     };
     module2.exports = { zh: DICT.zh, en: DICT.en };
@@ -1671,8 +1653,8 @@ var require_config_scheme_bar = __commonJS({
       var [name, setName] = React.useState("");
       var [from, setFrom] = React.useState("current");
       function begin(mode) {
-        var current = schemes.filter(function(s2) {
-          return s2.id === activeId;
+        var current = schemes.filter(function(s) {
+          return s.id === activeId;
         })[0];
         setName(mode === "rename" && current ? current.name : "");
         setFrom(current ? "current" : "default");
@@ -1710,8 +1692,8 @@ var require_config_scheme_bar = __commonJS({
               "aria-label": c.title
             },
             h2("option", { value: "" }, c.none),
-            schemes.map(function(s2) {
-              return h2("option", { key: s2.id, value: s2.id }, s2.name);
+            schemes.map(function(s) {
+              return h2("option", { key: s.id, value: s.id }, s.name);
             })
           ),
           h2("span", { className: prefix + "-cfg-schemes-hint" }, activeId ? c.current : "")
@@ -1775,35 +1757,35 @@ var require_client_base_styles = __commonJS({
     ];
     module2.exports = function baseStyles(prefix) {
       var p = String(prefix || "wb");
-      var s2 = "." + p;
+      var s = "." + p;
       return SECRET_FIELD.concat([
-        s2 + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
-        s2 + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
-        s2 + "-title{font-size:16px;font-weight:650;margin:0}",
-        s2 + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
-        s2 + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
-        s2 + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
-        s2 + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
-        s2 + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s2 + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
-        s2 + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s2 + "-table th," + s2 + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
-        s2 + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
-        s2 + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
-        s2 + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s2 + "-btn:disabled{opacity:.5;cursor:default}",
-        s2 + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--dsw-alias-label-primary-inverted,#fff)}",
-        s2 + "-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in oklab,var(--wb-danger,#b91c1c) 35%,transparent)}",
-        s2 + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s2 + "-label{font-weight:600}",
-        s2 + "-field input," + s2 + "-field select," + s2 + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
-        s2 + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s2 + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:color-mix(in oklab,var(--wb-accent,#2563eb) 9%,transparent);color:var(--dsw-alias-label-primary,inherit)}",
-        s2 + "-notice.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 10%,transparent);color:var(--wb-danger,#b91c1c)}" + s2 + "-notice.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 10%,transparent);color:var(--wb-ok,#047857)}",
-        s2 + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
-        s2 + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:color-mix(in oklab,currentColor 7%,transparent);color:inherit}",
-        s2 + "-pill.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 12%,transparent);color:var(--wb-ok,#047857)}" + s2 + "-pill.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 12%,transparent);color:var(--wb-danger,#b91c1c)}" + s2 + "-pill.warn{background:color-mix(in oklab,var(--wb-warn,#b45309) 14%,transparent);color:var(--wb-warn,#b45309)}",
-        s2 + "-json{margin:0;padding:8px;background:color-mix(in oklab,currentColor 4%,transparent);border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
-        s2 + "-muted{color:var(--wb-muted,#6b7280)}" + s2 + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
-        s2 + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
+        s + "-wrap{display:flex;flex-direction:column;gap:12px;padding:16px;overflow:auto;height:100%;box-sizing:border-box}",
+        s + "-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}",
+        s + "-title{font-size:16px;font-weight:650;margin:0}",
+        s + "-sub{font-size:12px;color:var(--wb-muted,#6b7280);margin:2px 0 0}",
+        s + "-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}",
+        s + "-card{border:1px solid var(--wb-border,#e5e7eb);border-radius:10px;background:var(--wb-surface,#fff);padding:12px}",
+        s + "-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}",
+        s + "-kpi{font-size:22px;font-weight:700;line-height:1.2}" + s + "-kpi-label{font-size:12px;color:var(--wb-muted,#6b7280)}",
+        s + "-table{width:100%;border-collapse:collapse;font-size:12px}" + s + "-table th," + s + "-table td{padding:7px 8px;border-bottom:1px solid var(--wb-border,#eef0f3);text-align:left;vertical-align:top}",
+        s + "-table th{font-weight:600;color:var(--wb-muted,#6b7280);white-space:nowrap}",
+        s + "-btn{border:1px solid var(--wb-border,#d1d5db);background:var(--wb-surface,#fff);color:inherit;border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer}",
+        s + "-btn:hover:not(:disabled){border-color:var(--wb-accent,#2563eb)}" + s + "-btn:disabled{opacity:.5;cursor:default}",
+        s + "-btn.primary{background:var(--wb-accent,#2563eb);border-color:var(--wb-accent,#2563eb);color:var(--dsw-alias-label-primary-inverted,#fff)}",
+        s + "-btn.danger{color:var(--wb-danger,#b91c1c);border-color:color-mix(in oklab,var(--wb-danger,#b91c1c) 35%,transparent)}",
+        s + "-field{display:flex;flex-direction:column;gap:4px;font-size:12px}" + s + "-label{font-weight:600}",
+        s + "-field input," + s + "-field select," + s + "-field textarea{border:1px solid var(--wb-border,#d1d5db);border-radius:7px;padding:6px 8px;font:inherit;background:var(--wb-surface,#fff);color:inherit;min-width:0}",
+        s + "-hint{color:var(--wb-muted,#6b7280);font-size:11px}" + s + "-notice{padding:8px 10px;border-radius:8px;font-size:12px;background:color-mix(in oklab,var(--wb-accent,#2563eb) 9%,transparent);color:var(--dsw-alias-label-primary,inherit)}",
+        s + "-notice.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 10%,transparent);color:var(--wb-danger,#b91c1c)}" + s + "-notice.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 10%,transparent);color:var(--wb-ok,#047857)}",
+        s + "-empty{padding:18px;text-align:center;color:var(--wb-muted,#6b7280);font-size:12px;border:1px dashed var(--wb-border,#e5e7eb);border-radius:8px}",
+        s + "-pill{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;background:color-mix(in oklab,currentColor 7%,transparent);color:inherit}",
+        s + "-pill.ok{background:color-mix(in oklab,var(--wb-ok,#047857) 12%,transparent);color:var(--wb-ok,#047857)}" + s + "-pill.error{background:color-mix(in oklab,var(--wb-danger,#b91c1c) 12%,transparent);color:var(--wb-danger,#b91c1c)}" + s + "-pill.warn{background:color-mix(in oklab,var(--wb-warn,#b45309) 14%,transparent);color:var(--wb-warn,#b45309)}",
+        s + "-json{margin:0;padding:8px;background:color-mix(in oklab,currentColor 4%,transparent);border-radius:8px;font-size:11px;max-height:240px;overflow:auto}",
+        s + "-muted{color:var(--wb-muted,#6b7280)}" + s + "-link{color:var(--wb-accent,#2563eb);cursor:pointer;text-decoration:none}",
+        s + "-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}",
         // 窄屏：页面容器不再自带左右内边距（宿主的 .wb-immersive-main 已经给过），
         // 卡片与栅格收紧，把宽度尽量留给内容——窄屏下两侧留白比桌面更影响可读性。
-        "@media(max-width:760px){" + s2 + "-wrap{padding:0 0 8px;gap:10px}" + s2 + "-card{padding:12px;border-radius:10px}" + s2 + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s2 + "-form{grid-template-columns:minmax(0,1fr)}" + s2 + "-title{font-size:15px}" + s2 + "-btn." + s2 + "-icon-text ." + s2 + "-btn-label{display:none}" + s2 + "-btn." + s2 + "-icon-text{padding-left:8px;padding-right:8px}" + s2 + "-table-wrap{overflow-x:auto;max-width:100%}" + s2 + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s2 + "-wrap{padding:0 0 6px}" + s2 + "-card{padding:10px}" + s2 + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
+        "@media(max-width:760px){" + s + "-wrap{padding:0 0 8px;gap:10px}" + s + "-card{padding:12px;border-radius:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}" + s + "-form{grid-template-columns:minmax(0,1fr)}" + s + "-title{font-size:15px}" + s + "-btn." + s + "-icon-text ." + s + "-btn-label{display:none}" + s + "-btn." + s + "-icon-text{padding-left:8px;padding-right:8px}" + s + "-table-wrap{overflow-x:auto;max-width:100%}" + s + "-table{width:max-content;min-width:100%}}button .wb-icon-label:not(.wb-icon-label-fallback) .wb-icon-label-text{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}button .wb-icon-label.wb-icon-label-short .wb-icon-label-text{position:static;width:auto;height:auto;margin:0;overflow:visible;clip-path:none;white-space:normal}@media(max-width:420px){" + s + "-wrap{padding:0 0 6px}" + s + "-card{padding:10px}" + s + "-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}}"
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
@@ -2420,10 +2402,8 @@ var require_styles2 = __commonJS({
       "@media (max-width:600px){.wba-toolbar-filters .wba-field{min-width:0;flex:1 1 100%}.wba-toolbar-filters .wba-grow{display:none}.wba-toolbar-filters .wba-btn{flex:1 1 100%}}",
       // 宿主视图容器：全宽铺满，不复用 .wb-inner 的 1040px 收窄。
       ".wb-auto{display:flex;flex-direction:column;gap:14px;width:100%;min-width:0}",
-      ".wb-auto .wba-wrap{padding:0;height:auto;overflow:visible;gap:14px}",
+      ".wb-auto .wba-wrap{padding:0;height:auto;overflow:visible;gap:14px}"
       // 数据页签删除后的去向说明条
-      ".wba-data-hint{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-line)}",
-      ".wba-data-hint .wba-hint{flex:1 1 260px;font-size:12px;color:var(--wb-muted);line-height:1.5}"
     ].join("\n") + "\n" + // 分步弹窗外壳：遮罩/焦点环/步骤条样式由共享层提供。
     require_staged_dialog().styles.join("\n");
   }
@@ -3081,7 +3061,7 @@ var require_client_common = __commonJS({
         return h2("pre", { className: p + "-json" }, text);
       }
       function useLoad(React, api, action, args, deps) {
-        var s2 = React.useState({ loading: true, data: null, error: "" });
+        var s = React.useState({ loading: true, data: null, error: "" });
         var tick = React.useState(0);
         var refresh = function() {
           tick[1](tick[0] + 1);
@@ -3089,11 +3069,11 @@ var require_client_common = __commonJS({
         React.useEffect(
           function() {
             var alive = true;
-            s2[1]({ loading: true, data: null, error: "" });
+            s[1]({ loading: true, data: null, error: "" });
             call(api, action, args).then(function(data) {
-              if (alive) s2[1]({ loading: false, data, error: "" });
+              if (alive) s[1]({ loading: false, data, error: "" });
             }).catch(function(e) {
-              if (alive) s2[1]({ loading: false, data: null, error: errText(e) });
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
             });
             return function() {
               alive = false;
@@ -3101,7 +3081,7 @@ var require_client_common = __commonJS({
           },
           (deps || []).concat([tick[0]])
         );
-        return { loading: s2[0].loading, data: s2[0].data, error: s2[0].error, refresh };
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
       }
       return {
         unwrap,
@@ -6209,16 +6189,16 @@ var require_event_queue_page = __commonJS({
               children: item[1]
             });
           }) }),
-          filters.length ? jsx2.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function(s2) {
-            var label = s2 ? statusText(lang, s2) : t("queue_all_status");
-            var on = filter === s2;
+          filters.length ? jsx2.jsx("div", { className: "wbq-filters", children: [""].concat(filters).map(function(s) {
+            var label = s ? statusText(lang, s) : t("queue_all_status");
+            var on = filter === s;
             return jsx2.jsx("button", {
-              key: s2 || "all",
+              key: s || "all",
               type: "button",
-              className: "wbq-filter" + (on ? " on" : "") + (s2 ? " s-" + s2 : ""),
+              className: "wbq-filter" + (on ? " on" : "") + (s ? " s-" + s : ""),
               "aria-pressed": on,
               onClick: function() {
-                setFilter(s2);
+                setFilter(s);
                 setPage(1);
               },
               children: label
@@ -7340,11 +7320,11 @@ var require_stats = __commonJS({
     var C = require_common();
     var icons = require_common().icons;
     var DENIED = ["vault.*", "automation.*", "audit.*", "*.delete", "*.backup"];
-    function kpiRows(s2) {
-      var today = s2 && s2.today || {};
+    function kpiRows(s) {
+      var today = s && s.today || {};
       return [
-        ["total", "layers", s2 && s2.total || 0, "stats.kpi.total", "stats.kpi.totalHint"],
-        ["enabled", "power", s2 && s2.enabled || 0, "stats.kpi.enabled", "stats.kpi.enabledHint"],
+        ["total", "layers", s && s.total || 0, "stats.kpi.total", "stats.kpi.totalHint"],
+        ["enabled", "power", s && s.enabled || 0, "stats.kpi.enabled", "stats.kpi.enabledHint"],
         ["ok", "check-circle", today.ok || 0, "stats.kpi.ok", "stats.kpi.okHint"],
         ["error", "alert-triangle", today.error || 0, "stats.kpi.error", "stats.kpi.errorHint"],
         ["skipped", "skip-forward", today.skipped || 0, "stats.kpi.skipped", "stats.kpi.skippedHint"]
@@ -7354,6 +7334,7 @@ var require_stats = __commonJS({
       var h2 = props.h;
       var t = props.t;
       var icon = props.icon;
+      var s = props.s;
       return h2(
         "div",
         { className: "wba-panel" },
@@ -7446,7 +7427,7 @@ var require_stats = __commonJS({
       var t = props.t;
       var stats = C.useLoad(React, api, "automation.stats", {}, []);
       var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
-      var s2 = stats.data || { total: 0, enabled: 0, today: {} };
+      var s = stats.data || { total: 0, enabled: 0, today: {} };
       return h2(
         "div",
         { className: "wba-wrap" },
@@ -7472,11 +7453,11 @@ var require_stats = __commonJS({
           )
         ),
         stats.error ? h2(C.Notice, { h: h2, kind: "error", text: stats.error }) : null,
-        s2.staleCount ? h2(C.Notice, { h: h2, kind: "warn", text: t("stats.staleWarning", { n: s2.staleCount }) }) : null,
-        s2.builtinStale || s2.builtinUninstalled ? h2(C.Notice, {
+        s.staleCount ? h2(C.Notice, { h: h2, kind: "warn", text: t("stats.staleWarning", { n: s.staleCount }) }) : null,
+        s.builtinStale || s.builtinUninstalled ? h2(C.Notice, {
           h: h2,
           kind: "warn",
-          text: t("stats.originWarning", { stale: s2.builtinStale || 0, uninstalled: s2.builtinUninstalled || 0 })
+          text: t("stats.originWarning", { stale: s.builtinStale || 0, uninstalled: s.builtinUninstalled || 0 })
         }) : null,
         stats.loading ? h2("div", { className: "wba-cards" }, [0, 1, 2, 3, 4].map(function(i) {
           return h2("div", { key: i, className: "wba-card" }, h2("div", { className: "wba-skel" }));
@@ -7484,7 +7465,7 @@ var require_stats = __commonJS({
           h: h2,
           t,
           icon: props.icon,
-          s: s2,
+          s,
           actions: opts.data && opts.data.actions || [],
           denied: opts.data && opts.data.denied || DENIED,
           onSettings: function() {
@@ -7747,8 +7728,8 @@ var require_agent_timing = __commonJS({
       ["after", "hourglass", "agent.after"]
     ];
     function hhmm(value) {
-      var s2 = String(value || "").trim();
-      return /^\d{2}:\d{2}$/.test(s2) ? s2 + ":00" : s2;
+      var s = String(value || "").trim();
+      return /^\d{2}:\d{2}$/.test(s) ? s + ":00" : s;
     }
     function buildTiming(form) {
       var kind = form.pKind || "daily";
@@ -9925,67 +9906,8 @@ var require_automation_page = __commonJS({
       ["overview", "stats.title", "activity"],
       ["rules", "rules.title", "list"],
       ["runs", "runs.title", "history"],
-      ["config", "config.title", "sliders-horizontal"],
-      ["actions", "auto_tab_actions", "sparkles"]
+      ["config", "config.title", "sliders-horizontal"]
     ];
-    function ActionsPane(props) {
-      var h2 = props.h;
-      var t = props.t;
-      var React = props.React;
-      var icon = props.icon;
-      var state = C.useLoad(React, props.api, "automation.actionSchema", {}, []);
-      var data = state.data || {};
-      var list = Array.isArray(data.actions) ? data.actions : [];
-      function paramsOf(input) {
-        var props2 = input && input.properties || {};
-        var keys = Object.keys(props2);
-        return keys.length ? keys.join(", ") : "\u2014";
-      }
-      return h2(
-        "div",
-        { className: "wba-wrap" },
-        h2(
-          "div",
-          { className: "wba-head" },
-          h2(
-            "div",
-            null,
-            h2("h2", { className: "wba-title" }, t("auto_actions_title")),
-            h2("p", { className: "wba-sub" }, t("auto_actions_hint"))
-          ),
-          h2(
-            "div",
-            { className: "wba-row" },
-            h2(C.Btn, { h: h2, onClick: state.refresh }, t("common.refresh"))
-          )
-        ),
-        state.error ? h2(C.Notice, { h: h2, kind: "error", text: state.error }) : null,
-        state.loading ? h2("div", { className: "wba-panel" }, h2("div", { className: "wba-skel" }), h2("div", { className: "wba-skel" })) : list.length === 0 ? h2(C.Empty, { h: h2, text: t("auto_actions_empty") }) : h2(
-          "div",
-          { className: "wba-table-wrap" },
-          h2(
-            "table",
-            { className: "wba-table" },
-            h2("thead", null, h2(
-              "tr",
-              null,
-              ["auto_actions_col_name", "auto_actions_col_desc", "auto_actions_col_params"].map(function(key) {
-                return h2("th", { key }, t(key));
-              })
-            )),
-            h2("tbody", null, list.map(function(a) {
-              return h2(
-                "tr",
-                { key: a.name },
-                h2("td", { className: "wba-nowrap" }, h2("code", null, a.name)),
-                h2("td", null, h2("span", { className: "wba-ellipsis" }, a.description || "\u2014")),
-                h2("td", { className: "wba-mono" }, paramsOf(a.input))
-              );
-            }))
-          )
-        )
-      );
-    }
     module2.exports = function AutomationView(props) {
       var h2 = props.h;
       var React = props.React;
@@ -10022,8 +9944,6 @@ var require_automation_page = __commonJS({
         body = h2(runs, { h: h2, api, React, lang: props.lang, t, icon: icons.icon });
       } else if (tab === "config") {
         body = h2(config, { h: h2, api, React, lang: props.lang, t, icon: icons.icon });
-      } else if (tab === "actions") {
-        body = h2(ActionsPane, { h: h2, api, React, t, icon: icons.icon });
       } else {
         body = h2(StatsView, { h: h2, api, React, lang: props.lang, t, icon: icons.icon, onNavigate });
       }
@@ -10055,18 +9975,10 @@ var require_automation_page = __commonJS({
               );
             })
           ),
-          // 数据页签删除后的去向说明：让用户知道规则与运行记录去哪看。
-          h2(
-            "div",
-            { className: "wba-data-hint" },
-            h2("span", { className: "wba-hint" }, t("auto_data_hint")),
-            props.onOpenData ? h2(C.Btn, { h: h2, onClick: props.onOpenData }, t("auto_data_open")) : null
-          ),
           body
         )
       );
     };
-    module2.exports.ActionsPane = ActionsPane;
     module2.exports.TABS = TABS;
   }
 });
@@ -10114,8 +10026,8 @@ var require_slot_catalog = __commonJS({
         return INDEX[String(id || "")] || null;
       },
       ids: function() {
-        return SLOTS.map(function(s2) {
-          return s2.id;
+        return SLOTS.map(function(s) {
+          return s.id;
         });
       }
     };
@@ -11718,8 +11630,8 @@ var require_system_tabs = __commonJS({
         var total = data ? data.total : 0;
         var totalPages = Math.max(1, Math.ceil(total / pageSize));
         var statsText = stats ? t("audit_stats") + "\uFF1A" + totalOf(stats) + " \xB7 " + t("audit_failed") + " " + (stats.failed || 0) : "";
-        function totalOf(s2) {
-          return t("audit_total") + " " + (s2.total || 0);
+        function totalOf(s) {
+          return t("audit_total") + " " + (s.total || 0);
         }
         return jsx2.jsxs(react2.Fragment, { children: [
           jsx2.jsxs("div", { className: "wb-card", children: [
@@ -12000,14 +11912,14 @@ var require_markdown = __commonJS({
       var out = [], re = /(\\[\\\x60*\[\]#!_>+-]|!?\[[^\[\]\n]+\]\([^\s)\[\]]*\)|\x60[^\x60\n]+\x60|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g, at = 0, m;
       while (m = re.exec(text)) {
         if (m.index > at) out.push(text.slice(at, m.index));
-        var s2 = m[0], link = /^\[([^\]]+)\]\(([^)]*)\)$/.exec(s2);
-        if (s2[0] === "\\") out.push(s2.slice(1));
+        var s = m[0], link = /^\[([^\]]+)\]\(([^)]*)\)$/.exec(s);
+        if (s[0] === "\\") out.push(s.slice(1));
         else if (link && /^(https?:\/\/|mailto:)[^\s\u0000-\u001f\u007f]+$/i.test(link[2]))
           out.push(node("a", inline(link[1], (depth || 0) + 1), { href: link[2], target: "_blank", rel: "noopener noreferrer nofollow" }));
-        else if (s2[0] === "[" || s2[0] === "!") out.push(s2);
-        else if (s2[0] === "`") out.push(node("code", [s2.slice(1, -1)]));
-        else if (s2.slice(0, 2) === "**") out.push(node("strong", inline(s2.slice(2, -2), (depth || 0) + 1)));
-        else out.push(node("em", inline(s2.slice(1, -1), (depth || 0) + 1)));
+        else if (s[0] === "[" || s[0] === "!") out.push(s);
+        else if (s[0] === "`") out.push(node("code", [s.slice(1, -1)]));
+        else if (s.slice(0, 2) === "**") out.push(node("strong", inline(s.slice(2, -2), (depth || 0) + 1)));
+        else out.push(node("em", inline(s.slice(1, -1), (depth || 0) + 1)));
         at = re.lastIndex;
       }
       if (at < text.length) out.push(text.slice(at));
@@ -12015,11 +11927,11 @@ var require_markdown = __commonJS({
     }
     function blocks(lines, depth) {
       var out = [], i = 0;
-      function listMatch(s2) {
-        return /^( *)([-+*]|\d+\.) +(.+)$/.exec(s2);
+      function listMatch(s) {
+        return /^( *)([-+*]|\d+\.) +(.+)$/.exec(s);
       }
-      function special(s2) {
-        return /^\s*$|^\x60\x60\x60|^#{1,6} +|^> ?|^\s*(?:---+|\*\*\*+|___+)\s*$/.test(s2) || listMatch(s2);
+      function special(s) {
+        return /^\s*$|^\x60\x60\x60|^#{1,6} +|^> ?|^\s*(?:---+|\*\*\*+|___+)\s*$/.test(s) || listMatch(s);
       }
       while (i < lines.length) {
         var line = lines[i], m;
@@ -12072,9 +11984,9 @@ var require_markdown = __commonJS({
         i++;
         while (i < lines.length && !special(lines[i])) paragraph.push(lines[i++]);
         var parts = [];
-        paragraph.forEach(function(s2, j) {
+        paragraph.forEach(function(s, j) {
           if (j) parts.push(node("br", []));
-          var children2 = inline(s2);
+          var children2 = inline(s);
           for (var k = 0; k < children2.length; k++) parts.push(children2[k]);
         });
         out.push(node("p", parts));
@@ -13212,11 +13124,11 @@ var ViewOutlet = require_view_outlet();
 function ensureCss() {
   if (typeof document === "undefined") return;
   if (document.getElementById("wb-css")) return;
-  var s2 = document.createElement("style");
-  s2.id = "wb-css";
-  s2.setAttribute("data-plugin-css", NS);
-  s2.textContent = CSS;
-  document.head.appendChild(s2);
+  var s = document.createElement("style");
+  s.id = "wb-css";
+  s.setAttribute("data-plugin-css", NS);
+  s.textContent = CSS;
+  document.head.appendChild(s);
 }
 function SearchPanel(props) {
   var api = props.api;
@@ -13462,9 +13374,7 @@ function WorkbenchPage(props) {
     return jsx.jsx(QueuePage.QueueView, { jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "automation") {
-    return jsx.jsx(AutomationPage, { h, jsx, React: react, api, lang, t, head: pageHead, onOpenData: function() {
-      go("data");
-    } });
+    return jsx.jsx(AutomationPage, { h, jsx, React: react, api, lang, t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx, api, lang, t, head: pageHead });
