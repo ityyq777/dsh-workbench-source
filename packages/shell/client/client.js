@@ -1753,24 +1753,6 @@ var require_config_scheme_bar = __commonJS({
   }
 });
 
-// packages/shell/client/conversation/styles.cjs
-var require_styles = __commonJS({
-  "packages/shell/client/conversation/styles.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = `
-.wb-role-trigger,.wb-role-mask{--wb-line:var(--dsw-alias-border-l2);--wb-card:var(--dsw-alias-bg-layer-1,Canvas);--wb-surface:var(--dsw-alias-bg-layer-2,Canvas);--wb-accent:var(--dsw-alias-brand-primary,Highlight);--wb-muted:var(--dsw-alias-label-tertiary,GrayText);--wb-danger:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary,CanvasText)}
-.wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
-.wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
-.wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
-.wb-role-trigger:focus-visible,.wb-role-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-.wb-role-btn:disabled{opacity:.5;cursor:wait}
-.wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
-.wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
-.wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
-`;
-  }
-});
-
 // packages/addons/lib/client-base-styles.cjs
 var require_client_base_styles = __commonJS({
   "packages/addons/lib/client-base-styles.cjs"(exports2, module2) {
@@ -1817,6 +1799,83 @@ var require_client_base_styles = __commonJS({
       ]);
     };
     module2.exports.secretFieldStyles = SECRET_FIELD;
+  }
+});
+
+// packages/shell/client/conversation/styles.cjs
+var require_styles = __commonJS({
+  "packages/shell/client/conversation/styles.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = `
+.wb-role-trigger,.wb-role-mask{--wb-line:var(--dsw-alias-border-l2);--wb-card:var(--dsw-alias-bg-layer-1,Canvas);--wb-surface:var(--dsw-alias-bg-layer-2,Canvas);--wb-accent:var(--dsw-alias-brand-primary,Highlight);--wb-muted:var(--dsw-alias-label-tertiary,GrayText);--wb-danger:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary,CanvasText)}
+.wb-role-trigger,.wb-role-btn{font:inherit;color:inherit;border:1px solid var(--wb-line);cursor:pointer;background:var(--wb-card);border-radius:8px;padding:6px 10px}
+.wb-role-trigger{height:28px;max-width:min(32vw,16em);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;border-radius:999px;font-size:12px;padding:0 9px}
+.wb-role-trigger:hover,.wb-role-btn:hover:not(:disabled),.wb-role-btn[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wb-role-trigger:focus-visible,.wb-role-btn:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wb-role-btn:disabled{opacity:.5;cursor:wait}
+.wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
+.wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
+.wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
+`;
+    var ROLES_BASE = require_client_base_styles()("wbr").join("\n");
+    module2.exports += "\n" + ROLES_BASE + `
+.wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:transparent;color:inherit;min-width:0;outline:none}
+.wbr-input:focus,.wbr-select:focus{border-color:var(--wb-accent)}
+.wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wbr-search{flex:1 1 260px;min-width:0}
+.wbr-select{flex:0 0 auto}
+.wbr-split{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:14px;align-items:start}
+.wbr-list{min-width:0;display:flex;flex-direction:column;gap:8px}
+.wbr-rows{display:flex;flex-direction:column;gap:6px;max-height:min(70dvh,720px);overflow:auto;padding-right:2px}
+.wbr-row{display:flex;flex-direction:column;gap:4px;text-align:start;background:transparent;color:inherit;font:inherit;border:1px solid var(--wb-line);border-radius:10px;padding:9px 10px;cursor:pointer}
+.wbr-row:hover{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 7%,transparent)}
+.wbr-row[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 12%,transparent)}
+.wbr-row:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+.wbr-row-name{font-weight:600;font-size:13px;overflow-wrap:anywhere}
+.wbr-row-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--wb-muted)}
+.wbr-row-meta code{font-size:11px;overflow-wrap:anywhere}
+.wbr-row-counts{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--wb-muted)}
+.wbr-row-counts small{color:var(--wb-muted);opacity:.85}
+.wbr-detail{border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.wbr-detail-empty{padding:0;border:0;background:transparent}
+.wbr-detail-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wbr-detail-head strong{font-size:15px}
+.wbr-detail-head code{font-size:11.5px;color:var(--wb-muted);overflow-wrap:anywhere}
+.wbr-detail-head small{font-size:11.5px;color:var(--wb-muted)}
+.wbr-detail-desc{margin:0;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.wbr-detail-actions{display:flex;flex-direction:column;gap:8px}
+.wbr-detail-group{display:flex;flex-direction:column;gap:5px}
+.wbr-detail-domain{font-size:11.5px;color:var(--wb-muted);font-weight:600}
+.wbr-chips{display:flex;gap:6px;flex-wrap:wrap}
+.wbr-chip{font-size:11.5px;line-height:1.5;padding:2px 7px;border-radius:6px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 4%,transparent);white-space:nowrap}
+.wbr-editor{display:flex;flex-direction:column;gap:10px}
+.wbr-editor-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wbr-editor-head small{color:var(--wb-muted);font-size:11.5px}
+.wbr-instructions{display:flex;flex-direction:column;gap:6px}
+.wbr-instructions-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wbr-tabs{display:inline-flex;gap:2px;border:1px solid var(--wb-line);border-radius:8px;padding:2px}
+.wbr-tab{font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
+.wbr-tab[aria-selected=true]{background:color-mix(in oklab,var(--wb-accent) 14%,transparent);color:var(--wb-accent)}
+.wbr-tab:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
+.wbr-preview{border:1px dashed var(--wb-line);border-radius:8px;padding:8px 10px;min-height:3em;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.wbr-actions{display:flex;flex-direction:column;gap:8px;border:1px solid var(--wb-line);border-radius:10px;padding:10px}
+.wbr-actions-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wbr-count{font-size:11.5px;color:var(--wb-muted);font-weight:400}
+.wbr-actions-groups{display:flex;flex-direction:column;gap:8px;max-height:min(46dvh,420px);overflow:auto}
+.wbr-actions-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.wbr-actions-domain{flex:0 0 100%;font-size:11.5px;font-weight:600;color:var(--wb-muted);display:flex;gap:6px}
+.wbr-check{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;border:1px solid var(--wb-line);border-radius:6px;padding:2px 7px;cursor:pointer}
+.wbr-check:has(input:checked){border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}
+.wbr-check:focus-within{outline:2px solid var(--wb-accent);outline-offset:1px}
+.wbr-check code{font-size:11.5px}
+.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-danger)}
+.wbr-unknown small{color:var(--wb-muted)}
+@media(max-width:760px){
+  .wbr-split{grid-template-columns:minmax(0,1fr)}
+  .wbr-rows{max-height:none}
+  .wbr-actions-groups{max-height:none}
+}
+`;
   }
 });
 
@@ -11674,51 +11733,687 @@ var require_view_outlet = __commonJS({
   }
 });
 
+// packages/addons/lib/markdown.cjs
+var require_markdown = __commonJS({
+  "packages/addons/lib/markdown.cjs"(exports2, module2) {
+    "use strict";
+    var cache = /* @__PURE__ */ new Map();
+    var cacheChars = 0;
+    function node(tag, children, props) {
+      return { tag, children, props: props || {} };
+    }
+    function inline(text, depth) {
+      if ((depth || 0) > 8) return [text];
+      var out = [], re = /(\\[\\\x60*\[\]#!_>+-]|!?\[[^\[\]\n]+\]\([^\s)\[\]]*\)|\x60[^\x60\n]+\x60|\*\*[^*\n]+\*\*|\*[^*\n]+\*)/g, at = 0, m;
+      while (m = re.exec(text)) {
+        if (m.index > at) out.push(text.slice(at, m.index));
+        var s2 = m[0], link = /^\[([^\]]+)\]\(([^)]*)\)$/.exec(s2);
+        if (s2[0] === "\\") out.push(s2.slice(1));
+        else if (link && /^(https?:\/\/|mailto:)[^\s\u0000-\u001f\u007f]+$/i.test(link[2]))
+          out.push(node("a", inline(link[1], (depth || 0) + 1), { href: link[2], target: "_blank", rel: "noopener noreferrer nofollow" }));
+        else if (s2[0] === "[" || s2[0] === "!") out.push(s2);
+        else if (s2[0] === "`") out.push(node("code", [s2.slice(1, -1)]));
+        else if (s2.slice(0, 2) === "**") out.push(node("strong", inline(s2.slice(2, -2), (depth || 0) + 1)));
+        else out.push(node("em", inline(s2.slice(1, -1), (depth || 0) + 1)));
+        at = re.lastIndex;
+      }
+      if (at < text.length) out.push(text.slice(at));
+      return out;
+    }
+    function blocks(lines, depth) {
+      var out = [], i = 0;
+      function listMatch(s2) {
+        return /^( *)([-+*]|\d+\.) +(.+)$/.exec(s2);
+      }
+      function special(s2) {
+        return /^\s*$|^\x60\x60\x60|^#{1,6} +|^> ?|^\s*(?:---+|\*\*\*+|___+)\s*$/.test(s2) || listMatch(s2);
+      }
+      while (i < lines.length) {
+        var line = lines[i], m;
+        if (!line.trim()) {
+          i++;
+          continue;
+        }
+        if (/^\x60\x60\x60/.test(line)) {
+          var end = i + 1;
+          while (end < lines.length && !/^\x60\x60\x60\s*$/.test(lines[end])) end++;
+          if (end === lines.length) {
+            out.push(node("p", [lines.slice(i).join("\n")]));
+            break;
+          }
+          out.push(node("pre", [node("code", [lines.slice(i + 1, end).join("\n")])]));
+          i = end + 1;
+          continue;
+        }
+        if (m = /^(#{1,6}) +(.+)$/.exec(line)) {
+          out.push(node("h" + m[1].length, inline(m[2])));
+          i++;
+          continue;
+        }
+        if (/^\s*(?:---+|\*\*\*+|___+)\s*$/.test(line)) {
+          out.push(node("hr", []));
+          i++;
+          continue;
+        }
+        if (/^> ?/.test(line) && depth < 2) {
+          var quote = [];
+          while (i < lines.length && /^> ?/.test(lines[i])) quote.push(lines[i++].replace(/^> ?/, ""));
+          out.push(node("blockquote", blocks(quote, depth + 1)));
+          continue;
+        }
+        if ((m = listMatch(line)) && depth < 2) {
+          var base = m[1].length, ordered = /\d/.test(m[2]), items = [], start = parseInt(m[2], 10);
+          while (i < lines.length) {
+            m = listMatch(lines[i]);
+            if (!m || m[1].length !== base || /\d/.test(m[2]) !== ordered) break;
+            var children = inline(m[3]), nested = [];
+            i++;
+            while (i < lines.length && (m = listMatch(lines[i])) && m[1].length > base) nested.push(lines[i++].slice(base + 2));
+            if (nested.length) children = children.concat(blocks(nested, depth + 1));
+            items.push(node("li", children));
+          }
+          out.push(node(ordered ? "ol" : "ul", items, ordered ? { start } : {}));
+          continue;
+        }
+        var paragraph = [line];
+        i++;
+        while (i < lines.length && !special(lines[i])) paragraph.push(lines[i++]);
+        var parts = [];
+        paragraph.forEach(function(s2, j) {
+          if (j) parts.push(node("br", []));
+          var children2 = inline(s2);
+          for (var k = 0; k < children2.length; k++) parts.push(children2[k]);
+        });
+        out.push(node("p", parts));
+      }
+      return out;
+    }
+    function parse(text, mode) {
+      text = String(text == null ? "" : text);
+      mode = mode === "text" ? "text" : "markdown";
+      var key = mode + ":" + text;
+      if (cache.has(key)) return cache.get(key);
+      var ast = mode === "text" ? [text] : blocks(text.replace(/\r\n?/g, "\n").split("\n"), 0);
+      if (text.length <= 1e5) {
+        while (cache.size >= 100 || cacheChars + key.length > 1e6) {
+          var first = cache.keys().next().value;
+          cacheChars -= first.length;
+          cache.delete(first);
+        }
+        cache.set(key, ast);
+        cacheChars += key.length;
+      }
+      return ast;
+    }
+    function createBody(React, Highlight) {
+      var h2 = React.createElement;
+      return function Body(props) {
+        function render(items, path) {
+          return items.map(function(item, i) {
+            var key = path + "-" + i;
+            if (typeof item === "string") return Highlight ? h2(Highlight, { key, text: item, keyword: props.keyword }) : item;
+            var attrs = Object.assign({ key }, item.props);
+            if (item.tag === "br" || item.tag === "hr") return h2(item.tag, attrs);
+            return h2(item.tag, attrs, render(item.children, key));
+          });
+        }
+        return h2("div", { className: props.mode === "text" ? "wb-body-text" : "wb-markdown" }, render(parse(props.text, props.mode), "md"));
+      };
+    }
+    module2.exports = { parse, createBody };
+  }
+});
+
+// packages/addons/lib/body-toggle.cjs
+var require_body_toggle = __commonJS({
+  "packages/addons/lib/body-toggle.cjs"(exports2, module2) {
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      return function BodyMode(props) {
+        var plain = props.mode === "text", t = props.t;
+        var label = t.bodyModeToggle.replace("{field}", props.label).replace("{current}", t[plain ? "plainText" : "markdown"]).replace("{target}", t[plain ? "markdown" : "plainText"]);
+        return h2("button", {
+          type: "button",
+          className: "wb-body-toggle" + (props.className ? " " + props.className : ""),
+          title: label,
+          "aria-label": label,
+          "aria-pressed": !plain,
+          onClick: function(e) {
+            e.stopPropagation();
+            props.onChange(plain ? "markdown" : "text");
+          }
+        }, h2("span", { key: props.mode, className: "wb-body-toggle-icon", "aria-hidden": true }, h2(props.Icon, { name: plain ? "pilcrow" : "code-2", size: 14 })));
+      };
+    };
+  }
+});
+
+// packages/addons/lib/body-copy.cjs
+var require_body_copy = __commonJS({
+  "packages/addons/lib/body-copy.cjs"(exports2, module2) {
+    module2.exports = {
+      zh: { desc: "\u63CF\u8FF0", markdown: "Markdown \u6E32\u67D3", plainText: "\u7EAF\u6587\u672C", bodyModeToggle: "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}" },
+      en: { desc: "Description", markdown: "Rendered Markdown", plainText: "Plain text", bodyModeToggle: "{field} \xB7 Current: {current}; switch to {target}" }
+    };
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
+var __iconData30, CodeXml;
+var init_code_xml = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
+    init_createLucideIcon();
+    __iconData30 = {
+      name: "code-xml",
+      size: 24,
+      node: [
+        ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+        ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+        ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+      ],
+      aliases: ["code-2"]
+    };
+    __iconData30.node;
+    CodeXml = createLucideIcon(__iconData30);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
+var code_2_exports = {};
+__export(code_2_exports, {
+  default: () => CodeXml
+});
+var init_code_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
+    init_code_xml();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
+var pilcrow_exports = {};
+__export(pilcrow_exports, {
+  __iconData: () => __iconData31,
+  default: () => Pilcrow
+});
+var __iconData31, Pilcrow;
+var init_pilcrow = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
+    init_createLucideIcon();
+    __iconData31 = {
+      name: "pilcrow",
+      size: 24,
+      node: [
+        ["path", { d: "M13 4v16", key: "8vvj80" }],
+        ["path", { d: "M17 4v16", key: "7dpous" }],
+        ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
+      ]
+    };
+    __iconData31.node;
+    Pilcrow = createLucideIcon(__iconData31);
+  }
+});
+
+// packages/addons/lib/body-styles.cjs
+var require_body_styles = __commonJS({
+  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
+    module2.exports = `
+.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
+.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
+.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
+.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
+.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
+.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
+.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
+.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
+.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
+.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
+.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
+.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
+.wb-body-section{min-width:0;overflow-anchor:none}
+.wb-body-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;padding-left:12px;min-height:24px}
+.wb-body-heading .wb-body-label{float:none;margin:0;padding:0;border-radius:0;background:none;color:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;opacity:.72}
+.wb-body-toggle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border:0;background:transparent;color:inherit;padding:0;border-radius:4px;cursor:pointer;opacity:.7}
+.wb-body-toggle:hover{opacity:1;background:color-mix(in srgb,currentColor 5%,transparent)}
+.wb-body-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+.wb-body-toggle-icon{display:flex;animation:wb-body-icon-in 140ms ease-out}
+@keyframes wb-body-icon-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
+.wbt-item.closed:has(.wb-body-label){opacity:1}
+`;
+  }
+});
+
+// packages/addons/lib/body-id.cjs
+var require_body_id = __commonJS({
+  "packages/addons/lib/body-id.cjs"(exports2, module2) {
+    var nextId = 0;
+    module2.exports = function useBodyId(React) {
+      return typeof React.useId === "function" ? React.useId() : React.useState("wb-body-" + ++nextId)[0];
+    };
+  }
+});
+
+// packages/addons/lib/description.cjs
+var require_description = __commonJS({
+  "packages/addons/lib/description.cjs"(exports2, module2) {
+    var React = require("react");
+    var h2 = React.createElement;
+    var Body = require_markdown().createBody(React);
+    var bodies = typeof WeakMap === "function" ? /* @__PURE__ */ new WeakMap() : null;
+    function bodyFor(Highlight) {
+      if (!Highlight) return Body;
+      if (!bodies) return require_markdown().createBody(React, Highlight);
+      if (!bodies.has(Highlight)) bodies.set(Highlight, require_markdown().createBody(React, Highlight));
+      return bodies.get(Highlight);
+    }
+    var BodyMode = require_body_toggle()(React);
+    var copy = require_body_copy();
+    var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
+    var Pilcrow2 = (init_pilcrow(), __toCommonJS(pilcrow_exports)).default;
+    function BodyIcon(props) {
+      return h2(props.name === "pilcrow" ? Pilcrow2 : Code, { size: props.size, "aria-hidden": true, focusable: false });
+    }
+    var css = require_body_styles() + `
+.wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
+.wb-description{margin-top:10px}.wb-description>.wb-desc{margin-top:0}
+.wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
+.wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+`;
+    function Description(props) {
+      var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
+      var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
+      var text = props.text == null ? "" : String(props.text);
+      var DescBody = bodyFor(props.Highlight);
+      var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
+      React.useEffect(function() {
+        expanded[1](false);
+      }, [text]);
+      React.useEffect(function() {
+        var node = ref.current;
+        if (!node) return;
+        function measure() {
+          if (!expanded[0]) overflow[1](node.scrollHeight > node.clientHeight + 1);
+        }
+        measure();
+        var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
+        if (observer) observer.observe(node);
+        return function() {
+          if (observer) observer.disconnect();
+        };
+      }, [text, expanded[0], mode[0]]);
+      if (!text.trim()) return null;
+      return h2(
+        "section",
+        { className: "wb-body-section wb-description", "aria-labelledby": labelId },
+        h2(
+          "div",
+          { className: "wb-body-heading" },
+          h2("span", { id: labelId, className: "wb-body-label" }, t.desc),
+          h2(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t, Icon: props.Icon || BodyIcon })
+        ),
+        h2(
+          "div",
+          { className: "wb-desc" },
+          h2(
+            "div",
+            { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
+            h2(DescBody, { text, mode: mode[0], keyword: props.keyword })
+          ),
+          overflow[0] || expanded[0] ? h2("button", {
+            type: "button",
+            className: "wb-desc-toggle",
+            "aria-expanded": expanded[0],
+            onClick: function() {
+              expanded[1](!expanded[0]);
+            }
+          }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
+        )
+      );
+    }
+    module2.exports = { css, Description };
+  }
+});
+
+// packages/shell/client/conversation/catalog-groups.cjs
+var require_catalog_groups = __commonJS({
+  "packages/shell/client/conversation/catalog-groups.cjs"(exports2, module2) {
+    "use strict";
+    function domainOf(name) {
+      var text = String(name || "");
+      var at = text.indexOf(".");
+      return at > 0 ? text.slice(0, at) : text;
+    }
+    function groupActions(names) {
+      var order = [], map = /* @__PURE__ */ Object.create(null);
+      (names || []).forEach(function(raw) {
+        var name = String(raw || "").trim();
+        if (!name) return;
+        var domain = domainOf(name);
+        if (!map[domain]) {
+          map[domain] = [];
+          order.push(domain);
+        }
+        if (map[domain].indexOf(name) < 0) map[domain].push(name);
+      });
+      order.sort();
+      return order.map(function(domain) {
+        return { domain, items: map[domain].sort() };
+      });
+    }
+    function dedupe(list) {
+      var out = [];
+      (list || []).forEach(function(raw) {
+        var name = String(raw || "").trim();
+        if (name && out.indexOf(name) < 0) out.push(name);
+      });
+      return out;
+    }
+    function parseManual(text) {
+      return dedupe(String(text || "").split(/[\s,，]+/));
+    }
+    function validateActions(names, catalog) {
+      var actions = dedupe(names);
+      if (!catalog) return { actions, unknown: [] };
+      var known = /* @__PURE__ */ Object.create(null);
+      catalog.forEach(function(item) {
+        if (item && item.name) known[String(item.name)] = true;
+      });
+      return {
+        actions,
+        unknown: actions.filter(function(name) {
+          return !known[name];
+        })
+      };
+    }
+    function domainKey(role) {
+      if (!role) return "";
+      if (role.source === "user") return "user";
+      var raw = String(role.domain || role.id || "");
+      return raw.replace(/^wb-addon-/, "").split(/[\/.]/)[0];
+    }
+    function filterRoles(rows, filter) {
+      var q = String(filter && filter.q || "").trim().toLowerCase();
+      var source = filter && filter.source || "";
+      var domain = filter && filter.domain || "";
+      return (rows || []).filter(function(role) {
+        if (source && role.source !== source) return false;
+        if (domain && domainKey(role) !== domain) return false;
+        if (!q) return true;
+        var text = [role.name, role.description, role.instructions, (role.actions || []).join(" "), role.id].join(" ").toLowerCase();
+        return text.indexOf(q) >= 0;
+      });
+    }
+    function domainsOf(rows) {
+      var seen = [];
+      (rows || []).forEach(function(role) {
+        var key = domainKey(role);
+        if (key && seen.indexOf(key) < 0) seen.push(key);
+      });
+      return seen.sort();
+    }
+    module2.exports = {
+      domainOf,
+      domainKey,
+      groupActions,
+      dedupe,
+      parseManual,
+      validateActions,
+      filterRoles,
+      domainsOf
+    };
+  }
+});
+
+// packages/shell/client/conversation/catalog-editor.cjs
+var require_catalog_editor = __commonJS({
+  "packages/shell/client/conversation/catalog-editor.cjs"(exports2, module2) {
+    "use strict";
+    var React = require("react");
+    var h2 = React.createElement;
+    var common = require_client_common()("wbr");
+    var Btn = common.Btn;
+    var Field = common.Field;
+    var Notice = common.Notice;
+    var Body = require_markdown().createBody(React);
+    var groups = require_catalog_groups();
+    function Editor(props) {
+      var draft = props.draft, lang = props.lang === "en";
+      var tr = function(zh, en) {
+        return lang ? en : zh;
+      };
+      var set = function(patch) {
+        props.setDraft(Object.assign({}, draft, patch));
+      };
+      var tab = React.useState("edit"), view = tab[0], setView = tab[1];
+      var pick = React.useState(""), query = pick[0], setQuery = pick[1];
+      var catalog = props.catalog;
+      var picked = draft.actions || [];
+      var manual = groups.parseManual(draft.manual);
+      var effective = groups.dedupe(picked.concat(manual));
+      var checked = groups.validateActions(effective, catalog);
+      var unknown = checked.unknown;
+      function toggle(name) {
+        var next = picked.indexOf(name) >= 0 ? picked.filter(function(x) {
+          return x !== name;
+        }) : picked.concat([name]);
+        set({ actions: next });
+      }
+      var catalogRows = (catalog || []).filter(function(item) {
+        if (!query.trim()) return true;
+        return String(item.name + " " + (item.description || "")).toLowerCase().indexOf(query.trim().toLowerCase()) >= 0;
+      });
+      var table = groups.groupActions(catalogRows.map(function(item) {
+        return item.name;
+      }));
+      var byName = /* @__PURE__ */ Object.create(null);
+      (catalog || []).forEach(function(item) {
+        byName[item.name] = item;
+      });
+      function actionsPane() {
+        return h2(
+          "section",
+          { className: "wbr-actions" },
+          h2(
+            "div",
+            { className: "wbr-actions-head" },
+            h2("strong", null, tr("\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C", "Allowed workbench actions")),
+            h2("span", { className: "wbr-count" }, tr("\u5DF2\u9009 ", "Selected ") + effective.length + tr(" \u9879", ""))
+          ),
+          props.catalogError ? h2(Notice, { h: h2, kind: "warn", text: props.catalogError }) : null,
+          h2("input", { name: "actionSearch", className: "wbr-input", value: query, placeholder: tr("\u7B5B\u9009\u52A8\u4F5C\u540D\u6216\u8BF4\u660E", "Filter actions"), onChange: function(e) {
+            setQuery(e.target.value);
+          } }),
+          h2("div", { className: "wbr-actions-groups" }, table.map(function(group) {
+            return h2(
+              "div",
+              { key: group.domain, className: "wbr-actions-group" },
+              h2("div", { className: "wbr-actions-domain" }, group.domain, h2("span", { className: "wbr-count" }, String(group.items.length))),
+              group.items.map(function(name) {
+                var item = byName[name] || {};
+                return h2(
+                  "label",
+                  { key: name, className: "wbr-check", title: item.description || name },
+                  h2("input", { type: "checkbox", name: "action:" + name, checked: picked.indexOf(name) >= 0, onChange: function() {
+                    toggle(name);
+                  } }),
+                  h2("code", null, name)
+                );
+              })
+            );
+          })),
+          h2(
+            Field,
+            { h: h2, label: tr("\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Extra action names (one per line)"), hint: tr("\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C", "For actions that are valid but not listed") },
+            h2("textarea", { name: "manual", className: "wbr-input", rows: 3, value: draft.manual || "", onChange: function(e) {
+              set({ manual: e.target.value });
+            } })
+          ),
+          unknown.length ? h2(
+            "div",
+            { className: "wbr-unknown", role: "alert" },
+            h2("strong", null, tr("\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5B58\u5728\uFF1A", "These actions do not exist: ")),
+            h2("span", null, unknown.join("\u3001")),
+            h2("small", null, tr("\u8BF7\u6539\u6210\u771F\u5B9E\u52A8\u4F5C\u540D\u540E\u518D\u4FDD\u5B58\uFF0C\u5426\u5219\u89D2\u8272\u6BCF\u6B21\u8C03\u7528\u90FD\u4F1A\u88AB\u62D2\u3002", "Fix the names before saving, otherwise every call from this role will be rejected."))
+          ) : null
+        );
+      }
+      return h2(
+        "section",
+        { className: "wb-card wbr-editor" },
+        h2(
+          "div",
+          { className: "wbr-editor-head" },
+          h2("strong", null, draft.mode === "create" ? tr("\u65B0\u5EFA\u89D2\u8272", "New role") : tr("\u7F16\u8F91\u89D2\u8272", "Edit role")),
+          h2("small", null, draft.id || "")
+        ),
+        h2(
+          Field,
+          { h: h2, label: tr("\u540D\u79F0", "Name") },
+          h2("input", { name: "name", className: "wbr-input", value: draft.name || "", onChange: function(e) {
+            set({ name: e.target.value });
+          } })
+        ),
+        h2(
+          Field,
+          { h: h2, label: tr("\u804C\u8D23\u7B80\u4ECB", "Description") },
+          h2("input", { name: "description", className: "wbr-input", value: draft.description || "", onChange: function(e) {
+            set({ description: e.target.value });
+          } })
+        ),
+        h2(
+          "section",
+          { className: "wbr-instructions" },
+          h2(
+            "div",
+            { className: "wbr-instructions-head" },
+            h2("strong", null, tr("\u89D2\u8272\u6307\u4EE4", "Instructions")),
+            h2(
+              "div",
+              { className: "wbr-tabs", role: "tablist" },
+              h2("button", { type: "button", role: "tab", "aria-selected": view === "edit", className: "wbr-tab", onClick: function() {
+                setView("edit");
+              } }, tr("\u7F16\u8F91", "Edit")),
+              h2("button", { type: "button", role: "tab", "aria-selected": view === "preview", className: "wbr-tab", onClick: function() {
+                setView("preview");
+              } }, tr("\u9884\u89C8", "Preview"))
+            )
+          ),
+          view === "edit" ? h2("textarea", { name: "instructions", className: "wbr-input", rows: 8, value: draft.instructions || "", onChange: function(e) {
+            set({ instructions: e.target.value });
+          } }) : h2("div", { className: "wbr-preview" }, (draft.instructions || "").trim() ? h2(Body, { text: draft.instructions, mode: "markdown" }) : h2("em", null, tr("\u8FD8\u6CA1\u6709\u5185\u5BB9", "Nothing to preview")))
+        ),
+        actionsPane(),
+        h2(
+          "div",
+          { className: "wb-sec" },
+          h2(Btn, { h: h2, onClick: props.onSave, disabled: props.busy || unknown.length > 0 || !String(draft.name || "").trim() || !String(draft.instructions || "").trim() }, tr("\u4FDD\u5B58", "Save")),
+          h2(Btn, { h: h2, onClick: props.onCancel, disabled: props.busy }, tr("\u53D6\u6D88", "Cancel"))
+        )
+      );
+    }
+    module2.exports = Editor;
+  }
+});
+
 // packages/shell/client/conversation/catalog.cjs
 var require_catalog = __commonJS({
   "packages/shell/client/conversation/catalog.cjs"(exports2, module2) {
     "use strict";
     var React = require("react");
     var h2 = React.createElement;
-    var { Btn, Field, Notice, Empty, unwrap } = require_client_common()("wb");
+    var common = require_client_common()("wbr");
+    var Btn = common.Btn;
+    var Notice = common.Notice;
+    var Empty = common.Empty;
+    var Pill = common.Pill;
+    var unwrap = common.unwrap;
+    var Description = require_description().Description;
+    var groups = require_catalog_groups();
+    var Editor = require_catalog_editor();
     var endpoint = "/role-catalog";
+    var ACTIONS_ENDPOINT = "/domains/wb-shell/actions/actions.list";
     function catalogRows(response) {
-      const value = unwrap(response);
-      if (!Array.isArray(value?.roles)) throw new Error("Invalid role catalog");
+      var value = unwrap(response);
+      if (!Array.isArray(value && value.roles)) throw new Error("Invalid role catalog");
       return value.roles;
     }
-    function fieldsOf(role) {
-      return { name: role?.name || "", description: role?.description || "", instructions: role?.instructions || "", actions: (role?.actions || []).join("\n") };
+    function actionRows(response) {
+      var value = unwrap(response);
+      var list = value && value.actions;
+      if (!Array.isArray(list)) return null;
+      return list.filter(function(item) {
+        return item && typeof item.name === "string";
+      });
     }
-    function editorPayload(mode, values, id) {
-      const actions = [...new Set(values.actions.split(/[\s,，]+/).filter(Boolean))];
-      return { op: mode, ...id ? { id } : {}, name: values.name.trim(), description: values.description.trim(), instructions: values.instructions.trim(), actions };
+    function blankDraft() {
+      return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [], manual: "" };
     }
-    function RoleCatalog({ api, lang, head }) {
-      const tr = (zh, en) => lang === "en" ? en : zh;
-      const [roles, setRoles] = React.useState(null);
-      const [draft, setDraft] = React.useState(null);
-      const [pendingDelete, setDelete] = React.useState(null);
-      const [error, setError] = React.useState("");
-      const [busy, setBusy] = React.useState(false);
-      const lock = React.useRef(false), sequence = React.useRef(0);
+    function draftOf(role) {
+      return {
+        mode: "update",
+        id: role.id,
+        name: role.name || "",
+        description: role.description || "",
+        instructions: role.instructions || "",
+        actions: (role.actions || []).slice(),
+        manual: ""
+      };
+    }
+    function payloadOf(draft) {
+      var actions = groups.dedupe((draft.actions || []).concat(groups.parseManual(draft.manual)));
+      return {
+        op: draft.mode,
+        ...draft.id ? { id: draft.id } : {},
+        name: String(draft.name || "").trim(),
+        description: String(draft.description || "").trim(),
+        instructions: String(draft.instructions || "").trim(),
+        actions
+      };
+    }
+    function RoleCatalog(props) {
+      var lang = props.lang === "en";
+      var tr = function(zh, en) {
+        return lang ? en : zh;
+      };
+      var rowsState = React.useState(null), rows = rowsState[0], setRows = rowsState[1];
+      var errorState = React.useState(""), error = errorState[0], setError = errorState[1];
+      var filterState = React.useState({ q: "", source: "", domain: "" }), filter = filterState[0], setFilter = filterState[1];
+      var selectState = React.useState(""), selected = selectState[0], setSelected = selectState[1];
+      var draftState = React.useState(null), draft = draftState[0], setDraft = draftState[1];
+      var deleteState = React.useState(""), pendingDelete = deleteState[0], setDelete = deleteState[1];
+      var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1];
+      var catalogState = React.useState(null), catalog = catalogState[0], setCatalog = catalogState[1];
+      var catalogErrorState = React.useState(""), catalogError = catalogErrorState[0], setCatalogError = catalogErrorState[1];
+      var lock = React.useRef(false), sequence = React.useRef(0);
       async function refresh() {
-        const req = ++sequence.current;
+        var req = ++sequence.current;
         try {
-          const rows = catalogRows(await api.get(endpoint));
-          if (req === sequence.current) {
-            setRoles(rows);
-            setError("");
-          }
+          var next = catalogRows(await props.api.get(endpoint));
+          if (req !== sequence.current) return;
+          setRows(next);
+          setError("");
         } catch (e) {
           if (req === sequence.current) setError(e.message);
         }
       }
-      React.useEffect(() => {
+      async function loadActions() {
+        try {
+          var list2 = actionRows(await props.api.post(ACTIONS_ENDPOINT, { detail: true }));
+          if (list2) setCatalog(list2);
+        } catch (e) {
+          setCatalogError(tr("\u52A8\u4F5C\u76EE\u5F55\u8BFB\u53D6\u5931\u8D25\uFF1A\u4FDD\u5B58\u65F6\u4ECD\u6309\u670D\u52A1\u7AEF\u6821\u9A8C", "Could not load the action catalog; the server still validates on save"));
+        }
+      }
+      React.useEffect(function() {
         refresh();
-        const stream2 = new EventSource("/workbench/api/events");
-        for (const event of ["role-catalog", "domains-changed", "open"]) stream2.addEventListener(event, refresh);
-        return () => {
+        loadActions();
+        var stream2 = new EventSource("/workbench/api/events");
+        var events = ["role-catalog", "domains-changed", "open"];
+        events.forEach(function(event) {
+          stream2.addEventListener(event, refresh);
+        });
+        return function() {
           ++sequence.current;
           stream2.close();
         };
@@ -11729,11 +12424,11 @@ var require_catalog = __commonJS({
         setBusy(true);
         setError("");
         try {
-          const rows = catalogRows(await api.post(endpoint, payload));
+          var next = catalogRows(await props.api.post(endpoint, payload));
           ++sequence.current;
-          setRoles(rows);
+          setRows(next);
           setDraft(null);
-          setDelete(null);
+          setDelete("");
         } catch (e) {
           setError(e.message);
         } finally {
@@ -11741,81 +12436,186 @@ var require_catalog = __commonJS({
           setBusy(false);
         }
       }
-      function button(label, onClick, disabled = false) {
-        return h2(Btn, { h: h2, onClick, disabled: busy || disabled }, label);
+      function save() {
+        var checked = groups.validateActions((draft.actions || []).concat(groups.parseManual(draft.manual)), catalog);
+        if (checked.unknown.length) {
+          setError(tr("\u52A8\u4F5C\u540D\u4E0D\u5B58\u5728\uFF1A", "Unknown actions: ") + checked.unknown.join("\u3001"));
+          return;
+        }
+        mutate(payloadOf(draft));
       }
-      function begin(mode, role) {
-        setDraft({ mode, id: role?.id, ...fieldsOf(role) });
-        setDelete(null);
-        setError("");
-      }
-      function field(key, label, rows) {
-        return h2(Field, { h: h2, label }, h2(rows ? "textarea" : "input", {
-          name: key,
-          rows,
-          className: "wb-input",
-          value: draft[key],
-          disabled: busy,
-          onChange: (e) => setDraft({ ...draft, [key]: e.target.value })
-        }));
-      }
-      const labels = { create: tr("\u65B0\u5EFA\u89D2\u8272", "New role"), update: tr("\u7F16\u8F91\u89D2\u8272", "Edit role") };
-      function editor() {
+      var filtered = groups.filterRoles(rows || [], filter);
+      var current = (rows || []).filter(function(role) {
+        return role.id === selected;
+      })[0] || null;
+      function toolbar() {
         return h2(
-          "section",
-          { className: "wb-card wb-stack" },
-          h2("strong", null, labels[draft.mode]),
-          field("name", tr("\u540D\u79F0", "Name")),
-          field("description", tr("\u804C\u8D23\u7B80\u4ECB", "Description")),
-          field("instructions", tr("\u89D2\u8272\u6307\u4EE4", "Instructions"), 8),
-          field("actions", tr("\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Allowed actions (one per line)"), 4),
+          "div",
+          { className: "wbr-toolbar" },
+          h2("input", {
+            name: "search",
+            className: "wbr-input wbr-search",
+            value: filter.q,
+            placeholder: tr("\u641C\u7D22\u540D\u79F0\u3001\u7B80\u4ECB\u3001\u6307\u4EE4\u6216\u52A8\u4F5C", "Search name, description, instructions or actions"),
+            "aria-label": tr("\u641C\u7D22\u89D2\u8272", "Search roles"),
+            onChange: function(e) {
+              setFilter(Object.assign({}, filter, { q: e.target.value }));
+            }
+          }),
           h2(
-            "div",
-            { className: "wb-sec" },
-            button(tr("\u4FDD\u5B58", "Save"), () => mutate(editorPayload(draft.mode, draft, draft.id)), !draft.name.trim() || !draft.instructions.trim()),
-            button(tr("\u53D6\u6D88", "Cancel"), () => setDraft(null))
-          )
+            "select",
+            {
+              name: "source",
+              className: "wbr-input wbr-select",
+              value: filter.source,
+              "aria-label": tr("\u6309\u6765\u6E90\u7B5B\u9009", "Filter by source"),
+              onChange: function(e) {
+                setFilter(Object.assign({}, filter, { source: e.target.value }));
+              }
+            },
+            h2("option", { value: "" }, tr("\u5168\u90E8\u6765\u6E90", "All sources")),
+            h2("option", { value: "plugin" }, tr("\u63D2\u4EF6\u89D2\u8272", "Plugin roles")),
+            h2("option", { value: "user" }, tr("\u81EA\u5B9A\u4E49\u89D2\u8272", "Custom roles"))
+          ),
+          h2(
+            "select",
+            {
+              name: "domain",
+              className: "wbr-input wbr-select",
+              value: filter.domain,
+              "aria-label": tr("\u6309\u57DF\u7B5B\u9009", "Filter by domain"),
+              onChange: function(e) {
+                setFilter(Object.assign({}, filter, { domain: e.target.value }));
+              }
+            },
+            h2("option", { value: "" }, tr("\u5168\u90E8\u57DF", "All domains")),
+            groups.domainsOf(rows || []).map(function(domain) {
+              return h2("option", { key: domain, value: domain }, domain);
+            })
+          ),
+          h2(Btn, { h: h2, onClick: function() {
+            setDraft(blankDraft());
+            setDelete("");
+          }, disabled: !!draft }, tr("\u65B0\u5EFA\u89D2\u8272", "New role"))
         );
       }
-      function card(role) {
-        const editable = role.source === "user";
+      function badge(role) {
+        return h2(
+          Pill,
+          { h: h2, kind: role.source === "user" ? "info" : "" },
+          role.source === "user" ? tr("\u81EA\u5B9A\u4E49", "Custom") : tr("\u63D2\u4EF6", "Plugin")
+        );
+      }
+      function list() {
+        if (rows === null) return h2(Notice, { h: h2, text: tr("\u6B63\u5728\u8BFB\u53D6\u89D2\u8272\u2026", "Loading roles\u2026") });
+        if (!rows.length) return h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") });
+        if (!filtered.length) return h2(Empty, { h: h2, text: tr("\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272\uFF0C\u8BD5\u8BD5\u6E05\u7A7A\u7B5B\u9009", "No role matches these filters") });
+        return h2("div", { className: "wbr-rows", role: "list" }, filtered.map(function(role) {
+          var counts = groups.groupActions(role.actions || []);
+          return h2(
+            "button",
+            {
+              key: role.id,
+              type: "button",
+              role: "listitem",
+              className: "wbr-row" + (role.id === selected ? " on" : ""),
+              "aria-pressed": role.id === selected,
+              onClick: function() {
+                setSelected(role.id);
+                setDraft(null);
+                setDelete("");
+              }
+            },
+            h2("span", { className: "wbr-row-name" }, role.name),
+            h2("span", { className: "wbr-row-meta" }, badge(role), h2("code", null, role.id), h2("small", null, "v" + role.version)),
+            h2(
+              "span",
+              { className: "wbr-row-counts" },
+              tr(String((role.actions || []).length) + " \u9879\u52A8\u4F5C", String((role.actions || []).length) + " actions"),
+              counts.length ? h2("small", null, counts.map(function(group) {
+                return group.domain + " " + group.items.length;
+              }).join(" \xB7 ")) : null
+            )
+          );
+        }));
+      }
+      function detail() {
+        if (!current) return h2("div", { className: "wbr-detail wbr-detail-empty" }, h2(Empty, { h: h2, text: tr("\u4ECE\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u89D2\u8272\u67E5\u770B\u8BE6\u60C5", "Pick a role on the left") }));
+        var editable = current.source === "user";
+        var table = groups.groupActions(current.actions || []);
         return h2(
           "article",
-          { key: role.id, className: "wb-card wb-stack" },
-          h2("strong", null, role.name),
-          h2("small", { className: "wb-msg" }, (editable ? tr("\u81EA\u5B9A\u4E49\u89D2\u8272", "Custom role") : role.domain) + " \xB7 " + role.id + " \xB7 v" + role.version),
-          h2("span", null, role.description),
+          { className: "wbr-detail" },
           h2(
-            "details",
-            null,
-            h2("summary", null, tr("\u67E5\u770B\u6307\u4EE4\u4E0E\u52A8\u4F5C", "View instructions and actions")),
-            h2("p", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, role.instructions),
-            h2("code", { style: { overflowWrap: "anywhere" } }, role.actions.join(", ") || tr("\u672A\u9009\u62E9\u52A8\u4F5C", "No actions"))
+            "header",
+            { className: "wbr-detail-head" },
+            h2("strong", null, current.name),
+            badge(current),
+            h2("code", null, current.id),
+            h2("small", null, "v" + current.version + " \xB7 " + (current.domain || "user"))
+          ),
+          current.description ? h2("p", { className: "wbr-detail-desc" }, current.description) : null,
+          h2(Description, { text: current.instructions, lang: props.lang, bodyMode: "markdown" }),
+          h2(
+            "section",
+            { className: "wbr-detail-actions" },
+            h2("strong", null, tr("\u52A8\u4F5C ", "Actions ") + (current.actions || []).length + tr(" \u9879", "")),
+            table.length ? table.map(function(group) {
+              return h2(
+                "div",
+                { key: group.domain, className: "wbr-detail-group" },
+                h2("span", { className: "wbr-detail-domain" }, group.domain + " \xB7 " + group.items.length),
+                h2("span", { className: "wbr-chips" }, group.items.map(function(name) {
+                  return h2("code", { key: name, className: "wbr-chip" }, name);
+                }))
+              );
+            }) : h2(Empty, { h: h2, text: tr("\u672A\u9009\u62E9\u52A8\u4F5C", "No actions") })
           ),
           h2(
             "div",
             { className: "wb-sec" },
-            button(tr("\u590D\u5236\u4E3A\u65B0\u89D2\u8272", "Duplicate as a new role"), () => mutate({ op: "copy", id: role.id }), !!draft),
-            editable && button(tr("\u7F16\u8F91", "Edit"), () => begin("update", role), !!draft),
-            editable && button(tr("\u5220\u9664", "Delete"), () => setDelete(role.id), !!draft)
+            h2(Btn, { h: h2, onClick: function() {
+              mutate({ op: "copy", id: current.id });
+            }, disabled: busy || !!draft }, tr("\u590D\u5236\u4E3A\u65B0\u89D2\u8272", "Duplicate as a new role")),
+            editable ? h2(Btn, { h: h2, onClick: function() {
+              setDraft(draftOf(current));
+            }, disabled: busy || !!draft }, tr("\u7F16\u8F91", "Edit")) : null,
+            editable ? h2(Btn, { h: h2, onClick: function() {
+              setDelete(current.id);
+            }, disabled: busy || !!draft }, tr("\u5220\u9664", "Delete")) : null
           ),
-          pendingDelete === role.id && h2(
+          pendingDelete === current.id ? h2(
             "div",
             { className: "wb-sec" },
             tr("\u786E\u5B9A\u5220\u9664\u6B64\u89D2\u8272\uFF1F", "Delete this role?"),
-            button(tr("\u786E\u8BA4\u5220\u9664", "Confirm deletion"), () => mutate({ op: "delete", id: role.id })),
-            button(tr("\u53D6\u6D88", "Cancel"), () => setDelete(null))
-          )
+            h2(Btn, { h: h2, onClick: function() {
+              mutate({ op: "delete", id: current.id });
+            }, disabled: busy }, tr("\u786E\u8BA4\u5220\u9664", "Confirm deletion")),
+            h2(Btn, { h: h2, onClick: function() {
+              setDelete("");
+            }, disabled: busy }, tr("\u53D6\u6D88", "Cancel"))
+          ) : null
         );
       }
       return h2("div", { className: "wb-root" }, h2(
         "div",
         { className: "wb-inner wb-wide wb-stack" },
-        head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u67E5\u770B\u63D2\u4EF6\u89D2\u8272\uFF0C\u521B\u5EFA\u548C\u7EF4\u62A4\u81EA\u5DF1\u7684\u4F1A\u8BDD\u89D2\u8272", "Browse plugin roles and manage your own session roles")),
-        h2("div", { className: "wb-sec" }, button(labels.create, () => begin("create"), !!draft)),
-        error && h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), button(tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"), refresh)),
-        draft && editor(),
-        roles === null ? h2(Notice, { h: h2, text: tr("\u6B63\u5728\u8BFB\u53D6\u89D2\u8272\u2026", "Loading roles\u2026") }) : roles.length ? roles.map(card) : h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") })
+        props.head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u6309\u6765\u6E90\u4E0E\u57DF\u67E5\u770B\u89D2\u8272\uFF0C\u6307\u4EE4\u53EF\u8BFB\u3001\u52A8\u4F5C\u53EF\u67E5\u3001\u4FDD\u5B58\u524D\u6821\u9A8C\u52A8\u4F5C\u540D", "Browse roles by source and domain; readable instructions, grouped actions, validated names")),
+        toolbar(),
+        error ? h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), h2(Btn, { h: h2, onClick: refresh }, tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"))) : null,
+        draft ? h2(Editor, {
+          h: h2,
+          lang: props.lang,
+          draft,
+          setDraft,
+          catalog,
+          catalogError,
+          busy,
+          onSave: save,
+          onCancel: function() {
+            setDraft(null);
+          }
+        }) : h2("div", { className: "wbr-split" }, h2("div", { className: "wbr-list" }, list()), detail())
       ));
     }
     module2.exports = RoleCatalog;

@@ -1,83 +1,246 @@
 "use strict";
-// 宿主角色目录使用自己的接口，插件原件只读，两种来源均可生成独立副本。
-const React = require("react");
-const h = React.createElement;
-const { Btn, Field, Notice, Empty, unwrap } = require("../../../addons/lib/client-common.cjs")("wb");
-const endpoint = "/role-catalog";
+/**
+ * 角色管理页（宿主 route "roles"）。
+ *
+ * 职责边界：页面只管「读目录、筛选、看详情、编辑提交」。指令的 markdown 渲染复用
+ * packages/addons/lib/description.cjs（内部走有界的 markdown.cjs，不引第三方包），
+ * 动作分组与名校验复用同目录的 catalog-groups.cjs，编辑器在 catalog-editor.cjs。
+ *
+ * 角色权限机制不在这里：白名单判定仍由宿主 tool-policy 做，本页只保证「写不错动作名」。
+ */
+var React = require("react");
+var h = React.createElement;
+var common = require("../../../addons/lib/client-common.cjs")("wbr");
+var Btn = common.Btn, Notice = common.Notice, Empty = common.Empty, Pill = common.Pill, unwrap = common.unwrap;
+var Description = require("../../../addons/lib/description.cjs").Description;
+var groups = require("./catalog-groups.cjs");
+var Editor = require("./catalog-editor.cjs");
+
+var endpoint = "/role-catalog";
+var ACTIONS_ENDPOINT = "/domains/wb-shell/actions/actions.list";
+
 function catalogRows(response) {
-  const value = unwrap(response);
-  if (!Array.isArray(value?.roles)) throw new Error("Invalid role catalog");
+  var value = unwrap(response);
+  if (!Array.isArray(value && value.roles)) throw new Error("Invalid role catalog");
   return value.roles;
 }
-function fieldsOf(role) {
-  return { name: role?.name || "", description: role?.description || "", instructions: role?.instructions || "", actions: (role?.actions || []).join("\n") };
+
+function actionRows(response) {
+  var value = unwrap(response);
+  var list = value && value.actions;
+  if (!Array.isArray(list)) return null;
+  return list.filter(function (item) { return item && typeof item.name === "string"; });
 }
-function editorPayload(mode, values, id) {
-  const actions = [...new Set(values.actions.split(/[\s,，]+/).filter(Boolean))];
-  return { op: mode, ...(id ? { id } : {}), name: values.name.trim(), description: values.description.trim(), instructions: values.instructions.trim(), actions };
+
+function blankDraft() {
+  return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [], manual: "" };
 }
-function RoleCatalog({ api, lang, head }) {
-  const tr = (zh, en) => lang === "en" ? en : zh;
-  const [roles, setRoles] = React.useState(null);
-  const [draft, setDraft] = React.useState(null);
-  const [pendingDelete, setDelete] = React.useState(null);
-  const [error, setError] = React.useState("");
-  const [busy, setBusy] = React.useState(false);
-  const lock = React.useRef(false), sequence = React.useRef(0);
+
+function draftOf(role) {
+  return {
+    mode: "update",
+    id: role.id,
+    name: role.name || "",
+    description: role.description || "",
+    instructions: role.instructions || "",
+    actions: (role.actions || []).slice(),
+    manual: "",
+  };
+}
+
+function payloadOf(draft) {
+  var actions = groups.dedupe((draft.actions || []).concat(groups.parseManual(draft.manual)));
+  return {
+    op: draft.mode,
+    ...(draft.id ? { id: draft.id } : {}),
+    name: String(draft.name || "").trim(),
+    description: String(draft.description || "").trim(),
+    instructions: String(draft.instructions || "").trim(),
+    actions: actions,
+  };
+}
+
+function RoleCatalog(props) {
+  var lang = props.lang === "en";
+  var tr = function (zh, en) { return lang ? en : zh; };
+  var rowsState = React.useState(null), rows = rowsState[0], setRows = rowsState[1];
+  var errorState = React.useState(""), error = errorState[0], setError = errorState[1];
+  var filterState = React.useState({ q: "", source: "", domain: "" }), filter = filterState[0], setFilter = filterState[1];
+  var selectState = React.useState(""), selected = selectState[0], setSelected = selectState[1];
+  var draftState = React.useState(null), draft = draftState[0], setDraft = draftState[1];
+  var deleteState = React.useState(""), pendingDelete = deleteState[0], setDelete = deleteState[1];
+  var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1];
+  var catalogState = React.useState(null), catalog = catalogState[0], setCatalog = catalogState[1];
+  var catalogErrorState = React.useState(""), catalogError = catalogErrorState[0], setCatalogError = catalogErrorState[1];
+  var lock = React.useRef(false), sequence = React.useRef(0);
+
   async function refresh() {
-    const req = ++sequence.current;
-    try { const rows = catalogRows(await api.get(endpoint)); if (req === sequence.current) { setRoles(rows); setError(""); } }
-    catch (e) { if (req === sequence.current) setError(e.message); }
+    var req = ++sequence.current;
+    try {
+      var next = catalogRows(await props.api.get(endpoint));
+      if (req !== sequence.current) return;
+      setRows(next);
+      setError("");
+    } catch (e) {
+      if (req === sequence.current) setError(e.message);
+    }
   }
-  React.useEffect(() => {
+
+  async function loadActions() {
+    try {
+      var list = actionRows(await props.api.post(ACTIONS_ENDPOINT, { detail: true }));
+      if (list) setCatalog(list);
+    } catch (e) {
+      // 动作目录取不到只影响勾选与「存在性」提示，不该挡住看角色。
+      setCatalogError(tr("动作目录读取失败：保存时仍按服务端校验", "Could not load the action catalog; the server still validates on save"));
+    }
+  }
+
+  React.useEffect(function () {
     refresh();
-    const stream = new EventSource("/workbench/api/events");
-    for (const event of ["role-catalog", "domains-changed", "open"]) stream.addEventListener(event, refresh);
-    return () => { ++sequence.current; stream.close(); };
+    loadActions();
+    var stream = new EventSource("/workbench/api/events");
+    var events = ["role-catalog", "domains-changed", "open"];
+    events.forEach(function (event) { stream.addEventListener(event, refresh); });
+    return function () {
+      ++sequence.current;
+      stream.close();
+    };
   }, []);
+
   async function mutate(payload) {
     if (lock.current) return;
-    lock.current = true; setBusy(true); setError("");
+    lock.current = true;
+    setBusy(true);
+    setError("");
     try {
-      const rows = catalogRows(await api.post(endpoint, payload));
-      ++sequence.current; setRoles(rows); setDraft(null); setDelete(null);
-    } catch (e) { setError(e.message); }
-    finally { lock.current = false; setBusy(false); }
+      var next = catalogRows(await props.api.post(endpoint, payload));
+      ++sequence.current;
+      setRows(next);
+      setDraft(null);
+      setDelete("");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
   }
-  function button(label, onClick, disabled = false) { return h(Btn, { h, onClick, disabled: busy || disabled }, label); }
-  function begin(mode, role) { setDraft({ mode, id: role?.id, ...fieldsOf(role) }); setDelete(null); setError(""); }
-  function field(key, label, rows) {
-    return h(Field, { h, label }, h(rows ? "textarea" : "input", { name: key, rows, className: "wb-input", value: draft[key], disabled: busy,
-      onChange: (e) => setDraft({ ...draft, [key]: e.target.value }) }));
+
+  function save() {
+    var checked = groups.validateActions((draft.actions || []).concat(groups.parseManual(draft.manual)), catalog);
+    if (checked.unknown.length) {
+      // 校验已经由编辑器红字展示；这里再挡一次，防止有人绕过按钮直接触发。
+      setError(tr("动作名不存在：", "Unknown actions: ") + checked.unknown.join("、"));
+      return;
+    }
+    mutate(payloadOf(draft));
   }
-  const labels = { create: tr("新建角色", "New role"), update: tr("编辑角色", "Edit role") };
-  function editor() {
-    return h("section", { className: "wb-card wb-stack" }, h("strong", null, labels[draft.mode]),
-      field("name", tr("名称", "Name")), field("description", tr("职责简介", "Description")),
-      field("instructions", tr("角色指令", "Instructions"), 8), field("actions", tr("允许的工作台动作（每行一个）", "Allowed actions (one per line)"), 4),
-      h("div", { className: "wb-sec" }, button(tr("保存", "Save"), () => mutate(editorPayload(draft.mode, draft, draft.id)), !draft.name.trim() || !draft.instructions.trim()),
-        button(tr("取消", "Cancel"), () => setDraft(null))));
+
+  var filtered = groups.filterRoles(rows || [], filter);
+  var current = (rows || []).filter(function (role) { return role.id === selected; })[0] || null;
+
+  function toolbar() {
+    return h("div", { className: "wbr-toolbar" },
+      h("input", {
+        name: "search",
+        className: "wbr-input wbr-search",
+        value: filter.q,
+        placeholder: tr("搜索名称、简介、指令或动作", "Search name, description, instructions or actions"),
+        "aria-label": tr("搜索角色", "Search roles"),
+        onChange: function (e) { setFilter(Object.assign({}, filter, { q: e.target.value })); },
+      }),
+      h("select", {
+        name: "source",
+        className: "wbr-input wbr-select",
+        value: filter.source,
+        "aria-label": tr("按来源筛选", "Filter by source"),
+        onChange: function (e) { setFilter(Object.assign({}, filter, { source: e.target.value })); },
+      },
+        h("option", { value: "" }, tr("全部来源", "All sources")),
+        h("option", { value: "plugin" }, tr("插件角色", "Plugin roles")),
+        h("option", { value: "user" }, tr("自定义角色", "Custom roles"))),
+      h("select", {
+        name: "domain",
+        className: "wbr-input wbr-select",
+        value: filter.domain,
+        "aria-label": tr("按域筛选", "Filter by domain"),
+        onChange: function (e) { setFilter(Object.assign({}, filter, { domain: e.target.value })); },
+      },
+        h("option", { value: "" }, tr("全部域", "All domains")),
+        groups.domainsOf(rows || []).map(function (domain) {
+          return h("option", { key: domain, value: domain }, domain);
+        })),
+      h(Btn, { h: h, onClick: function () { setDraft(blankDraft()); setDelete(""); }, disabled: !!draft }, tr("新建角色", "New role")));
   }
-  function card(role) {
-    const editable = role.source === "user";
-    return h("article", { key: role.id, className: "wb-card wb-stack" }, h("strong", null, role.name),
-      h("small", { className: "wb-msg" }, (editable ? tr("自定义角色", "Custom role") : role.domain) + " · " + role.id + " · v" + role.version),
-      h("span", null, role.description),
-      h("details", null, h("summary", null, tr("查看指令与动作", "View instructions and actions")),
-        h("p", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, role.instructions),
-        h("code", { style: { overflowWrap: "anywhere" } }, role.actions.join(", ") || tr("未选择动作", "No actions"))),
-      h("div", { className: "wb-sec" }, button(tr("复制为新角色", "Duplicate as a new role"), () => mutate({ op: "copy", id: role.id }), !!draft),
-        editable && button(tr("编辑", "Edit"), () => begin("update", role), !!draft),
-        editable && button(tr("删除", "Delete"), () => setDelete(role.id), !!draft)),
-      pendingDelete === role.id && h("div", { className: "wb-sec" }, tr("确定删除此角色？", "Delete this role?"),
-        button(tr("确认删除", "Confirm deletion"), () => mutate({ op: "delete", id: role.id })),
-        button(tr("取消", "Cancel"), () => setDelete(null))));
+
+  function badge(role) {
+    return h(Pill, { h: h, kind: role.source === "user" ? "info" : "" },
+      role.source === "user" ? tr("自定义", "Custom") : tr("插件", "Plugin"));
   }
+
+  function list() {
+    if (rows === null) return h(Notice, { h: h, text: tr("正在读取角色…", "Loading roles…") });
+    if (!rows.length) return h(Empty, { h: h, text: tr("暂无角色", "No roles") });
+    if (!filtered.length) return h(Empty, { h: h, text: tr("没有匹配的角色，试试清空筛选", "No role matches these filters") });
+    return h("div", { className: "wbr-rows", role: "list" }, filtered.map(function (role) {
+      var counts = groups.groupActions(role.actions || []);
+      return h("button", {
+        key: role.id,
+        type: "button",
+        role: "listitem",
+        className: "wbr-row" + (role.id === selected ? " on" : ""),
+        "aria-pressed": role.id === selected,
+        onClick: function () { setSelected(role.id); setDraft(null); setDelete(""); },
+      },
+        h("span", { className: "wbr-row-name" }, role.name),
+        h("span", { className: "wbr-row-meta" }, badge(role), h("code", null, role.id), h("small", null, "v" + role.version)),
+        h("span", { className: "wbr-row-counts" }, tr(String((role.actions || []).length) + " 项动作", String((role.actions || []).length) + " actions"),
+          counts.length ? h("small", null, counts.map(function (group) { return group.domain + " " + group.items.length; }).join(" · ")) : null));
+    }));
+  }
+
+  function detail() {
+    if (!current) return h("div", { className: "wbr-detail wbr-detail-empty" }, h(Empty, { h: h, text: tr("从左侧选择一个角色查看详情", "Pick a role on the left") }));
+    var editable = current.source === "user";
+    var table = groups.groupActions(current.actions || []);
+    return h("article", { className: "wbr-detail" },
+      h("header", { className: "wbr-detail-head" },
+        h("strong", null, current.name),
+        badge(current),
+        h("code", null, current.id),
+        h("small", null, "v" + current.version + " · " + (current.domain || "user"))),
+      current.description ? h("p", { className: "wbr-detail-desc" }, current.description) : null,
+      h(Description, { text: current.instructions, lang: props.lang, bodyMode: "markdown" }),
+      h("section", { className: "wbr-detail-actions" },
+        h("strong", null, tr("动作 ", "Actions ") + (current.actions || []).length + tr(" 项", "")),
+        table.length ? table.map(function (group) {
+          return h("div", { key: group.domain, className: "wbr-detail-group" },
+            h("span", { className: "wbr-detail-domain" }, group.domain + " · " + group.items.length),
+            h("span", { className: "wbr-chips" }, group.items.map(function (name) {
+              return h("code", { key: name, className: "wbr-chip" }, name);
+            })));
+        }) : h(Empty, { h: h, text: tr("未选择动作", "No actions") })),
+      h("div", { className: "wb-sec" },
+        h(Btn, { h: h, onClick: function () { mutate({ op: "copy", id: current.id }); }, disabled: busy || !!draft }, tr("复制为新角色", "Duplicate as a new role")),
+        editable ? h(Btn, { h: h, onClick: function () { setDraft(draftOf(current)); }, disabled: busy || !!draft }, tr("编辑", "Edit")) : null,
+        editable ? h(Btn, { h: h, onClick: function () { setDelete(current.id); }, disabled: busy || !!draft }, tr("删除", "Delete")) : null),
+      pendingDelete === current.id ? h("div", { className: "wb-sec" },
+        tr("确定删除此角色？", "Delete this role?"),
+        h(Btn, { h: h, onClick: function () { mutate({ op: "delete", id: current.id }); }, disabled: busy }, tr("确认删除", "Confirm deletion")),
+        h(Btn, { h: h, onClick: function () { setDelete(""); }, disabled: busy }, tr("取消", "Cancel"))) : null);
+  }
+
   return h("div", { className: "wb-root" }, h("div", { className: "wb-inner wb-wide wb-stack" },
-    head(tr("角色管理", "Role management"), tr("查看插件角色，创建和维护自己的会话角色", "Browse plugin roles and manage your own session roles")),
-    h("div", { className: "wb-sec" }, button(labels.create, () => begin("create"), !!draft)),
-    error && h("div", { role: "alert" }, h(Notice, { h, kind: "error", text: error }), button(tr("重新加载", "Reload"), refresh)),
-    draft && editor(), roles === null ? h(Notice, { h, text: tr("正在读取角色…", "Loading roles…") }) :
-      roles.length ? roles.map(card) : h(Empty, { h, text: tr("暂无角色", "No roles") })));
+    props.head(tr("角色管理", "Role management"), tr("按来源与域查看角色，指令可读、动作可查、保存前校验动作名", "Browse roles by source and domain; readable instructions, grouped actions, validated names")),
+    toolbar(),
+    error ? h("div", { role: "alert" }, h(Notice, { h: h, kind: "error", text: error }), h(Btn, { h: h, onClick: refresh }, tr("重新加载", "Reload"))) : null,
+    draft
+      ? h(Editor, {
+        h: h, lang: props.lang, draft: draft, setDraft: setDraft, catalog: catalog,
+        catalogError: catalogError, busy: busy, onSave: save, onCancel: function () { setDraft(null); },
+      })
+      : h("div", { className: "wbr-split" }, h("div", { className: "wbr-list" }, list()), detail())));
 }
+
 module.exports = RoleCatalog;

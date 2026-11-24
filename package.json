@@ -69,6 +69,7 @@
     "test:config": "node scripts/test-config.mjs",
     "test:host-data": "node scripts/test-host-data.mjs",
     "test:host-pages": "node scripts/test-host-pages.mjs",
+    "test:roles-page": "node --test packages/shell/client/conversation/catalog.test.mjs",
     "test:event-queue": "node scripts/test-event-queue.mjs",
     "test:event-queue-page": "node scripts/test-event-queue-page.mjs",
     "test:mail-message-queue": "node scripts/test-mail-message-queue.mjs",
