@@ -44,28 +44,28 @@ export function computeStats<TConfig extends { allowedActions: string[] }>(input
   const { db, now, config, hasDomain } = input;
   const builtinAll = registry.listRules();
   const total =
-    db.prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL").get().n + builtinAll.length;
+    db.prepare("SELECT COUNT(*) AS n FROM host_automation_rule WHERE deleted_at IS NULL").get().n + builtinAll.length;
   const enabled =
-    db.prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND enabled=1").get().n +
+    db.prepare("SELECT COUNT(*) AS n FROM host_automation_rule WHERE deleted_at IS NULL AND enabled=1").get().n +
     builtinAll.filter((rule: AutomationRule) => rule.enabled).length;
   const today = now() - 86400000;
-  const runs = db.prepare("SELECT status, COUNT(*) AS n FROM automation_run WHERE started_at>=? GROUP BY status").all(today);
+  const runs = db.prepare("SELECT status, COUNT(*) AS n FROM host_automation_run WHERE started_at>=? GROUP BY status").all(today);
   const map: Record<string, number> = {};
   for (const row of runs) map[row.status] = row.n;
   const cfg = config();
   // 用户规则里引用了白名单外的 action：页面要提示「有规则已失效」。
   const stale = db
-    .prepare("SELECT action_name FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='action'")
+    .prepare("SELECT action_name FROM host_automation_rule WHERE deleted_at IS NULL AND exec_mode='action'")
     .all()
     .filter((row: any) => checkAction(row.action_name, cfg.allowedActions)).length;
   const agentRuleCount = db
-    .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='agent'")
+    .prepare("SELECT COUNT(*) AS n FROM host_automation_rule WHERE deleted_at IS NULL AND exec_mode='agent'")
     .get().n;
   const agentEnabled = db
-    .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND exec_mode='agent' AND enabled=1")
+    .prepare("SELECT COUNT(*) AS n FROM host_automation_rule WHERE deleted_at IS NULL AND exec_mode='agent' AND enabled=1")
     .get().n;
   const userRules = db
-    .prepare("SELECT COUNT(*) AS n FROM automation_rule WHERE deleted_at IS NULL AND origin='user'")
+    .prepare("SELECT COUNT(*) AS n FROM host_automation_rule WHERE deleted_at IS NULL AND origin='user'")
     .get().n;
   let builtinEnabled = 0;
   let builtinDisabled = 0;

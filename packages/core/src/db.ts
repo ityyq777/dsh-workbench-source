@@ -12,10 +12,66 @@ function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
   }
 }
 
+/** 表是否存在（老库升级判断用）。 */
+function hasTable(db: DatabaseSync, table: string): boolean {
+  try {
+    return Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(table));
+  } catch {
+    return false;
+  }
+}
+
+/** 表的行数；表不存在按 0 处理。 */
+function countRows(db: DatabaseSync, table: string): number {
+  if (!hasTable(db, table)) return 0;
+  try {
+    const row = db.prepare("SELECT COUNT(*) AS n FROM " + table).get() as { n: number } | undefined;
+    return row ? Number(row.n) || 0 : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** 两张表都有的列（老表可能缺后来补的列，只搬交集，缺的落新表默认值）。 */
+function sharedColumns(db: DatabaseSync, from: string, to: string): string[] {
+  const pick = (table: string) =>
+    (db.prepare("PRAGMA table_info(" + table + ")").all() as { name: string }[]).map((row) => row.name);
+  const target = new Set(pick(to));
+  return pick(from).filter((name) => target.has(name));
+}
+
+/**
+ * 宿主内置自动化从 automation_* 改名为 host_automation_*（与业务插件的同名表分开）。
+ *
+ * 老库升级时：新表还是空的、旧表有数据，就把旧表数据搬过去；随后把旧表改名成
+ * automation_rule_legacy_<版本> 留一版，既不丢历史，也不会在下次启动时重复搬。
+ * 新表已有数据（新版已经跑过）就只改名，不再覆盖。
+ */
+function migrateLegacyAutomationTables(db: DatabaseSync, version: string): void {
+  const suffix = String(version || "0").replace(/[^0-9A-Za-z]+/g, "_");
+  for (const name of ["rule", "run", "meta"]) {
+    const legacy = "automation_" + name;
+    if (!hasTable(db, legacy)) continue;
+    const target = "host_automation_" + name;
+    if (countRows(db, target) === 0 && countRows(db, legacy) > 0) {
+      const cols = sharedColumns(db, legacy, target);
+      if (cols.length) {
+        db.exec(
+          "INSERT OR IGNORE INTO " + target + "(" + cols.join(",") + ") SELECT " + cols.join(",") + " FROM " + legacy,
+        );
+      }
+    }
+    const backup = legacy + "_legacy_" + suffix;
+    if (!hasTable(db, backup)) db.exec("ALTER TABLE " + legacy + " RENAME TO " + backup);
+  }
+}
+
 /** 旧库增量迁移（CREATE TABLE IF NOT EXISTS 不会补列）。 */
-function migrateLocalDb(db: DatabaseSync): void {
+function migrateLocalDb(db: DatabaseSync, version: string): void {
   db.exec("BEGIN IMMEDIATE");
   try {
+    // 先搬旧表：下面补列 / 建索引都针对新表，搬完老表才有数据。
+    migrateLegacyAutomationTables(db, version);
     if (!hasColumn(db, "conflict_shadow", "kind")) {
       db.exec("ALTER TABLE conflict_shadow ADD COLUMN kind TEXT NOT NULL DEFAULT 'pull'");
     }
@@ -34,8 +90,8 @@ function migrateLocalDb(db: DatabaseSync): void {
       ["agent_json", "TEXT NOT NULL DEFAULT ''"],
       ["schedule_id", "TEXT"],
     ] as const) {
-      if (!hasColumn(db, "automation_rule", name)) {
-        db.exec("ALTER TABLE automation_rule ADD COLUMN " + name + " " + ddl);
+      if (!hasColumn(db, "host_automation_rule", name)) {
+        db.exec("ALTER TABLE host_automation_rule ADD COLUMN " + name + " " + ddl);
       }
     }
     // 内置自动化规则来源：老库一律回填 user（历史规则都是用户自己建的）。
@@ -45,16 +101,16 @@ function migrateLocalDb(db: DatabaseSync): void {
       ["rule_key", "TEXT"],
       ["origin_version", "TEXT"],
     ] as const) {
-      if (!hasColumn(db, "automation_rule", name)) {
-        db.exec("ALTER TABLE automation_rule ADD COLUMN " + name + " " + ddl);
+      if (!hasColumn(db, "host_automation_rule", name)) {
+        db.exec("ALTER TABLE host_automation_rule ADD COLUMN " + name + " " + ddl);
       }
     }
-    // 索引放在补列之后建：老库的 automation_rule 刚补上 owner_domain / rule_key 才能建。
+    // 索引放在补列之后建：刚补上 owner_domain / rule_key 才能建。
     db.exec(
-      "CREATE UNIQUE INDEX IF NOT EXISTS idx_automation_rule_builtin " +
-        "ON automation_rule(owner_domain, rule_key) WHERE origin='plugin'",
+      "CREATE UNIQUE INDEX IF NOT EXISTS idx_host_automation_rule_builtin " +
+        "ON host_automation_rule(owner_domain, rule_key) WHERE origin='plugin'",
     );
-    db.exec("CREATE INDEX IF NOT EXISTS idx_automation_rule_origin ON automation_rule(origin)");
+    db.exec("CREATE INDEX IF NOT EXISTS idx_host_automation_rule_origin ON host_automation_rule(origin)");
     // 事件队列定向投递：老库的事件一律视为广播，补列后对外语义不变。
     if (!hasColumn(db, "host_event", "mode")) {
       db.exec("ALTER TABLE host_event ADD COLUMN mode TEXT NOT NULL DEFAULT 'broadcast'");
@@ -77,11 +133,11 @@ function migrateLocalDb(db: DatabaseSync): void {
 }
 
 /** 打开（或创建）工作台本地库并跑基线 schema。单进程权威，WAL。 */
-export function openDb(file: string): DatabaseSync {
+export function openDb(file: string, version = "0"): DatabaseSync {
   mkdirSync(dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
   db.exec(SCHEMA_SQL);
-  migrateLocalDb(db);
+  migrateLocalDb(db, version);
   return db;
 }
 

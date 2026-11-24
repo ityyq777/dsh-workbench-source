@@ -28,9 +28,9 @@ const TABLES = [
   { name: "host_event", label: "事件队列", sort: "created_at", desc: "push 进来的事件（queued/done/dead）" },
   { name: "host_event_delivery", label: "事件投递", sort: "updated_at", desc: "按订阅拆出的投递：pending/running/done/dead" },
   { name: "host_event_subscription", label: "事件订阅", sort: "domain", desc: "哪个域用哪个 plugin-only action 消费哪类事件" },
-  { name: "automation_rule", label: "自动化规则", sort: "created_at", desc: "触发条件 + 已启用 action（或交给 AI 的提示词）" },
-  { name: "automation_run", label: "自动化运行记录", sort: "started_at", desc: "每次触发的成败与错误，仅本机" },
-  { name: "automation_meta", label: "自动化设置", sort: "key", desc: "可调用 action 白名单等本机配置" },
+  { name: "host_automation_rule", label: "自动化规则", sort: "created_at", desc: "触发条件 + 已启用 action（或交给 AI 的提示词）" },
+  { name: "host_automation_run", label: "自动化运行记录", sort: "started_at", desc: "每次触发的成败与错误，仅本机" },
+  { name: "host_automation_meta", label: "自动化设置", sort: "key", desc: "可调用 action 白名单等本机配置" },
 ];
 
 const TABLE_BY_NAME = new Map(TABLES.map((t) => [t.name, t]));

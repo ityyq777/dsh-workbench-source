@@ -52,7 +52,7 @@ export function tx<T>(db: any, fn: () => T): T {
   }
 }
 
-/** 自动化规则（automation_rule 的行映射，对外 camelCase）。 */
+/** 自动化规则（host_automation_rule 的行映射，对外 camelCase）。 */
 export interface AutomationRule {
   id: string;
   name: string;
@@ -83,7 +83,7 @@ export interface AutomationRule {
   originVersion: string;
 }
 
-/** 自动化运行记录（automation_run 的行映射，对外 camelCase）。 */
+/** 自动化运行记录（host_automation_run 的行映射，对外 camelCase）。 */
 export interface AutomationRun {
   id: string;
   ruleId: string;
@@ -95,7 +95,7 @@ export interface AutomationRun {
   error: string;
 }
 
-/** automation_rule 行 → 规则对象。 */
+/** host_automation_rule 行 → 规则对象。 */
 export function ruleRow(row: any): AutomationRule {
   return {
     id: row.id,
@@ -124,7 +124,7 @@ export function ruleRow(row: any): AutomationRule {
   };
 }
 
-/** automation_run 行 → 运行记录对象。 */
+/** host_automation_run 行 → 运行记录对象。 */
 export function runRow(row: any): AutomationRun {
   return {
     id: row.id,
@@ -138,15 +138,15 @@ export function runRow(row: any): AutomationRun {
   };
 }
 
-/** 读 automation_meta；不存在返回 null。 */
+/** 读 host_automation_meta；不存在返回 null。 */
 export function metaGet(db: any, key: string): string | null {
-  const row = db.prepare("SELECT value FROM automation_meta WHERE key=?").get(key);
+  const row = db.prepare("SELECT value FROM host_automation_meta WHERE key=?").get(key);
   return row ? row.value : null;
 }
 
-/** 写 automation_meta（upsert）。 */
+/** 写 host_automation_meta（upsert）。 */
 export function metaSet(db: any, key: string, value: unknown): void {
   db.prepare(
-    "INSERT INTO automation_meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+    "INSERT INTO host_automation_meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
   ).run(String(key), String(value));
 }

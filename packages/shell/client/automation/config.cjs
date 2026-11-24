@@ -78,8 +78,8 @@ module.exports = function ConfigView(props) {
   var React = props.React;
   var lang = props.lang === "en" ? "en" : "zh";
   var t = props.t;
-  var cfg = C.useLoad(React, api, "automation.configGet", {}, []);
-  var catalog = C.useLoad(React, api, "automation.actionCatalog", {}, []);
+  var cfg = C.useLoad(React, api, "host.automation.configGet", {}, []);
+  var catalog = C.useLoad(React, api, "host.automation.actionCatalog", {}, []);
   var formS = React.useState(null);
   var busyS = React.useState(false);
   var msgS = React.useState(null);
@@ -104,7 +104,7 @@ module.exports = function ConfigView(props) {
   function save(payload) {
     busyS[1](true);
     msgS[1](null);
-    C.call(api, "automation.configSet", payload)
+    C.call(api, "host.automation.configSet", payload)
       .then(function () {
         busyS[1](false);
         savedS[1](true);

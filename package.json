@@ -98,7 +98,7 @@
     "test:message": "node scripts/test-message.mjs && node scripts/test-message-config-state.mjs && node scripts/test-message-float.mjs",
     "test:vault": "node --test packages/addons/vault/test/vault.test.mjs packages/addons/vault/test/ui.test.mjs packages/addons/vault/test/sets-lock.test.mjs",
     "test:connector": "node --test packages/addons/connector/test/connector.test.mjs packages/addons/connector/test/ui.test.mjs",
-    "test:automation": "node --test scripts/test-automation-engine.mjs scripts/test-automation-memory.mjs scripts/test-automation-ui.mjs scripts/test-automation-views.mjs",
+    "test:automation": "node --test scripts/test-automation-engine.mjs scripts/test-automation-memory.mjs scripts/test-automation-ui.mjs scripts/test-automation-views.mjs scripts/test-automation-host-prefix.mjs",
     "test:contacts": "node --test packages/addons/contacts/test/contacts.test.mjs",
     "test:calendar": "node --test packages/addons/calendar/test/calendar.test.mjs",
     "test:mail": "node --test packages/addons/mail/test/*.test.mjs && node scripts/test-mail-accounts.mjs && node scripts/test-mail-mime.mjs && node scripts/test-mail-layout.mjs && node scripts/test-mail-vault-gate.mjs && node scripts/test-mail-config.mjs && node scripts/test-mail-theme.mjs",

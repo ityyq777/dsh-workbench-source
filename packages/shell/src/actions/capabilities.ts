@@ -180,7 +180,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
           kind: "automation-rule",
           title: "自动化规则（action）",
           description: "一条「触发条件 + 已启用 action + 参数模板」的规则，由宿主内置引擎按时间或域事件驱动。",
-          primaryAction: "automation.ruleCreate",
+          primaryAction: "host.automation.ruleCreate",
           when: ["每天固定时间汇总或提醒", "某个域事件发生后调用另一个域的 action", "需要保留每次运行的成败与错误"],
           notFor: ["不要用它执行 vault、audit、automation 或删除/备份类 action", "不要用它替代任务管理"],
           keyArgs: ["name", "execMode", "triggerConfig", "actionName", "actionArgs"],
@@ -189,20 +189,20 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
           kind: "automation-agent-rule",
           title: "自动化规则（交给 AI）",
           description: "execMode=agent：把提示词登记到宿主「自动化任务」，按时投递到会话，由 agent 自己决定怎么执行。",
-          primaryAction: "automation.ruleCreate",
+          primaryAction: "host.automation.ruleCreate",
           when: ["需要理解、判断或多步操作，无法用固定 action 参数表达", "结果要回到某个会话里继续对话"],
           notFor: ["不要用它做高频轮询：每次投递都会产生一次模型请求", "不支持域事件触发，只有时间触发"],
           keyArgs: ["name", "execMode", "agent"],
         },
       ],
-      notFor: ["不允许调用 vault.*、automation.*、audit.* 或 delete/backup 类 action（硬底线，不可配置）"],
+      notFor: ["不允许调用 vault.*、automation.*、host.automation.*、audit.* 或 delete/backup 类 action（硬底线，不可配置）"],
       notes: [
         "允许调用的 action 在宿主「自动化」页的「设置」里勾选，默认空；只对本机生效。",
         "规则随备份迁移；运行记录只在本机，不参与云同步。",
-        "自动化所需的三张表（automation_rule / automation_run / automation_meta）是宿主平台表，可在「数据」页查看。",
+        "自动化所需的三张表（host_automation_rule / host_automation_run / host_automation_meta）是宿主平台表，可在「数据」页查看。",
         "事件队列的两种投递语义见 wb.eventDomains：广播按订阅表投递，定向按发布方白名单点名投递。",
       ],
-      actions: ["automation.ruleCreate", "automation.ruleList", "automation.ruleRun", "automation.runList", "automation.configSet"],
+      actions: ["host.automation.ruleCreate", "host.automation.ruleList", "host.automation.ruleRun", "host.automation.runList", "host.automation.configSet"],
     };
   }
 

@@ -2,7 +2,7 @@
  * 自动化引擎（宿主内置）行为测试。
  *
  * 原 packages/addons/automation/test/automation.test.mjs 搬到宿主后：
- * 建表改由 @wb/core 的 openDb（宿主平台表 automation_rule/run/meta），
+ * 建表改由 @wb/core 的 openDb（宿主平台表 host_automation_rule/run/meta），
  * 引擎改为 packages/shell/src/infra/automation，调用入口从 host.call 换成 invoke。
  */
 import { test } from "node:test";
@@ -208,11 +208,11 @@ test("导入新机器的规则会重新创建", async () => {
 test("定时规则到期后执行并重算下一次", async () => {
   const { db, engine, calls } = make();
   const rule = await engine.createRule({ name: "定时", triggerType: "interval", triggerConfig: { kind: "interval", everyMinutes: 60 }, actionName: "message.send", actionArgs: { title: "tick" } });
-  db.prepare("UPDATE automation_rule SET next_run_at=? WHERE id=?").run(Date.now() - 1000, rule.id);
+  db.prepare("UPDATE host_automation_rule SET next_run_at=? WHERE id=?").run(Date.now() - 1000, rule.id);
   await engine.tick();
   assert.equal(calls.length, 1);
   assert.equal(calls[0].args.title, "tick");
-  const after = db.prepare("SELECT next_run_at,last_status FROM automation_rule WHERE id=?").get(rule.id);
+  const after = db.prepare("SELECT next_run_at,last_status FROM host_automation_rule WHERE id=?").get(rule.id);
   assert.ok(after.next_run_at > Date.now());
   assert.equal(after.last_status, "ok");
 });
@@ -337,9 +337,9 @@ test("内置规则注册即建规则：稳定 id、标记来源、重复注册�
 
   registerMail(ctx);
   assert.equal(ctx.engine.listRules().length, 1);
-  // 定义在内存，不上表：automation_rule 里不应出现内置规则行。
-  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 0);
-  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_meta WHERE key LIKE 'builtin%'").get().n, 0);
+  // 定义在内存，不上表：host_automation_rule 里不应出现内置规则行。
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM host_automation_rule").get().n, 0);
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM host_automation_meta WHERE key LIKE 'builtin%'").get().n, 0);
 });
 
 test("内置规则只能调用本域 action：跨域声明直接报错且不落库", () => {
@@ -351,7 +351,7 @@ test("内置规则只能调用本域 action：跨域声明直接报错且不落�
       ]),
     /只能调用声明方本域 action/,
   );
-  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM automation_rule").get().n, 0);
+  assert.equal(ctx.db.prepare("SELECT COUNT(*) AS n FROM host_automation_rule").get().n, 0);
 });
 
 test("事件触发的内置规则必须已在 DomainDef.events.subscriptions 声明", () => {
@@ -482,7 +482,7 @@ test("旧库升级后所有规则 origin 回填 user，统计按来源拆分", (
   // 模拟历史用户规则：省略 origin，落库走默认值。
   ctx.db
     .prepare(
-      "INSERT INTO automation_rule(id,name,enabled,trigger_type,trigger_config,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO host_automation_rule(id,name,enabled,trigger_type,trigger_config,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
     )
     .run("rule_old", "老规则", 1, "manual", '{"kind":"manual"}', "mail.messageList", "{}", null, 1, 1);
   const old = ctx.engine.listRules().find((r) => r.id === "rule_old");

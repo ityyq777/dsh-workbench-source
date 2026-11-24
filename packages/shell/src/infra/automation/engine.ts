@@ -157,13 +157,13 @@ export function createAutomation({
     config,
     now: nowFn,
     audit,
-    // 内置规则的运行状态只在内存里记账（它们不落 automation_rule）。
+    // 内置规则的运行状态只在内存里记账（它们不落 host_automation_rule）。
     track: (rule, patch) => {
       registry.patchRuntime(rule.id, patch);
     },
   });
 
-  // 老库升级：把旧版本写进 automation_rule 的内置规则迁到内存（幂等）。
+  // 老库升级：把旧版本写进 host_automation_rule 的内置规则迁到内存（幂等）。
   try {
     migrateLegacyBuiltins(db, log);
   } catch (error) {
@@ -194,7 +194,7 @@ export function createAutomation({
   }
 
   function lastRunOf(id: string): AutomationRun | null {
-    const last = db.prepare("SELECT * FROM automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT 1").get(id);
+    const last = db.prepare("SELECT * FROM host_automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT 1").get(id);
     return last ? runRow(last) : null;
   }
 
@@ -205,13 +205,13 @@ export function createAutomation({
       const rule = registry.getRule(raw);
       return rule ? decorateOrigin(rule, hasDomain) : null;
     }
-    const row = db.prepare("SELECT * FROM automation_rule WHERE id=? AND deleted_at IS NULL").get(raw);
+    const row = db.prepare("SELECT * FROM host_automation_rule WHERE id=? AND deleted_at IS NULL").get(raw);
     return row ? decorateOrigin(ruleRow(row), hasDomain) : null;
   }
 
   function listRules(): AutomationRuleWithLastRun[] {
     const rows = db
-      .prepare("SELECT * FROM automation_rule WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 200")
+      .prepare("SELECT * FROM host_automation_rule WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 200")
       .all() as any[];
     const userRules = rows.map((row: any) =>
       decorateOrigin(Object.assign(ruleRow(row), { lastRun: lastRunOf(String(row.id)) }), hasDomain),
@@ -240,7 +240,7 @@ export function createAutomation({
     const ts = nowFn();
     const next = data.enabled === false ? null : nextAt(trigger.triggerType, trigger.config, ts);
     db.prepare(
-      "INSERT INTO automation_rule(id,name,enabled,trigger_type,trigger_config,condition,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+      "INSERT INTO host_automation_rule(id,name,enabled,trigger_type,trigger_config,condition,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
     ).run(
       id,
       name,
@@ -320,7 +320,7 @@ export function createAutomation({
     const ts = nowFn();
     const next = enabled ? nextAt(trigger.triggerType, trigger.config, ts) : null;
     db.prepare(
-      "UPDATE automation_rule SET name=?,enabled=?,trigger_type=?,trigger_config=?,condition=?,action_name=?,action_args=?,next_run_at=?,updated_at=?,rev=rev+1 WHERE id=?",
+      "UPDATE host_automation_rule SET name=?,enabled=?,trigger_type=?,trigger_config=?,condition=?,action_name=?,action_args=?,next_run_at=?,updated_at=?,rev=rev+1 WHERE id=?",
     ).run(
       name,
       enabled ? 1 : 0,
@@ -351,7 +351,7 @@ export function createAutomation({
       }
     }
     db.prepare(
-      "UPDATE automation_rule SET enabled=0, deleted_at=?, next_run_at=NULL, updated_at=?, rev=rev+1 WHERE id=?",
+      "UPDATE host_automation_rule SET enabled=0, deleted_at=?, next_run_at=NULL, updated_at=?, rev=rev+1 WHERE id=?",
     ).run(nowFn(), nowFn(), existing.id);
     return { id: existing.id, deleted: true };
   }
@@ -373,13 +373,13 @@ export function createAutomation({
     const ruleId = input && input.ruleId ? String(input.ruleId) : "";
     const limit = Math.max(1, Math.min(200, Number(input && input.limit) || 50));
     const rows = ruleId
-      ? db.prepare("SELECT * FROM automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT ?").all(ruleId, limit)
-      : db.prepare("SELECT * FROM automation_run ORDER BY started_at DESC LIMIT ?").all(limit);
+      ? db.prepare("SELECT * FROM host_automation_run WHERE rule_id=? ORDER BY started_at DESC LIMIT ?").all(ruleId, limit)
+      : db.prepare("SELECT * FROM host_automation_run ORDER BY started_at DESC LIMIT ?").all(limit);
     return rows.map(runRow);
   }
 
   function runGet(id: unknown): AutomationRun | null {
-    const row = db.prepare("SELECT * FROM automation_run WHERE id=?").get(String(id || ""));
+    const row = db.prepare("SELECT * FROM host_automation_run WHERE id=?").get(String(id || ""));
     return row ? runRow(row) : null;
   }
 
@@ -395,7 +395,7 @@ export function createAutomation({
       const userDue = (
         db
           .prepare(
-            "SELECT * FROM automation_rule WHERE deleted_at IS NULL AND enabled=1 AND exec_mode='action' AND next_run_at IS NOT NULL AND next_run_at<=? ORDER BY next_run_at ASC LIMIT 3",
+            "SELECT * FROM host_automation_rule WHERE deleted_at IS NULL AND enabled=1 AND exec_mode='action' AND next_run_at IS NOT NULL AND next_run_at<=? ORDER BY next_run_at ASC LIMIT 3",
           )
           .all(at) as any[]
       ).map((row: any) => ruleRow(row));
@@ -416,7 +416,7 @@ export function createAutomation({
     if (!plainObject(event) || !event.domainId || !event.event) return;
     const rows = db
       .prepare(
-        "SELECT * FROM automation_rule WHERE deleted_at IS NULL AND enabled=1 AND trigger_type='event' LIMIT 200",
+        "SELECT * FROM host_automation_rule WHERE deleted_at IS NULL AND enabled=1 AND trigger_type='event' LIMIT 200",
       )
       .all();
     for (const row of rows) {

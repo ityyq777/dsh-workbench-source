@@ -19,7 +19,7 @@ import { DENIED_PATTERNS, isDenied } from "./whitelist.js";
 export const AUTOMATION_DOMAIN = "wb-shell";
 
 const TABLE_WHITELIST: Record<string, string[]> = {
-  automation_rule: [
+  host_automation_rule: [
     "id",
     "name",
     "enabled",
@@ -32,7 +32,7 @@ const TABLE_WHITELIST: Record<string, string[]> = {
     "next_run_at",
     "updated_at",
   ],
-  automation_run: ["id", "rule_id", "trigger", "status", "started_at", "finished_at", "error"],
+  host_automation_run: ["id", "rule_id", "trigger", "status", "started_at", "finished_at", "error"],
 };
 
 /** 写操作来源校验：与源码 deny() 等价，403。 */
@@ -84,25 +84,25 @@ export function registerAutomationActions(
     api.action(name, def);
   };
 
-  action("automation.status", {
+  action("host.automation.status", {
     description: "自动化域状态：规则数量、启用数、今日运行与配置",
     input: { type: "object", properties: {} },
     execute: () => engine.stats(),
   });
 
-  action("automation.ruleList", {
+  action("host.automation.ruleList", {
     description: "列出自动化规则及最近一次运行；「交给 AI」规则会附带宿主任务的实时状态",
     input: { type: "object", properties: {} },
     execute: async () => ({ items: await engine.listRulesLive() }),
   });
 
-  action("automation.ruleGet", {
+  action("host.automation.ruleGet", {
     description: "读取一条规则详情",
     input: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
     execute: (args: any) => engine.getRule(args.id),
   });
 
-  action("automation.ruleCreate", {
+  action("host.automation.ruleCreate", {
     origins: ["ui", "agent", "plugin"],
     originsDefault: ["ui", "agent", "plugin"],
     description:
@@ -151,7 +151,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.ruleUpdate", {
+  action("host.automation.ruleUpdate", {
     origins: ["ui", "agent"],
     originsDefault: ["ui"],
     description: "局部更新规则；写操作仅 UI。AI 规则的改动会同步到宿主任务；执行方式创建后不可修改",
@@ -200,7 +200,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.ruleDelete", {
+  action("host.automation.ruleDelete", {
     origins: ["ui", "agent"],
     originsDefault: ["ui"],
     description: "软删规则；仅 UI",
@@ -211,7 +211,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.ruleRun", {
+  action("host.automation.ruleRun", {
     origins: ["ui", "agent"],
     originsDefault: ["ui"],
     description: "立即执行一次规则；action 规则仍受白名单、条件和频率限制，AI 规则会请求宿主立即投递一次",
@@ -222,7 +222,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.ruleHistory", {
+  action("host.automation.ruleHistory", {
     description: "AI 规则的宿主投递记录（最近在前）；回执只表示 prompt 进了会话收件箱，不代表执行成功",
     input: {
       type: "object",
@@ -243,37 +243,37 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.agentStatus", {
+  action("host.automation.agentStatus", {
     description: "宿主「自动化任务」能力：能否使用 AI 执行方式、最小间隔、标题上限、以及未纳入工作台的宿主任务",
     input: { type: "object", properties: {} },
     execute: () => engine.agentStatus(),
   });
 
-  action("automation.runList", {
+  action("host.automation.runList", {
     description: "运行记录列表",
     input: { type: "object", properties: { ruleId: { type: "string" }, limit: { type: "number" } } },
     execute: (args: any) => ({ items: engine.runList({ ruleId: args.ruleId, limit: args.limit }) }),
   });
 
-  action("automation.runGet", {
+  action("host.automation.runGet", {
     description: "单条运行记录",
     input: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
     execute: (args: any) => engine.runGet(args.id),
   });
 
-  action("automation.stats", {
+  action("host.automation.stats", {
     description: "首页卡片统计",
     input: { type: "object", properties: {} },
     execute: () => engine.stats(),
   });
 
-  action("automation.configGet", {
+  action("host.automation.configGet", {
     description: "读取自动化配置",
     input: { type: "object", properties: {} },
     execute: () => engine.config(),
   });
 
-  action("automation.configSet", {
+  action("host.automation.configSet", {
     origins: ["ui", "agent"],
     originsDefault: ["ui"],
     description: "修改最大规则数、每小时上限与允许调用的 action；仅 UI",
@@ -295,7 +295,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.actionOptions", {
+  action("host.automation.actionOptions", {
     description: "本机已启用的 action 清单、硬底线、action 触发类型与执行方式",
     input: { type: "object", properties: {} },
     execute: () => ({
@@ -306,7 +306,7 @@ export function registerAutomationActions(
     }),
   });
 
-  action("automation.actionCatalog", {
+  action("host.automation.actionCatalog", {
     description: "列出宿主全部可被自动化调用的 action（过滤硬底线与 automation 自身）",
     input: { type: "object", properties: {} },
     execute: async () => {
@@ -333,7 +333,7 @@ export function registerAutomationActions(
     },
   });
 
-  action("automation.actionSchema", {
+  action("host.automation.actionSchema", {
     description: "自证 action 清单与输入 schema（供 Action 页读取）",
     input: { type: "object", properties: {} },
     execute: () => ({
@@ -343,13 +343,13 @@ export function registerAutomationActions(
     }),
   });
 
-  action("automation.dataTables", {
+  action("host.automation.dataTables", {
     description: "数据表白名单与列",
     input: { type: "object", properties: {} },
     execute: () => ({ tables: Object.keys(TABLE_WHITELIST), columns: TABLE_WHITELIST }),
   });
 
-  action("automation.dataQuery", {
+  action("host.automation.dataQuery", {
     origins: ["ui", "agent"],
     originsDefault: ["ui"],
     description: "只读查询白名单表；仅 UI",

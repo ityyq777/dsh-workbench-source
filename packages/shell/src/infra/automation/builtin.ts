@@ -1,8 +1,8 @@
 /**
  * 内置自动化规则：声明校验、用户覆盖持久化与来源状态。
  *
- * 规则定义**只活在内存**（registry.ts），不写 automation_rule、不参与云同步；
- * 用户对内置规则的启停与参数覆盖属于「本机偏好」，只写 automation_meta
+ * 规则定义**只活在内存**（registry.ts），不写 host_automation_rule、不参与云同步；
+ * 用户对内置规则的启停与参数覆盖属于「本机偏好」，只写 host_automation_meta
  * （宿主域的 sync.tables 已把它排除在同步之外）。
  *
  * 三条红线：
@@ -135,7 +135,7 @@ export function readOverrides(db: any, domainId: string): BuiltinOverrides {
 export function writeOverrides(db: any, domainId: string, overrides: BuiltinOverrides): void {
   const key = OVERRIDE_PREFIX + domainId;
   if (!Object.keys(overrides).length) {
-    db.prepare("DELETE FROM automation_meta WHERE key=?").run(key);
+    db.prepare("DELETE FROM host_automation_meta WHERE key=?").run(key);
     return;
   }
   metaSet(db, key, JSON.stringify(overrides));
@@ -277,7 +277,7 @@ export function setBuiltinArgs(
 export function exportBuiltinOverrides(db: any): any[] {
   const out: any[] = [];
   const rows = db
-    .prepare("SELECT key,value FROM automation_meta WHERE key LIKE ?")
+    .prepare("SELECT key,value FROM host_automation_meta WHERE key LIKE ?")
     .all(OVERRIDE_PREFIX + "%") as { key: string; value: string }[];
   for (const row of rows) {
     const domainId = String(row.key).slice(OVERRIDE_PREFIX.length);
@@ -324,7 +324,7 @@ export function importBuiltinOverrides(db: any, list: unknown): number {
 }
 
 /**
- * 把内置规则从数据库迁到内存（旧版本写过 automation_rule 的 plugin 行）。
+ * 把内置规则从数据库迁到内存（旧版本写过 host_automation_rule 的 plugin 行）。
  *
  * 幂等：plugin 行先读成用户覆盖（启用状态与参数），再删除；老的 meta 登记
  * （builtin:/builtin-edited:/builtin-pending:）一并清掉。返回清理的行数。
@@ -333,7 +333,7 @@ export function migrateLegacyBuiltins(db: any, log?: (...args: unknown[]) => voi
   let rows: any[] = [];
   try {
     rows = db
-      .prepare("SELECT * FROM automation_rule WHERE origin='plugin'")
+      .prepare("SELECT * FROM host_automation_rule WHERE origin='plugin'")
       .all() as any[];
   } catch {
     return 0;
@@ -349,12 +349,12 @@ export function migrateLegacyBuiltins(db: any, log?: (...args: unknown[]) => voi
     if (patch.enabled !== undefined || patch.args) patchOverride(db, domainId, key, patch);
   }
   if (rows.length) {
-    db.prepare("DELETE FROM automation_rule WHERE origin='plugin'").run();
+    db.prepare("DELETE FROM host_automation_rule WHERE origin='plugin'").run();
     log?.("[automation] 已把 " + rows.length + " 条内置规则从数据库迁到内存注册表（启用状态与参数转为本机偏好）");
   }
   for (const prefix of LEGACY_META_PREFIX) {
     try {
-      db.prepare("DELETE FROM automation_meta WHERE key LIKE ?").run(prefix + "%");
+      db.prepare("DELETE FROM host_automation_meta WHERE key LIKE ?").run(prefix + "%");
     } catch {
       /* 老库没有 meta 表：忽略 */
     }

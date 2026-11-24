@@ -3,12 +3,12 @@
  * 宿主「自动化」视图：单入口页签式页面。
  *
  * 四个页签：概览 / 规则 / 运行记录 / 设置。
- * - 原来插件里的「数据」页签已删除：automation_rule / automation_run / automation_meta
+ * - 原来插件里的「数据」页签已删除：host_automation_rule / host_automation_run / host_automation_meta
  *   并入了宿主平台表，数据浏览统一走宿主「数据」页签；
- * - 原来的「Action」页签也删了：automation.* 注册在 wb-shell 域，宿主的「宿主 action 权限」
+ * - 原来的「Action」页签也删了：host.automation.* 注册在 wb-shell 域，宿主的「宿主 action 权限」
  *   页（route=agent，数据源 actions.list）已经把全部宿主 action 连同参数、允许来源列在一起，
  *   这里再挂一份只读清单只是重复入口；
- * - action 名仍是 automation.*，见 common.cjs 的 hostApi；
+ * - action 名是 host.automation.*，见 common.cjs 的 hostApi；
  * - 所有文案来自宿主 locale（auto_ 前缀），颜色只用主题 token。
  */
 var C = require("./automation/common.cjs");

@@ -111,8 +111,8 @@ module.exports = function RunsView(props) {
   var React = props.React;
   var lang = props.lang === "en" ? "en" : "zh";
   var t = props.t;
-  var runs = C.useLoad(React, api, "automation.runList", { limit: LIMIT }, []);
-  var rules = C.useLoad(React, api, "automation.ruleList", {}, []);
+  var runs = C.useLoad(React, api, "host.automation.runList", { limit: LIMIT }, []);
+  var rules = C.useLoad(React, api, "host.automation.ruleList", {}, []);
   var filterS = React.useState({ ruleId: "", status: "" });
   var expandS = React.useState("");
   var ruleList = (rules.data && rules.data.items) || [];

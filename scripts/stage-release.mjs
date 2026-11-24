@@ -133,11 +133,11 @@ const ADDON_META = {
     keywords: ["automation", "scheduler", "compat"],
     marketCategory: "workflow",
     marketEn:
-      "Compatibility placeholder for the DSH automation plugin. The rule engine, three tables, 19 automation.* actions and the automation page have shipped inside dsh-workbench-host since 0.17.0; installing this package only registers the host row and prints a migration notice. New users do not need it — the entry stays so old configs and links keep working.",
+      "Compatibility placeholder for the DSH automation plugin. Since dsh-workbench-host 0.17.0 the rule engine, its three tables (host_automation_*), the 19 host.automation.* actions and the automation page live in the host; installing this package only registers the host row. The host and the standalone plugin (0.4.12) now coexist: each keeps its own actions and tables, so nobody needs to uninstall one to avoid double runs.",
     marketZh:
-      "DSH 自动化兼容保留包：规则引擎、三张表、19 个 automation.* action 与自动化页自 dsh-workbench-host 0.17.0 起已内置于宿主，本包只插入宿主行并输出迁移提示，不含独立能力。新用户无需安装，保留条目是为了旧配置与旧链接不 404。",
+      "DSH 自动化兼容保留包：自 dsh-workbench-host 0.17.0 起规则引擎、三张 host_automation_* 表、19 个 host.automation.* action 与自动化页都已内置于宿主，本包只插入宿主行，不含独立能力。宿主与独立插件（0.4.12）现在可以共存：各用各的 action 与表，不会互相执行对方的规则，也就不必为了避开双跑而卸载其中一个。",
     marketExtra:
-      "引擎已在宿主里：装本包与不装行为一致，装后不会新增视图、表或 action。0.5.0 起不再注册 wb-addon-automation 域，因此不会停用宿主内置引擎；仍在用 0.4.x 的旧安装会触发双跑防护，升级到 0.5.0 或直接卸载后重启即可。",
+      "引擎已在宿主里：装本包与不装行为一致，装后不会新增视图、表或 action。想继续用插件自带的自动化页面，可以装 0.4.12（仍可从 npm 取到），它现在与宿主的 host.automation.* 共存；两套规则分别落在 host_automation_* 与插件自己的 automation_* 表里。",
   },
 };
 

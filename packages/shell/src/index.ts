@@ -92,7 +92,7 @@ export function apply(ctx: any): void {
   const sharedCreds = loadCreds();
   const initialConfig = loadCloudConfig(WB_HOME, CLOUD_DEFAULT, sharedCreds);
   const state: WbState = {
-    db: openDb(join(WB_HOME, "workbench.db")),
+    db: openDb(join(WB_HOME, "workbench.db"), SHELL_VERSION),
     creds: credsForConfig(initialConfig, sharedCreds),
     cloudUrl: cloudUrlForConfig(initialConfig),
     cloudConfig: initialConfig,
@@ -410,8 +410,9 @@ export function apply(ctx: any): void {
       enabled: rec.error === null,
       error: rec.error,
     }));
-    // 自动化内化后不再有独立域，但规则要跟着备份走：补一个宿主内置的导出模块，
-    // 模块 id 沿用 wb-addon-automation，老备份能直接导回、新备份格式不变。
+    // 自动化内化后不再有独立域，但规则要跟着备份走：补一个宿主内置的导出模块。
+    // 模块 id 用 wb-shell（与宿主元 action 域名一致）；旧备份里的 wb-addon-automation
+    // 模块在导入侧按别名映射到这里，规则不会丢。
     out.push({
       def: automationBackupDomain(),
       enabled: true,
@@ -423,12 +424,12 @@ export function apply(ctx: any): void {
   /** 宿主内置「自动化」备份模块：只导出规则，运行记录留在本机。 */
   function automationBackupDomain(): DomainDef {
     return {
-      id: "wb-addon-automation",
+      id: "wb-shell",
       title: "自动化（宿主内置）",
       description: "定时、域事件或手动触发白名单 action；规则随备份迁移，运行记录只在本机",
       version: SHELL_VERSION,
       category: "auto",
-      tables: ["automation_rule", "automation_run", "automation_meta"],
+      tables: ["host_automation_rule", "host_automation_run", "host_automation_meta"],
       sync: { tables: [] },
       exportData: () => automation.exportData(),
       importData: (payload: string | Record<string, unknown>) => automation.importData(payload),
@@ -489,8 +490,9 @@ export function apply(ctx: any): void {
     });
   }
 
-  // 引擎启动 + 双跑防护：业务插件是在宿主 apply 之后才注册域的，所以延迟一拍再确认
-  // 旧插件是否仍安装；若在，则停掉内置引擎，避免同一批规则被执行两次。
+  // 引擎启动 + 共存检查：业务插件是在宿主 apply 之后才注册域的，所以延迟一拍再确认
+  // 旧插件是否仍安装。两套自动化现在各用各的 action 名（host.automation.* 对 automation.*）
+  // 与各自的表（host_automation_* 对 automation_*），可以同时运行，不再互相停引擎。
   automation.start();
   ctx.effect?.(
     () => () => automation.stop(),
@@ -499,11 +501,9 @@ export function apply(ctx: any): void {
   {
     const timer = setTimeout(() => {
       if (domains.has("wb-addon-automation")) {
-        automation.stop();
         log(
-          "检测到旧版自动化插件（dsh-workbench-automation < 0.5.0，注册了 wb-addon-automation 域）：宿主内置自动化引擎已停用，" +
-            "避免同一批规则被执行两次；请卸载旧版插件（< 0.5.0），或升级到 0.5.0 兼容保留包——" +
-            "0.5.0 不再注册该域，不会停用内置引擎，随后重启 DSH 即可恢复",
+          "检测到同时安装了自动化插件（wb-addon-automation 域）：两套自动化共存，" +
+            "插件规则由插件引擎执行、宿主规则由宿主引擎执行，各自只读写自己的表",
         );
         return;
       }

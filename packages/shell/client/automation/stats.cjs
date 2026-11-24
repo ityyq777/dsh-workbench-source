@@ -3,7 +3,7 @@
 var C = require("./common.cjs");
 var icons = require("./common.cjs").icons;
 
-var DENIED = ["vault.*", "automation.*", "audit.*", "*.delete", "*.backup"];
+var DENIED = ["vault.*", "host.automation.*", "audit.*", "*.delete", "*.backup"];
 
 function kpiRows(s) {
   var today = (s && s.today) || {};
@@ -72,8 +72,8 @@ module.exports = function StatsView(props) {
   var React = props.React;
   var lang = props.lang === "en" ? "en" : "zh";
   var t = props.t;
-  var stats = C.useLoad(React, api, "automation.stats", {}, []);
-  var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
+  var stats = C.useLoad(React, api, "host.automation.stats", {}, []);
+  var opts = C.useLoad(React, api, "host.automation.actionOptions", {}, []);
   var s = stats.data || { total: 0, enabled: 0, today: {} };
   return h("div", { className: "wba-wrap" },
     h("div", { className: "wba-head" },

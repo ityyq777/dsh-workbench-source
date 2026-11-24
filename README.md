@@ -20,7 +20,7 @@
 | `dsh-workbench-mail` | [邮件](docs/邮件使用指南.md)：按日期浏览、展开读信、本页批量处理、搜索已同步邮件、按需下载附件、回复转发与本地草稿 |
 | `dsh-workbench-salary` | 工资记录：按发薪日期记录用工类型、构成、扣款与实发，含年度统计 |
 | `dsh-workbench-danmaku` | 弹幕：自建弹幕库轮播整个界面或叠加到桌面，含逐条样式与权重 |
-| `dsh-workbench-automation` | 兼容保留包（0.5.0）：自动化引擎已在宿主里，本包只插宿主行并输出内化提示；新用户无需安装 |
+| `dsh-workbench-automation` | 兼容保留包（0.5.0）：自动化引擎已在宿主里，本包只插宿主行；宿主用 `host.automation.*` 与 `host_automation_*`，与独立的 0.4.12 可共存 |
 
 所有业务插件都声明 `dependencies: { "dsh-workbench-host": "^<宿主版本>" }`：安装任意业务插件时，
 DSH 会一并准备宿主。数据保存在 `~/.dsh/workbench/workbench.db`，卸载插件只删代码，不删数据。

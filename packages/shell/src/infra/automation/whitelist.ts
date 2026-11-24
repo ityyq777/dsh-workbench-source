@@ -5,11 +5,14 @@
  * 永远不允许被自动化调用，即使写进了配置也会在读取时被清洗掉。
  */
 
-/** 永远不允许被自动化调用的 action（硬底线）。 */
-export const DENIED = /^(vault|automation|audit)\.|\.(delete|backup)/i;
+/**
+ * 永远不允许被自动化调用的 action（硬底线）。
+ * host.automation.* 是宿主内置自动化的新名字，同样不能反过来被自动化调用（否则会递归）。
+ */
+export const DENIED = /^(vault|automation|audit)\.|^host\.automation\.|\.(delete|backup)/i;
 
 /** 给界面展示的硬底线模式清单。 */
-export const DENIED_PATTERNS = ["vault.*", "automation.*", "audit.*", "*.delete", "*.backup"];
+export const DENIED_PATTERNS = ["vault.*", "automation.*", "host.automation.*", "audit.*", "*.delete", "*.backup"];
 
 const SEGMENT = /^[A-Za-z_][A-Za-z0-9_]*$/;
 

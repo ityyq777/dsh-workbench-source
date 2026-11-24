@@ -54,6 +54,13 @@ export function createActions({
     return error;
   }
 
+  /**
+   * 旧名兼容：宿主自动化 action 由 automation.* 改名为 host.automation.*。
+   * 旧名不进 META_ACTIONS（否则会盖住插件自己的 automation.*），只在分发末尾兜底：
+   * 插件仍装着时旧名优先走插件域，插件没装时旧名回落到宿主的新名字。
+   */
+  const LEGACY_ACTION_ALIASES = new Map<string, string>();
+
   /** agent 视角下某个 action 是否可见/可调：来源数组里必须有 agent（ui 恒看全量）。 */
   function agentVisible(name: string, def?: DomainActionDef | null): boolean {
     return policy.allows(name) && originAccess.allows(name, def, "agent");
@@ -473,6 +480,8 @@ const { capabilityListMeta, renderCapabilityList, capabilityGetMeta, renderCapab
         domainId: rec.def.id,
       };
     }
+    const alias = LEGACY_ACTION_ALIASES.get(action);
+    if (alias) return invokeAction(alias, args, origin);
     throw new Error("没有业务插件注册 action：" + action);
   }
 
@@ -556,6 +565,12 @@ function schemaSnapshot(domain?: string) {
     input: { type: "object", properties: {}, additionalProperties: false },
     execute: () => ({ domains: search.list() }),
   });
+
+  // 宿主自动化 action 都在 host.automation.* 下：旧名 automation.* 作为兜底别名，
+  // 只在没有插件域注册同名 action 时生效（见 invokeAction 末尾）。
+  for (const name of META_ACTIONS.keys()) {
+    if (name.startsWith("host.automation.")) LEGACY_ACTION_ALIASES.set(name.slice("host.".length), name);
+  }
 
   const installTool = (ctx: any) => {
     ctx.inject?.(["planMode"], (scope: any) => policy.setPlan(scope.planMode));

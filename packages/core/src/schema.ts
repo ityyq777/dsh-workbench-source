@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS host_event_subscription (
 );
 
 -- 自动化规则：触发条件 + 已启用的 action（execMode=action）或提示词（execMode=agent）。
-CREATE TABLE IF NOT EXISTS automation_rule (
+CREATE TABLE IF NOT EXISTS host_automation_rule (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   enabled INTEGER NOT NULL DEFAULT 1,
@@ -145,13 +145,13 @@ CREATE TABLE IF NOT EXISTS automation_rule (
   -- 声明方插件版本，用来提示「内置规则已更新」；不参与调度判断。
   origin_version TEXT
 );
-CREATE INDEX IF NOT EXISTS idx_automation_rule_due ON automation_rule(enabled, next_run_at);
-CREATE INDEX IF NOT EXISTS idx_automation_rule_schedule ON automation_rule(schedule_id);
--- 内置规则的两个索引不放在基线里：老库的 automation_rule 缺 origin / owner_domain / rule_key，
+CREATE INDEX IF NOT EXISTS idx_host_automation_rule_due ON host_automation_rule(enabled, next_run_at);
+CREATE INDEX IF NOT EXISTS idx_host_automation_rule_schedule ON host_automation_rule(schedule_id);
+-- 内置规则的两个索引不放在基线里：老库的 host_automation_rule 缺 origin / owner_domain / rule_key，
 -- 基线在建表之后就要建索引时会撞上「no such column」。索引统一由 migrateLocalDb 补列后再建。
 
--- 运行记录只在本机，不参与云同步；rule_id 指向 automation_rule。
-CREATE TABLE IF NOT EXISTS automation_run (
+-- 运行记录只在本机，不参与云同步；rule_id 指向 host_automation_rule。
+CREATE TABLE IF NOT EXISTS host_automation_run (
   id TEXT PRIMARY KEY,
   rule_id TEXT NOT NULL,
   trigger TEXT NOT NULL,
@@ -161,10 +161,10 @@ CREATE TABLE IF NOT EXISTS automation_run (
   result TEXT NOT NULL DEFAULT '',
   error TEXT NOT NULL DEFAULT ''
 );
-CREATE INDEX IF NOT EXISTS idx_automation_run_rule ON automation_run(rule_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_host_automation_run_rule ON host_automation_run(rule_id, started_at);
 
 -- 本机配置：允许调用的 action 清单等。
-CREATE TABLE IF NOT EXISTS automation_meta (
+CREATE TABLE IF NOT EXISTS host_automation_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );

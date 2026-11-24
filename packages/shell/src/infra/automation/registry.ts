@@ -3,7 +3,7 @@
  *
  * 内置规则的定义来自子插件代码（DomainDef.automations），不是用户数据，
  * 因此**不落库、不参与云同步**：注册时写进这张按域组织的 Map，进程重启后
- * 由各域重新注册重建。运行记录（automation_run）仍然落库，rule_id 用合成 id
+ * 由各域重新注册重建。运行记录（host_automation_run）仍然落库，rule_id 用合成 id
  * `auto:{domainId}:{key}`。
  *
  * 这里只做内存里的数据与调度时间，不认识 SQL、不写 meta：

@@ -11,6 +11,20 @@ export { normalizeBackupFormat } from "./backup-export.js";
 
 export const BACKUP_FORMAT_VERSION = 1;
 
+/**
+ * 旧备份里的模块 id → 当前模块 id。
+ * 自动化内化为宿主能力时，备份模块 id 从插件域 wb-addon-automation 改成了宿主域 wb-shell；
+ * 老备份照常能导回（数据格式没变），不会因为「当前未安装该模块」被整块跳过。
+ */
+const LEGACY_MODULE_IDS: Record<string, string> = {
+  "wb-addon-automation": "wb-shell",
+};
+
+/** 模块 id 规范化：老 id 映射到新 id，其它原样返回。 */
+export function canonicalModuleId(id: string): string {
+  return LEGACY_MODULE_IDS[id] || id;
+}
+
 export interface BackupDomain {
   def: DomainDef;
   enabled: boolean;
@@ -296,12 +310,13 @@ export async function importBackup(opts: {
       status: "failed",
       policy,
     };
-    if (seen.has(item.id)) {
+    const moduleId = canonicalModuleId(item.id);
+    if (seen.has(moduleId)) {
       results.push({ ...base, status: "skipped", message: "模块清单重复，已跳过" });
       continue;
     }
-    seen.add(item.id);
-    const rec = byId.get(item.id);
+    seen.add(moduleId);
+    const rec = byId.get(moduleId);
     if (!rec) {
       results.push({ ...base, status: "skipped", message: "当前未安装该模块，已跳过" });
       continue;

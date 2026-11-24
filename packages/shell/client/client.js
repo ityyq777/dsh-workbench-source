@@ -299,7 +299,7 @@ var require_locale = __commonJS({
         "auto_config_c_event": "\u4E8B\u4EF6\u89E6\u53D1\u7531\u5BBF\u4E3B domain-event \u9A71\u52A8\uFF0Cpayload \u4E3A {domainId,event,data}\u3002",
         "auto_config_c_condition": "\u6761\u4EF6\u4E0D\u6EE1\u8DB3\u8BB0 skipped\uFF0C\u4E0D\u8C03\u7528 action\u3002",
         "auto_config_c_backup": "\u89C4\u5219\u968F\u5907\u4EFD\u8FC1\u79FB\uFF1B\u5141\u8BB8\u6E05\u5355\u4E0E\u8FD0\u884C\u8BB0\u5F55\u53EA\u5728\u672C\u673A\uFF0C\u4E0D\u53C2\u4E0E\u4E91\u540C\u6B65\u3002",
-        "auto_config_c_safety": "\u786C\u5E95\u7EBF\u4E0D\u53EF\u914D\u7F6E\uFF1Avault.*\u3001automation.*\u3001audit.* \u4E0E\u4EFB\u4F55 delete/backup action \u6C38\u8FDC\u4E0D\u5141\u8BB8\u88AB\u81EA\u52A8\u5316\u8C03\u7528\u3002",
+        "auto_config_c_safety": "\u786C\u5E95\u7EBF\u4E0D\u53EF\u914D\u7F6E\uFF1Avault.*\u3001automation.*\u3001host.automation.*\u3001audit.* \u4E0E\u4EFB\u4F55 delete/backup action \u6C38\u8FDC\u4E0D\u5141\u8BB8\u88AB\u81EA\u52A8\u5316\u8C03\u7528\u3002",
         "auto_config_allowed_title": "\u5141\u8BB8\u8C03\u7528\u7684 action",
         "auto_config_allowed_hint": "\u9ED8\u8BA4\u7A7A\u3002\u53EA\u6709\u52FE\u9009\u540E\u7684 action \u624D\u80FD\u88AB\u89C4\u5219\u8C03\u7528\uFF1B\u786C\u5E95\u7EBF\u4E0D\u53D7\u6B64\u5904\u5F71\u54CD\u3002",
         "auto_config_allowed_search": "\u641C\u7D22 action \u6216\u6240\u5C5E\u57DF",
@@ -317,7 +317,7 @@ var require_locale = __commonJS({
         "auto_editor_ex_task_title": "\u6765\u81EA\u81EA\u52A8\u5316\u7684\u8DDF\u8FDB",
         "auto_editor_ex_task_description": "\u89C4\u5219 {{rule.name}} \u89E6\u53D1",
         "auto_editor_ex_tag_name": "\u81EA\u52A8\u5316",
-        "auto_page_title": "\u81EA\u52A8\u5316",
+        "auto_page_title": "\u81EA\u52A8\u5316\uFF08\u5BBF\u4E3B\u5185\u7F6E\uFF09",
         "auto_page_desc": "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF0C\u5E76\u67E5\u770B\u8FD0\u884C\u8BB0\u5F55\u3002"
       },
       en: {
@@ -575,7 +575,7 @@ var require_locale = __commonJS({
         "auto_config_c_event": "Events come from the host domain-event bus; payload is {domainId,event,data}.",
         "auto_config_c_condition": "A false condition records skipped and does not call the action.",
         "auto_config_c_backup": "Rules travel with backups; the allowed list and run history stay on this device.",
-        "auto_config_c_safety": "Hard limits are not configurable: vault.*, automation.*, audit.* and any delete/backup action can never be called.",
+        "auto_config_c_safety": "Hard limits are not configurable: vault.*, automation.*, host.automation.*, audit.* and any delete/backup action can never be called.",
         "auto_config_allowed_title": "Allowed actions",
         "auto_config_allowed_hint": "Empty by default. Only checked actions can be called by rules; hard limits always apply.",
         "auto_config_allowed_search": "Search action or domain",
@@ -592,7 +592,7 @@ var require_locale = __commonJS({
         "auto_editor_ex_task_title": "Follow-up from automation",
         "auto_editor_ex_task_description": "Triggered by rule {{rule.name}}",
         "auto_editor_ex_tag_name": "automation",
-        "auto_page_title": "Automation",
+        "auto_page_title": "Automation (built-in)",
         "auto_page_desc": "Run actions or AI rules on a schedule or event, and review the run history."
       }
     };
@@ -666,7 +666,7 @@ var require_locale2 = __commonJS({
         tab_account: "\u8D26\u53F7\u4E0E\u540C\u6B65",
         tab_addons: "\u5B50\u63D2\u4EF6",
         tab_backup: "\u6570\u636E\u5907\u4EFD",
-        tab_automation: "\u81EA\u52A8\u5316",
+        tab_automation: "\u81EA\u52A8\u5316\uFF08\u5BBF\u4E3B\u5185\u7F6E\uFF09",
         automation_desc: "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF1A\u7BA1\u7406\u89C4\u5219\u3001\u8FD0\u884C\u8BB0\u5F55\u4E0E\u8BBE\u7F6E",
         tab_data: "\u6570\u636E",
         data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u89D2\u8272\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
@@ -1065,7 +1065,7 @@ var require_locale2 = __commonJS({
         tab_account: "Account & Sync",
         tab_addons: "Addons",
         tab_backup: "Data backup",
-        tab_automation: "Automation",
+        tab_automation: "Automation (built-in)",
         automation_desc: "Run actions or AI rules on a schedule or event: manage rules, run history and settings",
         tab_data: "Data",
         data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session roles, audit log): read-only, searchable, paged",
@@ -7461,7 +7461,7 @@ var require_stats = __commonJS({
     "use strict";
     var C = require_common();
     var icons = require_common().icons;
-    var DENIED = ["vault.*", "automation.*", "audit.*", "*.delete", "*.backup"];
+    var DENIED = ["vault.*", "host.automation.*", "audit.*", "*.delete", "*.backup"];
     function kpiRows(s) {
       var today = s && s.today || {};
       return [
@@ -7567,8 +7567,8 @@ var require_stats = __commonJS({
       var React = props.React;
       var lang = props.lang === "en" ? "en" : "zh";
       var t = props.t;
-      var stats = C.useLoad(React, api, "automation.stats", {}, []);
-      var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
+      var stats = C.useLoad(React, api, "host.automation.stats", {}, []);
+      var opts = C.useLoad(React, api, "host.automation.actionOptions", {}, []);
       var s = stats.data || { total: 0, enabled: 0, today: {} };
       return h2(
         "div",
@@ -9206,9 +9206,9 @@ var require_rules = __commonJS({
       var React = props.React;
       var lang = props.lang === "en" ? "en" : "zh";
       var t = props.t;
-      var list = C.useLoad(React, api, "automation.ruleList", {}, []);
-      var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
-      var status = C.useLoad(React, api, "automation.agentStatus", {}, []);
+      var list = C.useLoad(React, api, "host.automation.ruleList", {}, []);
+      var opts = C.useLoad(React, api, "host.automation.actionOptions", {}, []);
+      var status = C.useLoad(React, api, "host.automation.agentStatus", {}, []);
       var formS = React.useState(null);
       var initS = React.useState(null);
       var busyS = React.useState(false);
@@ -9241,7 +9241,7 @@ var require_rules = __commonJS({
       function save(payload) {
         busyS[1](true);
         msgS[1]("");
-        var action = payload.id ? "automation.ruleUpdate" : "automation.ruleCreate";
+        var action = payload.id ? "host.automation.ruleUpdate" : "host.automation.ruleCreate";
         C.call(api, action, payload).then(function() {
           busyS[1](false);
           formS[1](null);
@@ -9254,12 +9254,12 @@ var require_rules = __commonJS({
       }
       function remove(rule) {
         if (typeof window !== "undefined" && !window.confirm(t("rules.confirm.delete", { name: rule.name }))) return;
-        C.call(api, "automation.ruleDelete", { id: rule.id }).then(reload).catch(fail);
+        C.call(api, "host.automation.ruleDelete", { id: rule.id }).then(reload).catch(fail);
       }
       function run(rule) {
         runningS[1](rule.id);
         msgS[1]("");
-        C.call(api, "automation.ruleRun", { id: rule.id }).then(function(r) {
+        C.call(api, "host.automation.ruleRun", { id: rule.id }).then(function(r) {
           runningS[1]("");
           msgS[1](r && r.skipped ? "skipped: " + (r.reason || "") : t("common.saved"));
           reload();
@@ -9269,7 +9269,7 @@ var require_rules = __commonJS({
         });
       }
       function toggle(rule) {
-        C.call(api, "automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(reload).catch(fail);
+        C.call(api, "host.automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(reload).catch(fail);
       }
       function setForm(k, v) {
         var next = Object.assign({}, formS[0]);
@@ -9395,7 +9395,7 @@ var require_rules = __commonJS({
       var t = props.t;
       var rule = props.rule;
       var cursorS = React.useState("");
-      var state = C.useLoad(React, api, "automation.ruleHistory", { id: rule.id, limit: LIMIT, before: cursorS[0] || void 0 }, [rule.id, cursorS[0]]);
+      var state = C.useLoad(React, api, "host.automation.ruleHistory", { id: rule.id, limit: LIMIT, before: cursorS[0] || void 0 }, [rule.id, cursorS[0]]);
       var data = state.data || {};
       var records = data.records || [];
       var missing = Boolean(rule.scheduleMissing) || data.earlierRecordsUnavailable && records.length === 0;
@@ -9623,8 +9623,8 @@ var require_runs = __commonJS({
       var React = props.React;
       var lang = props.lang === "en" ? "en" : "zh";
       var t = props.t;
-      var runs = C.useLoad(React, api, "automation.runList", { limit: LIMIT }, []);
-      var rules = C.useLoad(React, api, "automation.ruleList", {}, []);
+      var runs = C.useLoad(React, api, "host.automation.runList", { limit: LIMIT }, []);
+      var rules = C.useLoad(React, api, "host.automation.ruleList", {}, []);
       var filterS = React.useState({ ruleId: "", status: "" });
       var expandS = React.useState("");
       var ruleList = rules.data && rules.data.items || [];
@@ -9956,8 +9956,8 @@ var require_config = __commonJS({
       var React = props.React;
       var lang = props.lang === "en" ? "en" : "zh";
       var t = props.t;
-      var cfg = C.useLoad(React, api, "automation.configGet", {}, []);
-      var catalog = C.useLoad(React, api, "automation.actionCatalog", {}, []);
+      var cfg = C.useLoad(React, api, "host.automation.configGet", {}, []);
+      var catalog = C.useLoad(React, api, "host.automation.actionCatalog", {}, []);
       var formS = React.useState(null);
       var busyS = React.useState(false);
       var msgS = React.useState(null);
@@ -9977,7 +9977,7 @@ var require_config = __commonJS({
       function save(payload) {
         busyS[1](true);
         msgS[1](null);
-        C.call(api, "automation.configSet", payload).then(function() {
+        C.call(api, "host.automation.configSet", payload).then(function() {
           busyS[1](false);
           savedS[1](true);
           msgS[1]({ kind: "ok", text: t("common.saved") });

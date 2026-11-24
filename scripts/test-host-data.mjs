@@ -72,9 +72,9 @@ try {
     "host_event",
     "host_event_delivery",
     "host_event_subscription",
-    "automation_rule",
-    "automation_run",
-    "automation_meta",
+    "host_automation_rule",
+    "host_automation_run",
+    "host_automation_meta",
   ]) {
     assert(names.includes(name), "缺少平台表 " + name + "（实际 " + names.join(",") + "）");
   }

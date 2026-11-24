@@ -337,10 +337,10 @@ module.exports = function RulesView(props) {
   var React = props.React;
   var lang = props.lang === "en" ? "en" : "zh";
   var t = props.t;
-  var list = C.useLoad(React, api, "automation.ruleList", {}, []);
-  var opts = C.useLoad(React, api, "automation.actionOptions", {}, []);
+  var list = C.useLoad(React, api, "host.automation.ruleList", {}, []);
+  var opts = C.useLoad(React, api, "host.automation.actionOptions", {}, []);
   // 宿主服务是否可用、有没有游离任务：进页面就知道，决定能不能新建 AI 规则。
-  var status = C.useLoad(React, api, "automation.agentStatus", {}, []);
+  var status = C.useLoad(React, api, "host.automation.agentStatus", {}, []);
   var formS = React.useState(null);
   var initS = React.useState(null);
   var busyS = React.useState(false);
@@ -375,7 +375,7 @@ module.exports = function RulesView(props) {
   function save(payload) {
     busyS[1](true);
     msgS[1]("");
-    var action = payload.id ? "automation.ruleUpdate" : "automation.ruleCreate";
+    var action = payload.id ? "host.automation.ruleUpdate" : "host.automation.ruleCreate";
     C.call(api, action, payload)
       .then(function () {
         busyS[1](false);
@@ -390,12 +390,12 @@ module.exports = function RulesView(props) {
   }
   function remove(rule) {
     if (typeof window !== "undefined" && !window.confirm(t("rules.confirm.delete", { name: rule.name }))) return;
-    C.call(api, "automation.ruleDelete", { id: rule.id }).then(reload).catch(fail);
+    C.call(api, "host.automation.ruleDelete", { id: rule.id }).then(reload).catch(fail);
   }
   function run(rule) {
     runningS[1](rule.id);
     msgS[1]("");
-    C.call(api, "automation.ruleRun", { id: rule.id })
+    C.call(api, "host.automation.ruleRun", { id: rule.id })
       .then(function (r) {
         runningS[1]("");
         msgS[1](r && r.skipped ? "skipped: " + (r.reason || "") : t("common.saved"));
@@ -407,7 +407,7 @@ module.exports = function RulesView(props) {
       });
   }
   function toggle(rule) {
-    C.call(api, "automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(reload).catch(fail);
+    C.call(api, "host.automation.ruleUpdate", { id: rule.id, enabled: !rule.enabled }).then(reload).catch(fail);
   }
   function setForm(k, v) {
     var next = Object.assign({}, formS[0]);
@@ -517,7 +517,7 @@ function AgentHistory(props) {
   var rule = props.rule;
   // 游标是「上一页最旧一条」的消息 id；宿主按它往前翻，不需要我们自己算时间。
   var cursorS = React.useState("");
-  var state = C.useLoad(React, api, "automation.ruleHistory", { id: rule.id, limit: LIMIT, before: cursorS[0] || undefined }, [rule.id, cursorS[0]]);
+  var state = C.useLoad(React, api, "host.automation.ruleHistory", { id: rule.id, limit: LIMIT, before: cursorS[0] || undefined }, [rule.id, cursorS[0]]);
   var data = state.data || {};
   var records = data.records || [];
   var missing = Boolean(rule.scheduleMissing) || (data.earlierRecordsUnavailable && records.length === 0);

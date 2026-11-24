@@ -35,7 +35,7 @@ export interface ActionExecutorDeps {
   /** 内置规则豁免白名单，调用必须留痕 */
   audit?: (entry: { action: string; domain: string; ok: boolean; args?: unknown; error?: string }) => void;
   /**
-   * 内置规则的状态回写：它们不落 automation_rule（定义在内存注册表），
+   * 内置规则的状态回写：它们不落 host_automation_rule（定义在内存注册表），
    * 所以「最近运行/计数/下次时间」不能直接 UPDATE 表，交给引擎写内存。
    */
   track?: (rule: AutomationRule, patch: {
@@ -82,7 +82,7 @@ export function createActionExecutor({
   ): void {
     const finished = now();
     db.prepare(
-      "INSERT INTO automation_run(id,rule_id,trigger,status,started_at,finished_at,result,error) VALUES(?,?,?,?,?,?,?,?)",
+      "INSERT INTO host_automation_run(id,rule_id,trigger,status,started_at,finished_at,result,error) VALUES(?,?,?,?,?,?,?,?)",
     ).run(
       newId("run"),
       rule.id,
@@ -104,7 +104,7 @@ export function createActionExecutor({
       return;
     }
     if (status === "skipped") {
-      db.prepare("UPDATE automation_rule SET last_run_at=?, last_status=? WHERE id=?").run(
+      db.prepare("UPDATE host_automation_rule SET last_run_at=?, last_status=? WHERE id=?").run(
         finished,
         status,
         rule.id,
@@ -113,7 +113,7 @@ export function createActionExecutor({
     }
     const errorInc = status === "error" ? 1 : 0;
     db.prepare(
-      "UPDATE automation_rule SET last_run_at=?, last_status=?, run_count=run_count+1, error_count=error_count+? WHERE id=?",
+      "UPDATE host_automation_rule SET last_run_at=?, last_status=?, run_count=run_count+1, error_count=error_count+? WHERE id=?",
     ).run(finished, status, errorInc, rule.id);
   }
 
@@ -125,7 +125,7 @@ export function createActionExecutor({
       track(rule, { nextRunAt: Number(next) || 0 });
       return;
     }
-    db.prepare("UPDATE automation_rule SET next_run_at=? WHERE id=?").run(next, rule.id);
+    db.prepare("UPDATE host_automation_rule SET next_run_at=? WHERE id=?").run(next, rule.id);
   }
 
   async function execute(rule: AutomationRule, trigger: string, payload?: any): Promise<ActionExecuteResult> {
@@ -142,7 +142,7 @@ export function createActionExecutor({
     }
     const since = now() - 3600000;
     const used = db
-      .prepare("SELECT COUNT(*) AS n FROM automation_run WHERE rule_id=? AND started_at>=? AND status!='skipped'")
+      .prepare("SELECT COUNT(*) AS n FROM host_automation_run WHERE rule_id=? AND started_at>=? AND status!='skipped'")
       .get(rule.id, since).n;
     if (used >= config().perHour) {
       record(rule, trigger, "skipped", "", "超过每小时上限", now());

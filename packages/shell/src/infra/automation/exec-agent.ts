@@ -167,7 +167,7 @@ export function createAgentRules({ db, agent, log = () => {}, getRule, listRules
       if (rule.execMode !== "agent") return rule;
       const live = catalog.map.get(rule.scheduleId);
       if (!live) {
-        db.prepare("UPDATE automation_rule SET enabled=0, next_run_at=NULL WHERE id=? AND enabled=1").run(rule.id);
+        db.prepare("UPDATE host_automation_rule SET enabled=0, next_run_at=NULL WHERE id=? AND enabled=1").run(rule.id);
         return Object.assign(rule, {
           enabled: false,
           scheduleMissing: true,
@@ -190,7 +190,7 @@ export function createAgentRules({ db, agent, log = () => {}, getRule, listRules
       };
       const nextRunAt = live.scheduledAt ? Date.parse(live.scheduledAt) || null : null;
       if (JSON.stringify(snapshot) !== JSON.stringify(prev) || rule.nextRunAt !== nextRunAt) {
-        db.prepare("UPDATE automation_rule SET enabled=?, agent_json=?, next_run_at=? WHERE id=?").run(
+        db.prepare("UPDATE host_automation_rule SET enabled=?, agent_json=?, next_run_at=? WHERE id=?").run(
           live.status === "active" ? 1 : 0,
           JSON.stringify(snapshot),
           nextRunAt,
@@ -236,7 +236,7 @@ export function createAgentRules({ db, agent, log = () => {}, getRule, listRules
     const ts = now();
     try {
       db.prepare(
-        "INSERT INTO automation_rule(id,name,enabled,exec_mode,agent_json,schedule_id,trigger_type,trigger_config,condition,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO host_automation_rule(id,name,enabled,exec_mode,agent_json,schedule_id,trigger_type,trigger_config,condition,action_name,action_args,next_run_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       ).run(
         id,
         name,
@@ -295,7 +295,7 @@ export function createAgentRules({ db, agent, log = () => {}, getRule, listRules
     };
     const nextRunAt = record.scheduledAt ? Date.parse(record.scheduledAt) || null : null;
     db.prepare(
-      "UPDATE automation_rule SET name=?,enabled=?,agent_json=?,trigger_config=?,next_run_at=?,updated_at=?,rev=rev+1 WHERE id=?",
+      "UPDATE host_automation_rule SET name=?,enabled=?,agent_json=?,trigger_config=?,next_run_at=?,updated_at=?,rev=rev+1 WHERE id=?",
     ).run(
       name,
       status === "active" ? 1 : 0,
@@ -329,7 +329,7 @@ export function createAgentRules({ db, agent, log = () => {}, getRule, listRules
     const known = new Set(
       db
         .prepare(
-          "SELECT schedule_id FROM automation_rule WHERE deleted_at IS NULL AND schedule_id IS NOT NULL AND schedule_id!=''",
+          "SELECT schedule_id FROM host_automation_rule WHERE deleted_at IS NULL AND schedule_id IS NOT NULL AND schedule_id!=''",
         )
         .all()
         .map((row: any) => row.schedule_id),
