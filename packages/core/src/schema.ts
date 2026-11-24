@@ -147,10 +147,8 @@ CREATE TABLE IF NOT EXISTS automation_rule (
 );
 CREATE INDEX IF NOT EXISTS idx_automation_rule_due ON automation_rule(enabled, next_run_at);
 CREATE INDEX IF NOT EXISTS idx_automation_rule_schedule ON automation_rule(schedule_id);
--- 内置规则按 (声明域名, 域内键) 唯一：重复注册幂等，重装插件不会多出一条。
-CREATE UNIQUE INDEX IF NOT EXISTS idx_automation_rule_builtin
-  ON automation_rule(owner_domain, rule_key) WHERE origin='plugin';
-CREATE INDEX IF NOT EXISTS idx_automation_rule_origin ON automation_rule(origin);
+-- 内置规则的两个索引不放在基线里：老库的 automation_rule 缺 origin / owner_domain / rule_key，
+-- 基线在建表之后就要建索引时会撞上「no such column」。索引统一由 migrateLocalDb 补列后再建。
 
 -- 运行记录只在本机，不参与云同步；rule_id 指向 automation_rule。
 CREATE TABLE IF NOT EXISTS automation_run (
