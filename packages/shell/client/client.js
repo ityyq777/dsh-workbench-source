@@ -252,6 +252,7 @@ var require_locale = __commonJS({
         "auto_runs_detail_noError": "\u65E0\u9519\u8BEF",
         "auto_runs_empty_title": "\u8FD8\u6CA1\u6709\u8FD0\u884C\u8BB0\u5F55",
         "auto_runs_empty_body": "\u89C4\u5219\u8FD0\u884C\u540E\uFF0C\u8FD9\u91CC\u4FDD\u7559\u6700\u8FD1 200 \u6761\u8BB0\u5F55\u4E0E\u9519\u8BEF\u4FE1\u606F\u3002",
+        "auto_tab_overview": "\u6982\u89C8",
         "auto_stats_title": "\u81EA\u52A8\u5316",
         "auto_stats_subtitle": "\u628A\u5B9A\u65F6\u3001\u57DF\u4E8B\u4EF6\u6216\u624B\u52A8\u64CD\u4F5C\u63A5\u5230\u5DF2\u542F\u7528\u7684 action\uFF1A\u6A21\u677F\u3001\u6761\u4EF6\u3001\u9650\u9891\u4E0E\u8FD0\u884C\u8BB0\u5F55\u3002",
         "auto_stats_kpi_total": "\u89C4\u5219\u603B\u6570",
@@ -527,6 +528,7 @@ var require_locale = __commonJS({
         "auto_runs_detail_noError": "No error",
         "auto_runs_empty_title": "No runs yet",
         "auto_runs_empty_body": "Once rules run, the latest 200 runs and errors are kept here.",
+        "auto_tab_overview": "Overview",
         "auto_stats_title": "Automation",
         "auto_stats_subtitle": "Connect schedules, domain events or manual actions to whitelisted actions: templates, conditions, limits and history.",
         "auto_stats_kpi_total": "Rules",
@@ -626,7 +628,7 @@ var require_locale2 = __commonJS({
         tab_addons: "\u5B50\u63D2\u4EF6",
         tab_backup: "\u6570\u636E\u5907\u4EFD",
         tab_automation: "\u81EA\u52A8\u5316",
-        automation_desc: "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF1A\u7BA1\u7406\u89C4\u5219\u3001\u8FD0\u884C\u8BB0\u5F55\u3001\u8BBE\u7F6E\u4E0E Action \u6E05\u5355",
+        automation_desc: "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF1A\u7BA1\u7406\u89C4\u5219\u3001\u8FD0\u884C\u8BB0\u5F55\u4E0E\u8BBE\u7F6E",
         tab_data: "\u6570\u636E",
         data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u89D2\u8272\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
         tab_config: "\u914D\u7F6E",
@@ -986,7 +988,7 @@ var require_locale2 = __commonJS({
         tab_addons: "Addons",
         tab_backup: "Data backup",
         tab_automation: "Automation",
-        automation_desc: "Run actions or AI rules on a schedule or event: manage rules, run history, settings and the action list",
+        automation_desc: "Run actions or AI rules on a schedule or event: manage rules, run history and settings",
         tab_data: "Data",
         data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session roles, audit log): read-only, searchable, paged",
         tab_config: "Settings",
@@ -9903,7 +9905,7 @@ var require_automation_page = __commonJS({
     var runs = require_runs();
     var config = require_config();
     var TABS = [
-      ["overview", "stats.title", "activity"],
+      ["overview", "auto_tab_overview", "activity"],
       ["rules", "rules.title", "list"],
       ["runs", "runs.title", "history"],
       ["config", "config.title", "sliders-horizontal"]

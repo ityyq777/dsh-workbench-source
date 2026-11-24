@@ -22,7 +22,7 @@ var config = require("./automation/config.cjs");
 
 /** 页签定义：[key, 文案键, 图标名]。 */
 var TABS = [
-  ["overview", "stats.title", "activity"],
+  ["overview", "auto_tab_overview", "activity"],
   ["rules", "rules.title", "list"],
   ["runs", "runs.title", "history"],
   ["config", "config.title", "sliders-horizontal"],
