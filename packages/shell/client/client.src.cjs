@@ -494,7 +494,7 @@ function WorkbenchPage(props) {
     return jsx.jsx(QueuePage.QueueView, { jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "automation") {
-    return jsx.jsx(AutomationPage, { h: h, jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead, onOpenData: function () { go("data"); } });
+    return jsx.jsx(AutomationPage, { h: h, jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });

@@ -124,8 +124,6 @@ module.exports = require("../../../addons/lib/client-base-styles.cjs")("wba").jo
   ".wb-auto{display:flex;flex-direction:column;gap:14px;width:100%;min-width:0}",
   ".wb-auto .wba-wrap{padding:0;height:auto;overflow:visible;gap:14px}",
   // 数据页签删除后的去向说明条
-  ".wba-data-hint{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--wb-border);border-radius:10px;background:var(--wb-line)}",
-  ".wba-data-hint .wba-hint{flex:1 1 260px;font-size:12px;color:var(--wb-muted);line-height:1.5}",
 ].join("\n") +
   "\n" +
   // 分步弹窗外壳：遮罩/焦点环/步骤条样式由共享层提供。

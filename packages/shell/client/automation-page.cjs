@@ -2,10 +2,13 @@
 /**
  * 宿主「自动化」视图：单入口页签式页面。
  *
- * 五个页签：概览 / 规则 / 运行记录 / 设置 / Action。
+ * 四个页签：概览 / 规则 / 运行记录 / 设置。
  * - 原来插件里的「数据」页签已删除：automation_rule / automation_run / automation_meta
  *   并入了宿主平台表，数据浏览统一走宿主「数据」页签；
- * - action 名仍是 automation.*，宿主把它们注册在 wb-shell 域（见 common.cjs 的 hostApi）；
+ * - 原来的「Action」页签也删了：automation.* 注册在 wb-shell 域，宿主的「宿主 action 权限」
+ *   页（route=agent，数据源 actions.list）已经把全部宿主 action 连同参数、允许来源列在一起，
+ *   这里再挂一份只读清单只是重复入口；
+ * - action 名仍是 automation.*，见 common.cjs 的 hostApi；
  * - 所有文案来自宿主 locale（auto_ 前缀），颜色只用主题 token。
  */
 var C = require("./automation/common.cjs");
@@ -23,55 +26,12 @@ var TABS = [
   ["rules", "rules.title", "list"],
   ["runs", "runs.title", "history"],
   ["config", "config.title", "sliders-horizontal"],
-  ["actions", "auto_tab_actions", "sparkles"],
 ];
-
-/** Action 页签：只读展示宿主为自动化注册的 action 清单与输入 schema。 */
-function ActionsPane(props) {
-  var h = props.h;
-  var t = props.t;
-  var React = props.React;
-  var icon = props.icon;
-  var state = C.useLoad(React, props.api, "automation.actionSchema", {}, []);
-  var data = state.data || {};
-  var list = Array.isArray(data.actions) ? data.actions : [];
-
-  function paramsOf(input) {
-    var props2 = (input && input.properties) || {};
-    var keys = Object.keys(props2);
-    return keys.length ? keys.join(", ") : "—";
-  }
-
-  return h("div", { className: "wba-wrap" },
-    h("div", { className: "wba-head" },
-      h("div", null,
-        h("h2", { className: "wba-title" }, t("auto_actions_title")),
-        h("p", { className: "wba-sub" }, t("auto_actions_hint"))),
-      h("div", { className: "wba-row" },
-        h(C.Btn, { h: h, onClick: state.refresh }, t("common.refresh")))),
-    state.error ? h(C.Notice, { h: h, kind: "error", text: state.error }) : null,
-    state.loading
-      ? h("div", { className: "wba-panel" }, h("div", { className: "wba-skel" }), h("div", { className: "wba-skel" }))
-      : list.length === 0
-        ? h(C.Empty, { h: h, text: t("auto_actions_empty") })
-        : h("div", { className: "wba-table-wrap" },
-            h("table", { className: "wba-table" },
-              h("thead", null, h("tr", null,
-                ["auto_actions_col_name", "auto_actions_col_desc", "auto_actions_col_params"].map(function (key) {
-                  return h("th", { key: key }, t(key));
-                }))),
-              h("tbody", null, list.map(function (a) {
-                return h("tr", { key: a.name },
-                  h("td", { className: "wba-nowrap" }, h("code", null, a.name)),
-                  h("td", null, h("span", { className: "wba-ellipsis" }, a.description || "—")),
-                  h("td", { className: "wba-mono" }, paramsOf(a.input)));
-              })))));
-}
 
 /**
  * 页面组件。props：
  * jsx/React（宿主注入）、api（/workbench/api 客户端）、lang、t（宿主文案）、
- * head(title, desc)（宿主统一页头）、onOpenData（跳到宿主「数据」页，可选）。
+ * head(title, desc)（宿主统一页头）。
  */
 module.exports = function AutomationView(props) {
   var h = props.h;
@@ -112,8 +72,6 @@ module.exports = function AutomationView(props) {
     body = h(runs, { h: h, api: api, React: React, lang: props.lang, t: t, icon: icons.icon });
   } else if (tab === "config") {
     body = h(config, { h: h, api: api, React: React, lang: props.lang, t: t, icon: icons.icon });
-  } else if (tab === "actions") {
-    body = h(ActionsPane, { h: h, api: api, React: React, t: t, icon: icons.icon });
   } else {
     body = h(StatsView, { h: h, api: api, React: React, lang: props.lang, t: t, icon: icons.icon, onNavigate: onNavigate });
   }
@@ -134,12 +92,7 @@ module.exports = function AutomationView(props) {
           },
             h("span", { className: "wba-inline" }, icons.icon(item[2], 13), t(item[1])));
         })),
-      // 数据页签删除后的去向说明：让用户知道规则与运行记录去哪看。
-      h("div", { className: "wba-data-hint" },
-        h("span", { className: "wba-hint" }, t("auto_data_hint")),
-        props.onOpenData ? h(C.Btn, { h: h, onClick: props.onOpenData }, t("auto_data_open")) : null),
       body));
 };
 
-module.exports.ActionsPane = ActionsPane;
 module.exports.TABS = TABS;
