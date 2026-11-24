@@ -9,6 +9,17 @@ module.exports = `
 .wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
 .wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
 .wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
+.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;outline:none}
+.wb-role-search:focus{border-color:var(--wb-accent);box-shadow:0 0 0 2px color-mix(in oklab,var(--wb-accent) 22%,transparent)}
+.wb-role-search::placeholder{color:var(--wb-muted)}
+.wb-role-count{font-variant-numeric:tabular-nums}
+.wb-role-list{display:grid;gap:6px;max-height:min(52dvh,26rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-mark{background:color-mix(in oklab,var(--wb-accent) 24%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.wb-role-empty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--wb-muted);font-size:12px}
+.wb-role-clear{border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12px;border-radius:8px;padding:3px 8px;cursor:pointer}
+.wb-role-clear:hover{border-color:var(--wb-accent)}
+.wb-role-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+@media (max-width:480px){.wb-role-dialog{width:100%;max-height:88dvh}}
 `;
 
 // 角色管理页：共享控件用 wbr 前缀，基础样式从 addons/lib 生成，页面布局只用主题 token。

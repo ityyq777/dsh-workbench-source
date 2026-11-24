@@ -633,6 +633,10 @@ var require_locale2 = __commonJS({
         role_retry: "\u91CD\u8BD5",
         role_error: "\u65E0\u6CD5\u8BFB\u53D6\u6216\u4FDD\u5B58\u4F1A\u8BDD\u8BBE\u7F6E",
         role_loading: "\u8BFB\u53D6\u4E2D\u2026",
+        role_search: "\u641C\u7D22\u89D2\u8272\uFF08\u540D\u79F0\u3001\u57DF\u3001\u8BF4\u660E\u6216\u52A8\u4F5C\uFF09",
+        role_search_clear: "\u6E05\u7A7A\u641C\u7D22",
+        role_search_empty: "\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272",
+        role_search_count: "\u5339\u914D {shown} / \u5171 {total} \u4E2A\u89D2\u8272",
         nav: "\u5DE5\u4F5C\u53F0",
         title: "\u5DE5\u4F5C\u53F0",
         tagline: "\u79BB\u7EBF\u4F18\u5148 \xB7 \u4E1A\u52A1\u63D2\u4EF6\u7531 DSH \u5B89\u88C5",
@@ -989,6 +993,10 @@ var require_locale2 = __commonJS({
         role_retry: "Retry",
         role_error: "Could not read or save session settings",
         role_loading: "Loading\u2026",
+        role_search: "Search roles (name, domain, description or action)",
+        role_search_clear: "Clear search",
+        role_search_empty: "No matching roles",
+        role_search_count: "{shown} of {total} roles match",
         nav: "Workbench",
         title: "Workbench",
         tagline: "Offline-first \xB7 addons installed by DSH",
@@ -1816,6 +1824,17 @@ var require_styles = __commonJS({
 .wb-role-mask{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:12px;background:color-mix(in oklab,var(--dsw-alias-label-primary,CanvasText) 22%,transparent)}
 .wb-role-dialog{display:grid;gap:8px;padding:16px;box-sizing:border-box;width:min(100%,24rem);max-height:80dvh;overflow:auto;background:var(--wb-card);border:1px solid var(--wb-line);border-radius:12px;box-shadow:0 8px 32px color-mix(in oklab,var(--wb-muted) 24%,transparent)}
 .wb-role-dialog small{display:block;color:var(--wb-muted)}.wb-role-dialog .wb-role-btn[aria-pressed]{display:grid;gap:3px;text-align:start}.wb-role-dialog [role=alert]{color:var(--wb-danger)}
+.wb-role-search{box-sizing:border-box;width:100%;font:inherit;font-size:13px;color:inherit;background:var(--wb-surface);border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;outline:none}
+.wb-role-search:focus{border-color:var(--wb-accent);box-shadow:0 0 0 2px color-mix(in oklab,var(--wb-accent) 22%,transparent)}
+.wb-role-search::placeholder{color:var(--wb-muted)}
+.wb-role-count{font-variant-numeric:tabular-nums}
+.wb-role-list{display:grid;gap:6px;max-height:min(52dvh,26rem);overflow:auto;overscroll-behavior:contain}
+.wb-role-mark{background:color-mix(in oklab,var(--wb-accent) 24%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.wb-role-empty{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--wb-muted);font-size:12px}
+.wb-role-clear{border:1px solid var(--wb-line);background:var(--wb-card);color:inherit;font:inherit;font-size:12px;border-radius:8px;padding:3px 8px;cursor:pointer}
+.wb-role-clear:hover{border-color:var(--wb-accent)}
+.wb-role-clear:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
+@media (max-width:480px){.wb-role-dialog{width:100%;max-height:88dvh}}
 `;
     var ROLES_BASE = require_client_base_styles()("wbr").join("\n");
     module2.exports += "\n" + ROLES_BASE + `
@@ -10512,6 +10531,57 @@ var require_session_role = __commonJS({
     var Dialog = require_overlay()({ maskClass: "wb-role-mask", dialogClass: "wb-role-dialog" });
     var endpoint = "/workbench/api/session-role";
     var listeners2 = /* @__PURE__ */ new Set();
+    var TOKEN_SPLIT = /\s+/;
+    function tokensOf(query) {
+      return String(query || "").toLowerCase().split(TOKEN_SPLIT).filter(Boolean);
+    }
+    function haystackOf(role) {
+      const actions = Array.isArray(role && role.actions) ? role.actions : [];
+      return [role && role.name, role && role.domain, role && role.description, ...actions].filter(Boolean).join(" ").toLowerCase();
+    }
+    function matchRole(role, tokens) {
+      if (!tokens.length) return true;
+      const hay = haystackOf(role);
+      return tokens.every((token) => hay.includes(token));
+    }
+    function filterRoles(roles, query) {
+      const tokens = tokensOf(query);
+      return (roles || []).filter((role) => matchRole(role, tokens));
+    }
+    function splitHits(value, tokens) {
+      const text = String(value == null ? "" : value);
+      if (!text) return [];
+      if (!tokens.length) return [{ text, hit: false }];
+      const lower = text.toLowerCase();
+      const ranges = [];
+      for (const token of tokens) {
+        let from = 0;
+        for (; ; ) {
+          const at = lower.indexOf(token, from);
+          if (at < 0) break;
+          ranges.push([at, at + token.length]);
+          from = at + token.length;
+          if (!token.length) break;
+        }
+      }
+      if (!ranges.length) return [{ text, hit: false }];
+      ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+      const merged = [];
+      for (const range of ranges) {
+        const last = merged[merged.length - 1];
+        if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+        else merged.push([range[0], range[1]]);
+      }
+      const parts = [];
+      let cursor = 0;
+      for (const [start, end] of merged) {
+        if (start > cursor) parts.push({ text: text.slice(cursor, start), hit: false });
+        parts.push({ text: text.slice(start, end), hit: true });
+        cursor = end;
+      }
+      if (cursor < text.length) parts.push({ text: text.slice(cursor), hit: false });
+      return parts;
+    }
     function attachStream(stream2) {
       function refresh(event) {
         try {
@@ -10539,14 +10609,20 @@ var require_session_role = __commonJS({
       if (!response.ok || data.ok === false || data.sessionId !== sid) throw new Error(data.error || "HTTP " + response.status);
       return data;
     }
+    function fill(text, values) {
+      return String(text || "").replace(/\{(\w+)\}/g, (all, key) => key in values ? String(values[key]) : all);
+    }
     function SessionRole({ sessionId: sid, t, ensureStream: ensureStream2 }) {
       const [state, setState] = React.useState(null);
       const [open, setOpen] = React.useState(false);
       const [busy, setBusy] = React.useState(false);
       const [error, setError] = React.useState("");
+      const [query, setQuery] = React.useState("");
       const generation = React.useRef(0);
       const saving = React.useRef(false);
       const alive = React.useRef(false);
+      const searchRef = React.useRef(null);
+      const listRef = React.useRef(null);
       const refresh = React.useCallback(async () => {
         const current = ++generation.current;
         try {
@@ -10585,6 +10661,7 @@ var require_session_role = __commonJS({
           if (alive.current) {
             ++generation.current;
             setState((previous) => ({ ...previous, ...result }));
+            setQuery("");
             setOpen(false);
             refresh();
           }
@@ -10600,7 +10677,74 @@ var require_session_role = __commonJS({
       const selected = roles.find((r) => r.id === state?.roleId);
       const missing = state?.roleId && !selected;
       const label = selected?.name || t(missing ? "role_missing" : "role_none");
-      const choices = [{ id: null, name: t("role_none"), description: t("role_none_desc") }, ...roles];
+      const tokens = tokensOf(query);
+      const matched = filterRoles(roles, query);
+      const choices = [{ id: null, name: t("role_none"), description: t("role_none_desc") }, ...matched];
+      const searching = tokens.length > 0;
+      function clearQuery() {
+        setQuery("");
+        if (searchRef.current && searchRef.current.focus) searchRef.current.focus();
+      }
+      function escape() {
+        if (searching) clearQuery();
+        else setOpen(false);
+      }
+      function focusItem(step) {
+        if (!listRef.current || !listRef.current.querySelectorAll) return;
+        const items = Array.from(listRef.current.querySelectorAll("button:not(:disabled)"));
+        if (!items.length) return;
+        const active = typeof document === "undefined" ? null : document.activeElement;
+        const at = items.indexOf(active);
+        const next = at < 0 ? step > 0 ? 0 : items.length - 1 : Math.min(items.length - 1, Math.max(0, at + step));
+        if (items[next] && items[next].focus) items[next].focus();
+      }
+      function onSearchKeyDown(event) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          focusItem(1);
+          return;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          focusItem(-1);
+          return;
+        }
+        if (event.key === "Enter") {
+          if (matched.length === 1) {
+            event.preventDefault();
+            save({ roleId: matched[0].id });
+            return;
+          }
+          if (matched.length) {
+            event.preventDefault();
+            focusItem(1);
+          }
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          escape();
+        }
+      }
+      function onItemKeyDown(event) {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          focusItem(1);
+          return;
+        }
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+          focusItem(-1);
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          escape();
+        }
+      }
+      function marked(value) {
+        return splitHits(value, tokens).map((part, index) => part.hit ? h2("mark", { key: "m" + index, className: "wb-role-mark" }, part.text) : part.text);
+      }
       return h2(
         React.Fragment,
         null,
@@ -10620,28 +10764,66 @@ var require_session_role = __commonJS({
         ),
         open && createPortal(h2(
           Dialog,
-          { title: t("role_title"), onClose: () => setOpen(false), closeOnEscape: !busy, closeOnMask: !busy },
+          { title: t("role_title"), onClose: () => {
+            setQuery("");
+            setOpen(false);
+          }, closeOnEscape: !busy, closeOnMask: !busy, autoFocus: false },
           h2("strong", null, t("role_title")),
           h2("small", null, t("role_next")),
           missing && h2("small", { role: "status" }, t("role_missing")),
           error && h2("div", { role: "alert" }, t("role_error") + " \xB7 " + error, " ", h2(Button, { disabled: busy, onClick: refresh }, t("role_retry"))),
           !state && !error && h2("small", { role: "status" }, t("role_loading")),
-          choices.map((r) => h2(
-            Button,
-            {
-              key: r.id || "",
-              disabled: busy || !state,
-              "aria-pressed": !!state && state.roleId === r.id,
-              onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id })
-            },
-            h2("b", null, r.name),
-            h2("small", null, [r.domain, r.description].filter(Boolean).join(" \xB7 "))
-          )),
-          h2(Button, { disabled: busy, onClick: () => setOpen(false) }, t("role_close"))
+          h2("input", {
+            ref: searchRef,
+            className: "wb-role-search",
+            type: "search",
+            value: query,
+            autoFocus: true,
+            "aria-label": t("role_search"),
+            placeholder: t("role_search"),
+            onChange: (event) => setQuery(event.target.value),
+            onKeyDown: onSearchKeyDown
+          }),
+          searching && h2(
+            "small",
+            { className: "wb-role-count", role: "status" },
+            fill(t("role_search_count"), { shown: matched.length, total: roles.length })
+          ),
+          h2(
+            "div",
+            { ref: listRef, className: "wb-role-list", role: "group", "aria-label": t("role_title") },
+            choices.map((r) => {
+              const meta = [r.domain, r.description].filter(Boolean).join(" \xB7 ");
+              return h2(
+                Button,
+                {
+                  key: r.id || "",
+                  className: "wb-role-option",
+                  disabled: busy || !state,
+                  "aria-pressed": !!state && state.roleId === r.id,
+                  onKeyDown: onItemKeyDown,
+                  onClick: () => state.roleId === r.id ? setOpen(false) : save({ roleId: r.id })
+                },
+                h2("b", null, marked(r.name)),
+                meta ? h2("small", null, marked(meta)) : null
+              );
+            })
+          ),
+          searching && !matched.length && h2(
+            "div",
+            { className: "wb-role-empty", role: "status" },
+            h2("span", null, t("role_search_empty")),
+            " ",
+            h2(Button, { className: "wb-role-clear", onClick: clearQuery }, t("role_search_clear"))
+          ),
+          h2(Button, { disabled: busy, onClick: () => {
+            setQuery("");
+            setOpen(false);
+          } }, t("role_close"))
         ), document.body)
       );
     }
-    module2.exports = { SessionRole, attachStream };
+    module2.exports = { SessionRole, attachStream, filterRoles, splitHits, tokensOf };
   }
 });
 

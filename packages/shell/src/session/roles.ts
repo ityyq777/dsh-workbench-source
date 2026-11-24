@@ -20,7 +20,11 @@ export function createSessionRoles(db: DatabaseSync, domains: Map<string, Regist
   const resolve = catalog.resolve;
   function info(sid: string) {
     const cfg = config(sid);
-    const roles = catalog.list().map(({ id, domain, name, description, version, source }) => ({ id, domain, name, description, version, source }));
+    // actions 只给选择器做「按动作名搜索」用（例如「谁能 tasks.update」）；
+    // 权限判定仍只认 role_id + role_version 绑定的快照，不读这里。
+    const roles = catalog.list().map(({ id, domain, name, description, version, source, actions }) => ({
+      id, domain, name, description, version, source, actions: Array.isArray(actions) ? actions : [],
+    }));
     return { sessionId: sid, ...cfg, unavailable: !!cfg.roleId && resolve(cfg.roleId)?.version !== cfg.version, roles };
   }
   function patch(sid: string, body: { roleId: string | null; sessionId?: string }) {
