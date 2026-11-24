@@ -497,4 +497,6 @@ var CSS = [
   ".wb-toast{position:sticky;bottom:12px;align-self:center;padding:7px 14px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.12)}",
 ].join("\n");
 // 共享开关样式追加在宿主样式末尾：ensureCss() 是唯一注入点，重复追加无害。
-module.exports = CSS + "\n" + schemeStyles + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n");
+// 自动化页：共享 base 样式（wba-*）与版式层，页面卸载后样式仍留在文档里（幂等）。
+var AUTO_CSS = require("./automation/styles.cjs");
+module.exports = CSS + "\n" + schemeStyles + "\n" + SW.styles.join("\n") + "\n" + NF.styles.join("\n") + "\n" + AUTO_CSS;

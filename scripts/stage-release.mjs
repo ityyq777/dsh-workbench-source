@@ -87,14 +87,6 @@ const ADDON_META = {
     marketZh: "DSH 连接器：定义 RSS/Webhook 来源并同步条目进工作台，凭据留在本机，按来源查看运行记录。",
     marketExtra: "只保存来源定义与拉取到的条目，不代理浏览外部页面；凭据优先存保险箱。",
   },
-  automation: {
-    description: "个人工作台自动化：定时/域事件/手动触发白名单 action，含模板、条件、限频与运行记录",
-    keywords: ["automation", "rules", "cron", "trigger"],
-    marketCategory: "workflow",
-    marketEn: "Automation for DSH: run whitelisted actions on a schedule, on domain events or manually, with templates, conditions, rate limits and run history.",
-    marketZh: "DSH 自动化：按定时、域事件或手动触发白名单 action，含模板、条件、限频与运行记录。",
-    marketExtra: "定时规则由插件内 30 秒定时器驱动，不依赖宿主调度器。",
-  },
   contacts: {
     description: "个人工作台联系人插件：本地联系人、分组、多值字段与 vCard 导入导出",
     keywords: ["contacts", "vcard", "addressbook"],

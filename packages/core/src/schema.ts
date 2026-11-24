@@ -114,4 +114,50 @@ CREATE TABLE IF NOT EXISTS host_event_subscription (
   created_at INTEGER NOT NULL,
   PRIMARY KEY (domain, type, action)
 );
+
+-- 自动化规则：触发条件 + 已启用的 action（execMode=action）或提示词（execMode=agent）。
+CREATE TABLE IF NOT EXISTS automation_rule (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  trigger_type TEXT NOT NULL,
+  trigger_config TEXT NOT NULL DEFAULT '{}',
+  condition TEXT NOT NULL DEFAULT '',
+  action_name TEXT NOT NULL,
+  action_args TEXT NOT NULL DEFAULT '{}',
+  next_run_at INTEGER,
+  last_run_at INTEGER,
+  last_status TEXT NOT NULL DEFAULT 'never',
+  run_count INTEGER NOT NULL DEFAULT 0,
+  error_count INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted_at INTEGER,
+  rev INTEGER NOT NULL DEFAULT 1,
+  -- execMode=action 时调 action；execMode=agent 时把提示词交给宿主「自动化任务」投递。
+  exec_mode TEXT NOT NULL DEFAULT 'action',
+  agent_json TEXT NOT NULL DEFAULT '',
+  schedule_id TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_automation_rule_due ON automation_rule(enabled, next_run_at);
+CREATE INDEX IF NOT EXISTS idx_automation_rule_schedule ON automation_rule(schedule_id);
+
+-- 运行记录只在本机，不参与云同步；rule_id 指向 automation_rule。
+CREATE TABLE IF NOT EXISTS automation_run (
+  id TEXT PRIMARY KEY,
+  rule_id TEXT NOT NULL,
+  trigger TEXT NOT NULL,
+  status TEXT NOT NULL,
+  started_at INTEGER NOT NULL,
+  finished_at INTEGER,
+  result TEXT NOT NULL DEFAULT '',
+  error TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_automation_run_rule ON automation_run(rule_id, started_at);
+
+-- 本机配置：允许调用的 action 清单等。
+CREATE TABLE IF NOT EXISTS automation_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;

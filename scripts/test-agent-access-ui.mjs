@@ -267,7 +267,6 @@ const roster = {
   // 口径：原 agentEnabled:false → origins: ["ui", "agent"] + originsDefault: ["ui"]
   // （本身支持 agent、默认只给界面，用户可在界面打开）；原 agentLocked → origins: ["ui"]（不可放开）。
   const expected = {
-    automation: { ui: 0, agentOff: 5 },
     calendar: { ui: 0, agentOff: 8 },
     contacts: { ui: 0, agentOff: 6 },
     mail: { ui: 2, agentOff: 12 },
@@ -285,9 +284,6 @@ const roster = {
   // 插件自己的执行期 guard 原样保留：数组是第一道门，execute 里的 origin 判断是第二道。
   const contacts = readFileSync(pluginFile("contacts"), "utf8");
   assert.match(contacts, /origin !== "ui" && origin !== "agent"/, "contacts 的 origin guard 应放行 agent、继续拒绝 plugin/sync");
-  const automation = readFileSync(pluginFile("automation"), "utf8");
-  assert.equal((automation.match(/deny\(ctx\.origin, \["ui", "agent"\]\)/g) || []).length, 6, "automation 的 6 处写入口 guard 应放行 agent");
-  assert.equal((automation.match(/deny\(ctx\.origin, \["ui"\]\)/g) || []).length, 0, "不得残留只允许 ui 的旧 guard");
   const vault = readFileSync(pluginFile("vault"), "utf8");
   assert.equal((vault.match(/only\(ctx, \["ui", "agent"/g) || []).length, 6, "原本就允许 agent 的读类保持原样");
   // 只给插件的后台动作必须声明 plugin，否则邮件同步这类跨插件调用会被来源闸门拦下

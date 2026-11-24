@@ -28,6 +28,16 @@ function migrateLocalDb(db: DatabaseSync): void {
     if (!hasColumn(db, "conflict_shadow", "local_updated_at")) {
       db.exec("ALTER TABLE conflict_shadow ADD COLUMN local_updated_at INTEGER");
     }
+    // 自动化内化为宿主能力：老库的自动化表缺这三列（插件版后来才加），补列保证规则可读。
+    for (const [name, ddl] of [
+      ["exec_mode", "TEXT NOT NULL DEFAULT 'action'"],
+      ["agent_json", "TEXT NOT NULL DEFAULT ''"],
+      ["schedule_id", "TEXT"],
+    ] as const) {
+      if (!hasColumn(db, "automation_rule", name)) {
+        db.exec("ALTER TABLE automation_rule ADD COLUMN " + name + " " + ddl);
+      }
+    }
     // 事件队列定向投递：老库的事件一律视为广播，补列后对外语义不变。
     if (!hasColumn(db, "host_event", "mode")) {
       db.exec("ALTER TABLE host_event ADD COLUMN mode TEXT NOT NULL DEFAULT 'broadcast'");

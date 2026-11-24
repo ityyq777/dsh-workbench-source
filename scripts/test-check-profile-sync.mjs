@@ -19,7 +19,6 @@ const SOURCE_PKGS = [
   { dir: "packages/addons/message", name: "dsh-workbench-message", version: "6.0.0", addon: true },
   { dir: "packages/addons/vault", name: "dsh-workbench-vault", version: "7.0.0", addon: true },
   { dir: "packages/addons/connector", name: "dsh-workbench-connector", version: "8.0.0", addon: true },
-  { dir: "packages/addons/automation", name: "dsh-workbench-automation", version: "9.0.0", addon: true },
   { dir: "packages/addons/contacts", name: "dsh-workbench-contacts", version: "10.0.0", addon: true },
   { dir: "packages/addons/calendar", name: "dsh-workbench-calendar", version: "11.0.0", addon: true },
   { dir: "packages/addons/mail", name: "dsh-workbench-mail", version: "12.0.0", addon: true },

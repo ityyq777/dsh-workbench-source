@@ -1,5 +1,5 @@
 /**
- * 共享控件接入覆盖率：13 个插件都必须走 packages/addons/lib/ 里的共享入口，
+ * 共享控件接入覆盖率：12 个插件都必须走 packages/addons/lib/ 里的共享入口，
  * 不允许再各自维护图标表、按钮、骨架屏、对话框外壳。
  *
  * 这个测试是「全量接入」的可核对凭据：新增插件或改装控件时它会直接失败，
@@ -17,7 +17,7 @@ const PLUGINS = readdirSync(ADDONS)
   .filter((name) => existsSync(join(ADDONS, name, 'client')))
   .sort();
 
-assert.equal(PLUGINS.length, 13, '插件数量变了（现在 ' + PLUGINS.length + ' 个），请同步本测试与文档矩阵');
+assert.equal(PLUGINS.length, 12, '插件数量变了（现在 ' + PLUGINS.length + ' 个），请同步本测试与文档矩阵');
 
 // 共享入口 → 语义。插件至少要接一个，且图标必须走 lib/icons.cjs 工厂。
 const SHARED = {

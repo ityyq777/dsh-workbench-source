@@ -14,8 +14,8 @@ const PAGE_SIZES = [10, 25, 50, 100, 200];
 const MAX_SEARCH = 100;
 
 /**
- * 宿主自有平台表白名单。只列 packages/core/lib/schema.js 与审计表，
- * 业务表归各自插件，宿主页面不越权浏览。
+ * 宿主自有平台表白名单。列 packages/core/lib/schema.js 里的平台表、审计表，
+ * 以及内化进宿主的自动化三张表；其余业务表归各自插件，宿主页面不越权浏览。
  */
 const TABLES = [
   { name: "meta", label: "键值（meta）", sort: "k", desc: "本机配置与元数据" },
@@ -28,6 +28,9 @@ const TABLES = [
   { name: "host_event", label: "事件队列", sort: "created_at", desc: "push 进来的事件（queued/done/dead）" },
   { name: "host_event_delivery", label: "事件投递", sort: "updated_at", desc: "按订阅拆出的投递：pending/running/done/dead" },
   { name: "host_event_subscription", label: "事件订阅", sort: "domain", desc: "哪个域用哪个 plugin-only action 消费哪类事件" },
+  { name: "automation_rule", label: "自动化规则", sort: "created_at", desc: "触发条件 + 已启用 action（或交给 AI 的提示词）" },
+  { name: "automation_run", label: "自动化运行记录", sort: "started_at", desc: "每次触发的成败与错误，仅本机" },
+  { name: "automation_meta", label: "自动化设置", sort: "key", desc: "可调用 action 白名单等本机配置" },
 ];
 
 const TABLE_BY_NAME = new Map(TABLES.map((t) => [t.name, t]));

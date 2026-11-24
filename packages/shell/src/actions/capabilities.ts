@@ -155,6 +155,49 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
     };
   }
 
+  /**
+   * 宿主内置能力目录：自动化内化为宿主能力后不再有独立业务域，但 agent 仍要在
+   * capabilities.list 里看见它记什么、首选哪个 action。记录结构与业务域保持同形。
+   */
+  function hostCapability() {
+    return {
+      id: "wb-shell",
+      title: "宿主内置能力",
+      version: SHELL_VERSION,
+      builtin: true,
+      summary:
+        "宿主自己提供、不需要安装子插件的能力：事件队列（广播/定向投递）与自动化规则（定时或域事件触发白名单 action，或把提示词交给宿主「自动化任务」由 AI 执行）。",
+      records: [
+        {
+          kind: "automation-rule",
+          title: "自动化规则（action）",
+          description: "一条「触发条件 + 已启用 action + 参数模板」的规则，由宿主内置引擎按时间或域事件驱动。",
+          primaryAction: "automation.ruleCreate",
+          when: ["每天固定时间汇总或提醒", "某个域事件发生后调用另一个域的 action", "需要保留每次运行的成败与错误"],
+          notFor: ["不要用它执行 vault、audit、automation 或删除/备份类 action", "不要用它替代任务管理"],
+          keyArgs: ["name", "execMode", "triggerConfig", "actionName", "actionArgs"],
+        },
+        {
+          kind: "automation-agent-rule",
+          title: "自动化规则（交给 AI）",
+          description: "execMode=agent：把提示词登记到宿主「自动化任务」，按时投递到会话，由 agent 自己决定怎么执行。",
+          primaryAction: "automation.ruleCreate",
+          when: ["需要理解、判断或多步操作，无法用固定 action 参数表达", "结果要回到某个会话里继续对话"],
+          notFor: ["不要用它做高频轮询：每次投递都会产生一次模型请求", "不支持域事件触发，只有时间触发"],
+          keyArgs: ["name", "execMode", "agent"],
+        },
+      ],
+      notFor: ["不允许调用 vault.*、automation.*、audit.* 或 delete/backup 类 action（硬底线，不可配置）"],
+      notes: [
+        "允许调用的 action 在宿主「自动化」页的「设置」里勾选，默认空；只对本机生效。",
+        "规则随备份迁移；运行记录只在本机，不参与云同步。",
+        "自动化所需的三张表（automation_rule / automation_run / automation_meta）是宿主平台表，可在「数据」页查看。",
+        "事件队列的两种投递语义见 wb.eventDomains：广播按订阅表投递，定向按发布方白名单点名投递。",
+      ],
+      actions: ["automation.ruleCreate", "automation.ruleList", "automation.ruleRun", "automation.runList", "automation.configSet"],
+    };
+  }
+
   /** capabilities.list：聚合各插件“记录什么、首选哪个 action”，给 agent 做统一发现。 */
   async function capabilityListMeta(args: Record<string, unknown>, origin: string = "ui") {
     const kind = args.kind === undefined || args.kind === null ? "" : String(args.kind).trim();
@@ -195,7 +238,7 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
         warnings: cap.warnings,
       });
     }
-    return { shellVersion: SHELL_VERSION, kind, domains: out };
+    return { shellVersion: SHELL_VERSION, kind, domains: out, builtin: [hostCapability()] };
   }
 
   /** 插槽明细的文字渲染：贡献方写明落点属主，落点方写明自己在渲染哪些插槽。 */
@@ -232,6 +275,15 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
       }
       for (const w of d.warnings ?? []) lines.push("  ⚠ " + w);
     }
+    for (const b of meta.builtin ?? []) {
+      lines.push("", "[" + b.id + "] " + b.title + " v" + b.version);
+      lines.push("  " + b.summary);
+      for (const r of b.records) {
+        lines.push("  " + r.kind + " → " + r.primaryAction + "：" + r.description);
+      }
+      if (b.actions.length) lines.push("  相关 action：" + b.actions.join("、"));
+      for (const w of b.notFor ?? []) lines.push("  ✗ " + w);
+    }
     lines.push(
       "",
       '查看单个域的完整能力与 action 列表：Workbench({ action: "capabilities.get", args: { domain: "tasks" } })',
@@ -243,6 +295,29 @@ export function createCapabilities({ domains, SHELL_VERSION, actionEntry, taskTa
   async function capabilityGetMeta(args: Record<string, unknown>, origin: string = "ui") {
     const name = String(args.domain ?? args.id ?? "").trim();
     if (!name) throw new Error("缺少 domain；先用 capabilities.list 查看可用业务域");
+    if (name === "wb-shell" || name === "builtin" || name === "host") {
+      // 宿主内置能力不是业务域（没有 action 注册表），单独回一层结构，字段与业务域同形。
+      const b = hostCapability();
+      return {
+        shellVersion: SHELL_VERSION,
+        domain: { id: b.id, title: b.title, description: b.summary, version: b.version, enabled: true, error: null },
+        capability: {
+          summary: b.summary,
+          taskOwnership: null,
+          records: b.records,
+          notFor: b.notFor,
+          notes: b.notes,
+          fields: [],
+          requires: [],
+          missingRequires: [],
+          slots: { renders: [], contributes: [] },
+        },
+        source: "builtin",
+        // 这里只回名字与所属域：入参细节由 actions.help（走真实注册表）给，避免宿主自建一份影子 schema。
+        actions: b.actions.map((action: string) => ({ name: action, domain: "wb-shell" })),
+        warnings: [],
+      };
+    }
     const rec = findDomain(name);
     if (!rec) throw new Error("没有该业务域：" + name + "；先用 capabilities.list 查看");
     const cap = capabilityOf(rec, origin);

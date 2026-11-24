@@ -14,6 +14,8 @@ var SystemPages = require("./system-pages.cjs");
 var HostPages = require("./host-pages.cjs");
 // 宿主「事件队列」页：队列三张表的运行视图 + 重投/清理。
 var QueuePage = require("./event-queue-page.cjs");
+// 宿主「自动化」页：概览/规则/运行记录/设置/Action 五页签（数据页签已并入宿主数据页）。
+var AutomationPage = require("./automation-page.cjs");
 // 跨插件界面插槽：目录（白名单）+ 注册表（纯逻辑）。贡献变更要通知页面重渲染。
 var slotCatalog = require("./slot-catalog.cjs");
 var slotRegistry = require("./slot-registry.cjs")(slotCatalog, function () { notifyStore(); });
@@ -490,6 +492,9 @@ function WorkbenchPage(props) {
   }
   if (route === "queue") {
     return jsx.jsx(QueuePage.QueueView, { jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
+  }
+  if (route === "automation") {
+    return jsx.jsx(AutomationPage, { h: h, jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead, onOpenData: function () { go("data"); } });
   }
   if (route === "data") {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });

@@ -36,12 +36,6 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
-  packages/addons/automation:
-    dependencies:
-      dsh-workbench:
-        specifier: file:../../shell-dist
-        version: link:../../shell-dist
-
   packages/addons/calendar:
     dependencies:
       dsh-workbench:

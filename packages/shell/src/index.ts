@@ -32,6 +32,7 @@ import {
 
 import type { WbState, RegisteredDomain } from "./types/host-types.js";
 import { createActions } from "./actions/actions.js";
+import { createAutomation, registerAutomationActions } from "./infra/automation/index.js";
 import { createEventQueue } from "./infra/event-queue.js";
 import { createAgentRun } from "./actions/agent-run.js";
 import { installNetwork } from "./infra/network.js";
@@ -182,6 +183,43 @@ export function apply(ctx: any): void {
   // 队列实例要在 createActions 之后才建（分发要用固定 plugin 来源的 invoke）：
   // 先给 action 层一个可写持有者，「事件队列」页读授权清单与重投都从这里取。
   const queueRef: { value: any } = { value: null };
+
+  // ── 自动化（宿主内置）──
+  // 引擎与 19 个 automation.* action 都归宿主：action 挂 wb-shell 元 action 表，
+  // 页面在宿主客户端（client/automation-page.cjs）。旧的 wb-addon-automation 插件
+  // 若仍安装，下面 startAutomation 会做双跑防护，只让其中一份引擎运行。
+  const invokeRef: { value: any } = {
+    value: async () => {
+      throw new Error("自动化引擎在 action 分发就绪前被调用");
+    },
+  };
+  const getSchedule = () => {
+    try {
+      const svc = typeof ctx.get === "function" ? ctx.get("schedule", false) : null;
+      return svc && typeof svc.create === "function" ? svc : null;
+    } catch {
+      return null;
+    }
+  };
+  const automation = createAutomation({
+    db: state.db,
+    invoke: (name: string, args?: Record<string, unknown>) => invokeRef.value(name, args ?? {}, "plugin"),
+    log,
+    getSchedule,
+    now: () => clock.now(),
+  });
+  /** automation.* 的 DomainActionDef：先收集，再随 createActions 一起进 META_ACTIONS。 */
+  const automationDefs = new Map<string, DomainActionDef>();
+  registerAutomationActions(
+    {
+      action: (actionName: string, def: DomainActionDef) => automationDefs.set(actionName, def),
+      call: (actionName: string, args?: Record<string, unknown>) => invokeRef.value(actionName, args ?? {}, "plugin"),
+      db: state.db,
+      shellVersion: SHELL_VERSION,
+    },
+    automation,
+  );
+
   const { invoke, actionNames, installTool, schemaSnapshot } = createActions({
     domains,
     SHELL_VERSION,
@@ -192,9 +230,11 @@ export function apply(ctx: any): void {
     db: state.db,
     search,
     sessionRoles,
-    extraMetaActions: [["host.agentRun", agentRun]],
+    extraMetaActions: [["host.agentRun", agentRun], ...automationDefs.entries()],
     queueRef,
   });
+
+  invokeRef.value = invoke;
 
   // 宿主事件队列：push 写库即返回，订阅方的消费 action 由后台 drain 异步分发。
   // 必须在 createActions 之后建，因为分发要用它固定 plugin 来源的 invoke。
@@ -343,7 +383,34 @@ export function apply(ctx: any): void {
   }
 
   function backupDomains(): BackupDomain[] {
-    return [...domains.values()].map((rec) => ({ def: rec.def, enabled: rec.error === null, error: rec.error }));
+    const out: BackupDomain[] = [...domains.values()].map((rec) => ({
+      def: rec.def,
+      enabled: rec.error === null,
+      error: rec.error,
+    }));
+    // 自动化内化后不再有独立域，但规则要跟着备份走：补一个宿主内置的导出模块，
+    // 模块 id 沿用 wb-addon-automation，老备份能直接导回、新备份格式不变。
+    out.push({
+      def: automationBackupDomain(),
+      enabled: true,
+      error: null,
+    });
+    return out;
+  }
+
+  /** 宿主内置「自动化」备份模块：只导出规则，运行记录留在本机。 */
+  function automationBackupDomain(): DomainDef {
+    return {
+      id: "wb-addon-automation",
+      title: "自动化（宿主内置）",
+      description: "定时、域事件或手动触发白名单 action；规则随备份迁移，运行记录只在本机",
+      version: SHELL_VERSION,
+      category: "auto",
+      tables: ["automation_rule", "automation_run", "automation_meta"],
+      sync: { tables: [] },
+      exportData: () => automation.exportData(),
+      importData: (payload: string | Record<string, unknown>) => automation.importData(payload),
+    } as unknown as DomainDef;
   }
 
 
@@ -381,6 +448,46 @@ export function apply(ctx: any): void {
     () => () => eventQueue.stop(),
     "wb-event-queue",
   );
+
+  // 自动化的域事件触发：监听宿主统一 domain-event（{domainId,event,data}），
+  // 与插件版 api.on("domain-event") 等价；监听器出错不影响其它监听器。
+  {
+    const key = "domain-event";
+    let set = eventListeners.get(key);
+    if (!set) {
+      set = new Set();
+      eventListeners.set(key, set);
+    }
+    set.add((data: unknown) => {
+      try {
+        automation.onEvent(data);
+      } catch (e) {
+        log("自动化事件触发失败", e);
+      }
+    });
+  }
+
+  // 引擎启动 + 双跑防护：业务插件是在宿主 apply 之后才注册域的，所以延迟一拍再确认
+  // 旧插件是否仍安装；若在，则停掉内置引擎，避免同一批规则被执行两次。
+  automation.start();
+  ctx.effect?.(
+    () => () => automation.stop(),
+    "wb-automation",
+  );
+  {
+    const timer = setTimeout(() => {
+      if (domains.has("wb-addon-automation")) {
+        automation.stop();
+        log(
+          "检测到旧的自动化插件（wb-addon-automation）仍安装：宿主内置自动化引擎已停用，避免同一批规则被执行两次；" +
+            "请在插件管理中卸载 dsh-workbench-automation 后重启",
+        );
+        return;
+      }
+      log("automation 已内化为宿主能力", SHELL_VERSION);
+    }, 4000);
+    if (typeof timer.unref === "function") timer.unref();
+  }
 
   // ── 会话角色：按当前轮次组装系统提示 ──
   const trackOn = (scope: any, dispose: unknown) => {

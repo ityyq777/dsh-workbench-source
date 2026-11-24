@@ -1,11 +1,11 @@
 # 个人工作台 · DSH 插件
 
 个人工作台是 DeepSeek Harness（DSH）的本地优先工作台：一个共享宿主加若干可独立安装的业务插件。
-当前发布 12 个包（宿主 + 11 个插件）：
+当前发布 12 个包（宿主 + 11 个插件）；自动化已内化进宿主，不再是独立包：
 
 | 包 | 作用 |
 | --- | --- |
-| `dsh-workbench-host` | 共享宿主：本地 SQLite、业务域注册、HTTP/SSE、`Workbench` agent 工具、账号与数据同步、按模块导出/导入、卡片首页 |
+| `dsh-workbench-host` | 共享宿主：本地 SQLite、业务域注册、HTTP/SSE、`Workbench` agent 工具、账号与数据同步、按模块导出/导入、卡片首页；内置事件队列、数据/配置/备份/队列/自动化页面 |
 | `dsh-workbench-tasks` | 任务与任务树（8 个视图、时间线、重启、批量归并/迁表） |
 | `dsh-workbench-tags` | 标签管理，供任务、站点与储物归类 |
 | `dsh-workbench-sites` | 站点收藏：目录树、多链接、标签与筛选 |
@@ -13,7 +13,6 @@
 | `dsh-workbench-message` | 消息中心：给 agent 与其他插件的统一发送入口，收件箱、未读数与可配置提示音 |
 | `dsh-workbench-vault` | 凭据保险箱：scrypt 派生密钥 + AES-256-GCM 加密，agent 只见掩码 |
 | `dsh-workbench-connector` | 连接器：RSS/Webhook 来源接入，条目与运行记录 |
-| `dsh-workbench-automation` | 自动化：定时、域事件或手动触发白名单 action，含模板、条件、限频与运行记录 |
 | `dsh-workbench-contacts` | 联系人：本地通讯录、分组、多值字段与 vCard 导入导出 |
 | `dsh-workbench-calendar` | 日历：本地日历、事件、参与人与提醒 |
 | `dsh-workbench-mail` | [邮件](docs/邮件使用指南.md)：按日期浏览、展开读信、本页批量处理、搜索已同步邮件、按需下载附件、回复转发与本地草稿 |

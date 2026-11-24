@@ -28,7 +28,6 @@ const ADDONS = [
   ["mail", "dsh-workbench-mail", "wb-addon-mail"],
   ["vault", "dsh-workbench-vault", "wb-addon-vault"],
   ["connector", "dsh-workbench-connector", "wb-addon-connector"],
-  ["automation", "dsh-workbench-automation", "wb-addon-automation"],
   ["contacts", "dsh-workbench-contacts", "wb-addon-contacts"],
   ["calendar", "dsh-workbench-calendar", "wb-addon-calendar"],
   ["salary", "dsh-workbench-salary", "wb-addon-salary"],
