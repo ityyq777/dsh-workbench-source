@@ -57,10 +57,15 @@ check("真实插件注册角色及职责边界", () => {
   assert.equal(executor.id, "executor");
   assert.equal(publisher.instructions, PUBLISHER_INSTRUCTIONS);
   assert.ok(publisher.actions.includes("tasks.create"));
-  assert.ok(!publisher.actions.includes("tasks.update"));
+  // 1.1.0 起发布者可以回修自己发布的任务，但仍不能完成与接取。
+  assert.ok(publisher.actions.includes("tasks.update"));
+  assert.equal(publisher.version, "1.1.0");
+  assert.ok(!publisher.actions.includes("tasks.complete"));
+  assert.ok(!publisher.actions.includes("tasks.claim"));
   assert.ok(executor.actions.includes("tasks.update"));
   assert.ok(!executor.actions.includes("tasks.create"));
   assert.match(executor.instructions, /询问进度时只读/);
+  assert.match(publisher.instructions, /tasks.update 只用于回修本轮自己刚发布的任务/);
 });
 
 check("角色绑定失败不投递", () => {
@@ -87,11 +92,12 @@ check("brief 结构完整", () => {
   }
   assert.ok(brief.includes("## 输出格式"));
   assert.ok(brief.includes("## 边界规则"));
-  // 边界规则只保留「不改 schema / 不伪造证据」与「一次性问答不建任务」两条：
+  // 边界规则三条：「不改 schema / 不伪造证据」「一次性问答不建任务」「tasks.update 只回修本轮自建任务」：
   // 建节点授权与直接发布口径统一由 SOP C/F 定义，避免同一份 brief 里出现相反指令。
   const boundaryBlock = brief.split("## 边界规则")[1].split("## 会话信息")[0];
   const boundaryLines = boundaryBlock.split("\n").filter((line) => line.startsWith("- "));
-  assert.equal(boundaryLines.length, 2, "边界规则应只剩 2 条");
+  assert.equal(boundaryLines.length, 3, "边界规则应为 3 条");
+  assert.ok(boundaryBlock.includes("tasks.update 只用于回修本轮自己刚发布的任务"));
   assert.equal(brief.includes("不要自动建任务表或任务节点"), false);
   assert.equal(brief.includes("不做无人值守的全自动发布"), false);
   // 缺任务表 / 时间线 / 工作区不再停问：agent 自行补齐，只在回执说明

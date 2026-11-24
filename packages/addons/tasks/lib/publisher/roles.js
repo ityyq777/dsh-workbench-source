@@ -8,10 +8,10 @@ export const TASK_ROLES = [
     id: "publisher",
     name: "任务发布者",
     description: "整理需求、核对归属与验收标准，按要求发布任务。",
-    version: "1.0.0",
+    version: "1.1.0",
     instructions: PUBLISHER_INSTRUCTIONS,
-    actions: [...reads, "tasks.timelines", "tasks.tags", "tasks.tagOptions", "taskTimelines.get", "tasks.create",
-      "taskNodes.create", "taskWorkspaces.create", "taskTimelines.create", "taskTimelines.attach"],
+    actions: [...reads, "tasks.update", "tasks.timelines", "tasks.tags", "tasks.tagOptions", "taskTimelines.get",
+      "tasks.create", "taskNodes.create", "taskWorkspaces.create", "taskTimelines.create", "taskTimelines.attach"],
   },
   {
     id: "executor",
