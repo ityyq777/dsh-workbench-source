@@ -1,0 +1,8 @@
+# 自动化兼容保留包：不注册任何服务，只插入宿主行。
+#
+# 引擎（规则引擎、三张表、automation.* action 与自动化页）自 dsh-workbench-host 0.17.0
+# 起已内置于宿主，本包仅作为安装入口与市场条目保留，装不装都能用自动化。
+# 宿主行必须流式单行：块式会被插件市场算进 insertedIds，导致与其他 dsh-workbench 系
+# 插件冲突并整次回滚（见 docs/AGENTS规范/03-安装与交付.md）。
+- insert:
+    - { id: workbench, name: 'dsh-workbench' }

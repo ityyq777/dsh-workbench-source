@@ -128,6 +128,17 @@ const ADDON_META = {
     marketZh: "DSH 弹幕：把自建弹幕轮播在整个界面，也可叠加到整个桌面，含弹幕库、逐条样式与权重轮播。",
     marketExtra: "桌面透明层依赖 Electron 外壳；弹幕库只存本机，不上传也不参与云同步。",
   },
+  automation: {
+    description: "自动化兼容保留包：引擎自宿主 dsh-workbench-host 0.17.0 起已内化，本包不提供独立能力",
+    keywords: ["automation", "scheduler", "compat"],
+    marketCategory: "workflow",
+    marketEn:
+      "Compatibility placeholder for the DSH automation plugin. The rule engine, three tables, 19 automation.* actions and the automation page have shipped inside dsh-workbench-host since 0.17.0; installing this package only registers the host row and prints a migration notice. New users do not need it — the entry stays so old configs and links keep working.",
+    marketZh:
+      "DSH 自动化兼容保留包：规则引擎、三张表、19 个 automation.* action 与自动化页自 dsh-workbench-host 0.17.0 起已内置于宿主，本包只插入宿主行并输出迁移提示，不含独立能力。新用户无需安装，保留条目是为了旧配置与旧链接不 404。",
+    marketExtra:
+      "引擎已在宿主里：装本包与不装行为一致，装后不会新增视图、表或 action。0.5.0 起不再注册 wb-addon-automation 域，因此不会停用宿主内置引擎；仍在用 0.4.x 的旧安装会触发双跑防护，升级到 0.5.0 或直接卸载后重启即可。",
+  },
 };
 
 const addonNames = readdirSync(addonsRoot)

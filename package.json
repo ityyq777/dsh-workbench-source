@@ -40,6 +40,7 @@
     "test:clients": "node scripts/test-clients.mjs && node scripts/test-workbench-navigation.mjs",
     "test:slots": "node scripts/test-addon-slots.mjs && node scripts/audit-slots.mjs",
     "test:shared-ui": "node scripts/test-shared-ui.mjs",
+    "test:automation-compat": "node scripts/test-automation-compat.mjs",
     "test:vault-lock": "node scripts/test-vault-lock.mjs",
     "test:task-stats-bars": "node scripts/test-task-stats-bars-ui.mjs",
     "test:addon-actions": "node scripts/test-addon-action-schema-view.mjs",

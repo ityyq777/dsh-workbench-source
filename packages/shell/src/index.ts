@@ -501,8 +501,9 @@ export function apply(ctx: any): void {
       if (domains.has("wb-addon-automation")) {
         automation.stop();
         log(
-          "检测到旧的自动化插件（wb-addon-automation）仍安装：宿主内置自动化引擎已停用，避免同一批规则被执行两次；" +
-            "请在插件管理中卸载 dsh-workbench-automation 后重启",
+          "检测到旧版自动化插件（dsh-workbench-automation < 0.5.0，注册了 wb-addon-automation 域）：宿主内置自动化引擎已停用，" +
+            "避免同一批规则被执行两次；请卸载旧版插件（< 0.5.0），或升级到 0.5.0 兼容保留包——" +
+            "0.5.0 不再注册该域，不会停用内置引擎，随后重启 DSH 即可恢复",
         );
         return;
       }
