@@ -622,6 +622,44 @@ var require_locale2 = __commonJS({
         role_search_empty: "\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272",
         role_search_count: "\u5339\u914D {shown} / \u5171 {total} \u4E2A\u89D2\u8272",
         role_hint: "\u2191\u2193 \u9009\u62E9 \xB7 Enter \u786E\u8BA4 \xB7 Esc \u5173\u95ED",
+        role_step_basic: "\u57FA\u672C\u4FE1\u606F",
+        role_step_instructions: "\u89D2\u8272\u6307\u4EE4",
+        role_step_actions: "\u5141\u8BB8\u7684\u52A8\u4F5C",
+        role_step_confirm: "\u786E\u8BA4\u4E0E\u4FDD\u5B58",
+        role_step_label: "\u521B\u5EFA\u6B65\u9AA4",
+        role_wizard_new: "\u65B0\u5EFA\u89D2\u8272",
+        role_wizard_edit: "\u7F16\u8F91\u89D2\u8272",
+        role_name: "\u540D\u79F0",
+        role_description: "\u804C\u8D23\u7B80\u4ECB",
+        role_name_required: "\u8BF7\u5148\u586B\u5199\u89D2\u8272\u540D\u79F0",
+        role_instructions: "\u89D2\u8272\u6307\u4EE4",
+        role_instructions_required: "\u8BF7\u5148\u586B\u5199\u89D2\u8272\u6307\u4EE4",
+        role_edit: "\u7F16\u8F91",
+        role_preview: "\u9884\u89C8",
+        role_preview_empty: "\u8FD8\u6CA1\u6709\u5185\u5BB9",
+        role_chars: "{n} \u5B57",
+        role_actions_title: "\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C",
+        role_actions_selected: "\u5DF2\u9009 {n} \u9879",
+        role_actions_search: "\u7B5B\u9009\u52A8\u4F5C\u540D\u6216\u8BF4\u660E",
+        role_actions_select_all: "\u5168\u9009",
+        role_actions_clear: "\u6E05\u7A7A\u672C\u57DF",
+        role_actions_manual: "\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09",
+        role_actions_manual_hint: "\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C",
+        role_unknown_title: "\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5B58\u5728\uFF1A",
+        role_unknown_hint: "\u8BF7\u6539\u6210\u771F\u5B9E\u52A8\u4F5C\u540D\u540E\u518D\u7EE7\u7EED\uFF0C\u5426\u5219\u89D2\u8272\u6BCF\u6B21\u8C03\u7528\u90FD\u4F1A\u88AB\u62D2\u3002",
+        role_back: "\u4E0A\u4E00\u6B65",
+        role_next_step: "\u4E0B\u4E00\u6B65",
+        role_save: "\u4FDD\u5B58",
+        role_cancel: "\u53D6\u6D88",
+        role_summary_name: "\u540D\u79F0",
+        role_summary_description: "\u804C\u8D23\u7B80\u4ECB",
+        role_summary_actions: "\u5141\u8BB8\u7684\u52A8\u4F5C",
+        role_summary_actions_value: "\u5DF2\u9009 {n} \u9879",
+        role_summary_instructions: "\u6307\u4EE4\u957F\u5EA6",
+        role_summary_chars: "{n} \u5B57",
+        role_summary_effect: "\u751F\u6548\u65F6\u673A",
+        role_summary_effect_value: "\u4FDD\u5B58\u540E\u4ECE\u4E0B\u4E00\u8F6E\u5BF9\u8BDD\u751F\u6548\u3002",
+        role_summary_empty: "\u672A\u586B\u5199",
         nav: "\u5DE5\u4F5C\u53F0",
         title: "\u5DE5\u4F5C\u53F0",
         tagline: "\u79BB\u7EBF\u4F18\u5148 \xB7 \u4E1A\u52A1\u63D2\u4EF6\u7531 DSH \u5B89\u88C5",
@@ -983,6 +1021,44 @@ var require_locale2 = __commonJS({
         role_search_empty: "No matching roles",
         role_search_count: "{shown} of {total} roles match",
         role_hint: "\u2191\u2193 select \xB7 Enter confirm \xB7 Esc close",
+        role_step_basic: "Basics",
+        role_step_instructions: "Instructions",
+        role_step_actions: "Actions",
+        role_step_confirm: "Review",
+        role_step_label: "Setup steps",
+        role_wizard_new: "New role",
+        role_wizard_edit: "Edit role",
+        role_name: "Name",
+        role_description: "Description",
+        role_name_required: "Enter a role name first",
+        role_instructions: "Instructions",
+        role_instructions_required: "Enter role instructions first",
+        role_edit: "Edit",
+        role_preview: "Preview",
+        role_preview_empty: "Nothing to preview",
+        role_chars: "{n} chars",
+        role_actions_title: "Allowed workbench actions",
+        role_actions_selected: "{n} selected",
+        role_actions_search: "Filter actions by name or description",
+        role_actions_select_all: "All",
+        role_actions_clear: "Clear domain",
+        role_actions_manual: "Extra action names (one per line)",
+        role_actions_manual_hint: "For actions that are valid but not listed",
+        role_unknown_title: "These actions do not exist:",
+        role_unknown_hint: "Fix the names before continuing, otherwise every call from this role will be rejected.",
+        role_back: "Back",
+        role_next_step: "Next",
+        role_save: "Save",
+        role_cancel: "Cancel",
+        role_summary_name: "Name",
+        role_summary_description: "Description",
+        role_summary_actions: "Allowed actions",
+        role_summary_actions_value: "{n} selected",
+        role_summary_instructions: "Instruction length",
+        role_summary_chars: "{n} chars",
+        role_summary_effect: "Takes effect",
+        role_summary_effect_value: "From the next turn after saving.",
+        role_summary_empty: "Not set",
         nav: "Workbench",
         title: "Workbench",
         tagline: "Offline-first \xB7 addons installed by DSH",
@@ -1796,6 +1872,88 @@ var require_client_base_styles = __commonJS({
   }
 });
 
+// packages/addons/lib/stepper.cjs
+var require_stepper = __commonJS({
+  "packages/addons/lib/stepper.cjs"(exports2, module2) {
+    "use strict";
+    function stepState(index, current, maxVisited) {
+      if (index === current) return "current";
+      if (index < current) return "done";
+      if (index <= maxVisited) return "visited";
+      return "todo";
+    }
+    function Steps(props) {
+      var h2 = props.h;
+      var steps = props.steps || [];
+      var current = props.current || 0;
+      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
+      var invalid = props.invalid || {};
+      var disabled = !!props.disabled;
+      var label = props.label || "\u6B65\u9AA4";
+      return h2(
+        "nav",
+        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
+        h2(
+          "ol",
+          { className: "wbctl-step-list" },
+          steps.map(function(step, index) {
+            var state = stepState(index, current, maxVisited);
+            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
+            var isInvalid = !!invalid[index] || !!invalid[step.key];
+            return h2(
+              "li",
+              { key: step.key || index, className: "wbctl-step-item" },
+              h2(
+                "button",
+                {
+                  type: "button",
+                  className: "wbctl-step",
+                  "data-state": state,
+                  "data-invalid": isInvalid ? "true" : null,
+                  "aria-current": state === "current" ? "step" : void 0,
+                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
+                  disabled: disabled || state === "todo",
+                  title: step.hint || "",
+                  onClick: function() {
+                    if (canJump) props.onJump(index);
+                  }
+                },
+                h2("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
+                h2("span", { className: "wbctl-step-label" }, step.label),
+                step.hint ? h2("span", { className: "wbctl-step-hint" }, step.hint) : null,
+                step.optional ? h2("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
+              )
+            );
+          })
+        )
+      );
+    }
+    var STYLES = [
+      ".wbctl-steps{display:block;min-width:0}",
+      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
+      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
+      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
+      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
+      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
+      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
+      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
+      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
+      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
+      ".wbctl-step:disabled{cursor:default;opacity:.72}",
+      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
+      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
+      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
+      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
+      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
+      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
+      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
+      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
+    ];
+    module2.exports = { Steps, stepState, styles: STYLES };
+  }
+});
+
 // packages/shell/client/conversation/styles.cjs
 var require_styles = __commonJS({
   "packages/shell/client/conversation/styles.cjs"(exports2, module2) {
@@ -1859,7 +2017,8 @@ var require_styles = __commonJS({
 }
 `;
     var ROLES_BASE = require_client_base_styles()("wbr").join("\n");
-    module2.exports += "\n" + ROLES_BASE + `
+    var STEPS_BASE = require_stepper().styles.join("\n");
+    module2.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + `
 .wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:transparent;color:inherit;min-width:0;outline:none}
 .wbr-input:focus,.wbr-select:focus{border-color:var(--wb-accent)}
 .wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -1889,11 +2048,16 @@ var require_styles = __commonJS({
 .wbr-detail-domain{font-size:11.5px;color:var(--wb-muted);font-weight:600}
 .wbr-chips{display:flex;gap:6px;flex-wrap:wrap}
 .wbr-chip{font-size:11.5px;line-height:1.5;padding:2px 7px;border-radius:6px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 4%,transparent);white-space:nowrap}
-.wbr-editor{display:flex;flex-direction:column;gap:10px}
+.wbr-editor{display:flex;flex-direction:column;gap:12px}
+.wbr-steps .wbctl-step-list{margin:0}
+.wbr-step-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
+.wbr-field-error{margin:0;font-size:12px;color:var(--wb-danger)}
+.wbr-step-status{margin:0;font-size:12px;color:var(--wb-muted)}
 .wbr-editor-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .wbr-editor-head small{color:var(--wb-muted);font-size:11.5px}
 .wbr-instructions{display:flex;flex-direction:column;gap:6px}
-.wbr-instructions-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wbr-instructions-head{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
+.wbr-instructions-head .wbr-tabs{margin-inline-start:auto}
 .wbr-tabs{display:inline-flex;gap:2px;border:1px solid var(--wb-line);border-radius:8px;padding:2px}
 .wbr-tab{font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
 .wbr-tab[aria-selected=true]{background:color-mix(in oklab,var(--wb-accent) 14%,transparent);color:var(--wb-accent)}
@@ -1903,18 +2067,38 @@ var require_styles = __commonJS({
 .wbr-actions-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .wbr-count{font-size:11.5px;color:var(--wb-muted);font-weight:400}
 .wbr-actions-groups{display:flex;flex-direction:column;gap:8px;max-height:min(46dvh,420px);overflow:auto}
-.wbr-actions-group{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.wbr-actions-domain{flex:0 0 100%;font-size:11.5px;font-weight:600;color:var(--wb-muted);display:flex;gap:6px}
+.wbr-actions-group{display:flex;flex-direction:column;gap:6px}
+.wbr-actions-grouphead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wbr-actions-domain{flex:1 1 auto;min-width:0;font-size:11.5px;font-weight:600;color:var(--wb-muted);display:flex;gap:6px;overflow-wrap:anywhere}
+.wbr-actions-checks{display:flex;flex-wrap:wrap;gap:6px}
+.wbr-mini{font:inherit;font-size:11px;line-height:1.5;border:1px solid var(--wb-line);background:transparent;color:var(--wb-muted);border-radius:6px;padding:1px 6px;cursor:pointer}
+.wbr-mini:hover{border-color:var(--wb-accent);color:var(--wb-accent)}
+.wbr-mini:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-check{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;border:1px solid var(--wb-line);border-radius:6px;padding:2px 7px;cursor:pointer}
 .wbr-check:has(input:checked){border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}
 .wbr-check:focus-within{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-check code{font-size:11.5px}
 .wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-danger)}
 .wbr-unknown small{color:var(--wb-muted)}
+.wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
+.wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}
+.wbr-summary-row dt{color:var(--wb-muted);font-size:12px}
+.wbr-summary-row dd{margin:0;overflow-wrap:anywhere}
+.wbr-wizard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wb-line);padding-top:10px}
+.wbr-wizard-nav{display:flex;gap:8px;margin-inline-start:auto}
 @media(max-width:760px){
   .wbr-split{grid-template-columns:minmax(0,1fr)}
   .wbr-rows{max-height:none}
   .wbr-actions-groups{max-height:none}
+}
+@media(max-width:520px){
+  .wbr-summary-row{grid-template-columns:minmax(0,1fr);gap:2px}
+  .wbr-wizard-foot{gap:6px}
+  /* \u7A84\u5C4F\u4E0D\u6324\u538B\u6B65\u9AA4\u540D\uFF1A\u6BCF\u6B65\u7ED9\u6700\u5C0F\u5BBD\u5EA6\uFF0C\u6574\u6761\u6B65\u9AA4\u680F\u6A2A\u5411\u6EDA\u52A8\u3002 */
+  .wbr-steps .wbctl-step-list{overflow-x:auto;padding-bottom:2px}
+  .wbr-steps .wbctl-step-item{flex:0 0 auto}
+  .wbr-steps .wbctl-step{min-width:112px}
+  .wbr-steps .wbctl-step-label{white-space:nowrap}
 }
 `;
   }
@@ -2018,88 +2202,6 @@ var require_overlay = __commonJS({
       }
       return Modal;
     };
-  }
-});
-
-// packages/addons/lib/stepper.cjs
-var require_stepper = __commonJS({
-  "packages/addons/lib/stepper.cjs"(exports2, module2) {
-    "use strict";
-    function stepState(index, current, maxVisited) {
-      if (index === current) return "current";
-      if (index < current) return "done";
-      if (index <= maxVisited) return "visited";
-      return "todo";
-    }
-    function Steps(props) {
-      var h2 = props.h;
-      var steps = props.steps || [];
-      var current = props.current || 0;
-      var maxVisited = props.maxVisited === void 0 ? current : props.maxVisited;
-      var invalid = props.invalid || {};
-      var disabled = !!props.disabled;
-      var label = props.label || "\u6B65\u9AA4";
-      return h2(
-        "nav",
-        { className: "wbctl-steps" + (props.className ? " " + props.className : ""), "aria-label": label },
-        h2(
-          "ol",
-          { className: "wbctl-step-list" },
-          steps.map(function(step, index) {
-            var state = stepState(index, current, maxVisited);
-            var canJump = !disabled && typeof props.onJump === "function" && state !== "current" && state !== "todo";
-            var isInvalid = !!invalid[index] || !!invalid[step.key];
-            return h2(
-              "li",
-              { key: step.key || index, className: "wbctl-step-item" },
-              h2(
-                "button",
-                {
-                  type: "button",
-                  className: "wbctl-step",
-                  "data-state": state,
-                  "data-invalid": isInvalid ? "true" : null,
-                  "aria-current": state === "current" ? "step" : void 0,
-                  "aria-label": index + 1 + " \xB7 " + step.label + (state === "done" ? "\uFF08\u5DF2\u5B8C\u6210\uFF09" : ""),
-                  disabled: disabled || state === "todo",
-                  title: step.hint || "",
-                  onClick: function() {
-                    if (canJump) props.onJump(index);
-                  }
-                },
-                h2("span", { className: "wbctl-step-index", "aria-hidden": "true" }, state === "done" ? "\u2713" : String(index + 1)),
-                h2("span", { className: "wbctl-step-label" }, step.label),
-                step.hint ? h2("span", { className: "wbctl-step-hint" }, step.hint) : null,
-                step.optional ? h2("span", { className: "wbctl-step-opt" }, "\u53EF\u9009") : null
-              )
-            );
-          })
-        )
-      );
-    }
-    var STYLES = [
-      ".wbctl-steps{display:block;min-width:0}",
-      ".wbctl-step-list{display:flex;align-items:stretch;gap:6px;list-style:none;margin:0 0 14px;padding:0;min-width:0}",
-      ".wbctl-step-item{display:flex;flex:1 1 0;min-width:0}",
-      ".wbctl-step{display:flex;align-items:center;gap:7px;flex:1 1 auto;min-width:0;padding:7px 9px;border:1px solid var(--wb-line,var(--wb-border));border-radius:10px;background:transparent;color:var(--wb-muted,inherit);font:inherit;font-size:12px;line-height:1.35;text-align:left;cursor:default;transition:background .14s ease,border-color .14s ease,color .14s ease}",
-      ".wbctl-step[data-state=done],.wbctl-step[data-state=visited]{color:inherit;cursor:pointer}",
-      ".wbctl-step[data-state=done]{border-color:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 36%,var(--wb-border))}",
-      ".wbctl-step[data-state=current]{border-color:color-mix(in oklab,var(--wb-accent,#2563eb) 58%,var(--wb-border));background:color-mix(in oklab,var(--wb-accent,#2563eb) 8%,transparent);color:inherit;font-weight:600}",
-      ".wbctl-step[data-state=visited]:hover,.wbctl-step[data-state=done]:hover{background:color-mix(in oklab,currentColor 7%,transparent)}",
-      ".wbctl-step[data-invalid=true]{border-color:var(--wb-danger,#d33)}",
-      ".wbctl-step:focus-visible{outline:2px solid var(--wb-accent,#2563eb);outline-offset:2px}",
-      ".wbctl-step:disabled{cursor:default;opacity:.72}",
-      ".wbctl-step-index{display:inline-flex;align-items:center;justify-content:center;flex:none;width:20px;height:20px;border-radius:50%;font-size:11px;font-variant-numeric:tabular-nums;background:color-mix(in oklab,currentColor 15%,transparent)}",
-      ".wbctl-step[data-state=current] .wbctl-step-index{background:var(--wb-accent,#2563eb);color:var(--wb-on-accent,#fff)}",
-      ".wbctl-step[data-state=done] .wbctl-step-index{background:color-mix(in oklab,var(--wb-ok,var(--wb-accent,#2563eb)) 20%,transparent);color:var(--wb-ok,var(--wb-accent,#2563eb))}",
-      ".wbctl-step-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".wbctl-step-hint{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:400;opacity:.62}",
-      ".wbctl-step-opt{flex:none;font-size:10px;font-weight:400;opacity:.55}",
-      "@media (max-width:760px){.wbctl-step{padding:6px 7px;font-size:11.5px}.wbctl-step-hint,.wbctl-step-opt{display:none}.wbctl-step-index{width:18px;height:18px;font-size:10px}}",
-      "@media (max-width:520px){.wbctl-step-list{gap:4px}.wbctl-step-label{white-space:normal}.wbctl-step{gap:5px}}",
-      "@media (prefers-reduced-motion:reduce){.wbctl-step{transition:none}}"
-    ];
-    module2.exports = { Steps, stepState, styles: STYLES };
   }
 });
 
@@ -12537,143 +12639,342 @@ var require_catalog_editor = __commonJS({
     var Field = common.Field;
     var Notice = common.Notice;
     var Body = require_markdown().createBody(React);
+    var Steps = require_stepper().Steps;
+    var LOCALE2 = require_locale2();
     var groups = require_catalog_groups();
-    function Editor(props) {
-      var draft = props.draft, lang = props.lang === "en";
-      var tr = function(zh, en) {
-        return lang ? en : zh;
+    function translator(lang) {
+      var dict = LOCALE2[lang] || LOCALE2.zh;
+      return function(key, values) {
+        var text = dict[key] || LOCALE2.zh[key] || key;
+        return values ? String(text).replace(/\{(\w+)\}/g, function(all, name) {
+          return name in values ? String(values[name]) : all;
+        }) : text;
       };
+    }
+    function firstFailing(draft, catalog) {
+      if (!String(draft.name || "").trim()) return 0;
+      if (!String(draft.instructions || "").trim()) return 1;
+      var picked = (draft.actions || []).concat(groups.parseManual(draft.manual));
+      if (groups.validateActions(picked, catalog).unknown.length) return 2;
+      return -1;
+    }
+    function Editor(props) {
+      var draft = props.draft;
+      var t = translator(props.lang);
       var set = function(patch) {
         props.setDraft(Object.assign({}, draft, patch));
       };
-      var tab = React.useState("edit"), view = tab[0], setView = tab[1];
-      var pick = React.useState(""), query = pick[0], setQuery = pick[1];
+      var stepState = React.useState(0), step = stepState[0], setStep = stepState[1];
+      var visitedState = React.useState(0), maxVisited = visitedState[0], setMaxVisited = visitedState[1];
+      var invalidState = React.useState({}), invalid = invalidState[0], setInvalid = invalidState[1];
+      var statusState = React.useState(""), status = statusState[0], setStatus = statusState[1];
+      var tabState = React.useState("edit"), view = tabState[0], setView = tabState[1];
+      var pickState = React.useState(""), query = pickState[0], setQuery = pickState[1];
+      var nameRef = React.useRef(null), instructionsRef = React.useRef(null);
+      var searchRef = React.useRef(null), saveRef = React.useRef(null);
       var catalog = props.catalog;
       var picked = draft.actions || [];
       var manual = groups.parseManual(draft.manual);
       var effective = groups.dedupe(picked.concat(manual));
-      var checked = groups.validateActions(effective, catalog);
-      var unknown = checked.unknown;
-      function toggle(name) {
-        var next = picked.indexOf(name) >= 0 ? picked.filter(function(x) {
-          return x !== name;
-        }) : picked.concat([name]);
-        set({ actions: next });
+      var unknown = groups.validateActions(effective, catalog).unknown;
+      var busy = !!props.busy;
+      React.useEffect(function() {
+        var refs = [nameRef, instructionsRef, searchRef, saveRef];
+        var node = refs[step] && refs[step].current;
+        if (node && node.focus) node.focus();
+      }, [step]);
+      function mark(index, bad) {
+        var next2 = Object.assign({}, invalid);
+        if (bad) next2[index] = true;
+        else delete next2[index];
+        setInvalid(next2);
       }
-      var catalogRows = (catalog || []).filter(function(item) {
-        if (!query.trim()) return true;
-        return String(item.name + " " + (item.description || "")).toLowerCase().indexOf(query.trim().toLowerCase()) >= 0;
-      });
-      var table = groups.groupActions(catalogRows.map(function(item) {
-        return item.name;
-      }));
-      var byName = /* @__PURE__ */ Object.create(null);
-      (catalog || []).forEach(function(item) {
-        byName[item.name] = item;
-      });
-      function actionsPane() {
+      function toggle(name) {
+        set({ actions: picked.indexOf(name) >= 0 ? picked.filter(function(x) {
+          return x !== name;
+        }) : picked.concat([name]) });
+      }
+      function toggleDomain(items, on) {
+        var next2 = picked.slice();
+        items.forEach(function(name) {
+          var at = next2.indexOf(name);
+          if (on && at < 0) next2.push(name);
+          if (!on && at >= 0) next2.splice(at, 1);
+        });
+        set({ actions: next2 });
+      }
+      function goBack() {
+        setStatus("");
+        setStep(Math.max(0, step - 1));
+      }
+      function blockedText(index) {
+        if (index === 0) return t("role_name_required");
+        if (index === 1) return t("role_instructions_required");
+        return t("role_unknown_hint");
+      }
+      function next() {
+        var blocked = firstFailing(draft, catalog);
+        if (blocked >= 0 && blocked <= step) {
+          mark(blocked, true);
+          setStatus(blockedText(blocked));
+          setStep(blocked);
+          return;
+        }
+        mark(step, false);
+        setStatus("");
+        var to = Math.min(3, step + 1);
+        setStep(to);
+        setMaxVisited(Math.max(maxVisited, to));
+      }
+      function goTo(index) {
+        if (index <= maxVisited) {
+          setStatus("");
+          setStep(index);
+        }
+      }
+      function submit() {
+        var blocked = firstFailing(draft, catalog);
+        if (blocked >= 0) {
+          mark(blocked, true);
+          setStatus(blockedText(blocked));
+          setStep(blocked);
+          return;
+        }
+        props.onSave();
+      }
+      function basicPane() {
         return h2(
-          "section",
-          { className: "wbr-actions" },
-          h2(
-            "div",
-            { className: "wbr-actions-head" },
-            h2("strong", null, tr("\u5141\u8BB8\u7684\u5DE5\u4F5C\u53F0\u52A8\u4F5C", "Allowed workbench actions")),
-            h2("span", { className: "wbr-count" }, tr("\u5DF2\u9009 ", "Selected ") + effective.length + tr(" \u9879", ""))
-          ),
-          props.catalogError ? h2(Notice, { h: h2, kind: "warn", text: props.catalogError }) : null,
-          h2("input", { name: "actionSearch", className: "wbr-input", value: query, placeholder: tr("\u7B5B\u9009\u52A8\u4F5C\u540D\u6216\u8BF4\u660E", "Filter actions"), onChange: function(e) {
-            setQuery(e.target.value);
-          } }),
-          h2("div", { className: "wbr-actions-groups" }, table.map(function(group) {
-            return h2(
-              "div",
-              { key: group.domain, className: "wbr-actions-group" },
-              h2("div", { className: "wbr-actions-domain" }, group.domain, h2("span", { className: "wbr-count" }, String(group.items.length))),
-              group.items.map(function(name) {
-                var item = byName[name] || {};
-                return h2(
-                  "label",
-                  { key: name, className: "wbr-check", title: item.description || name },
-                  h2("input", { type: "checkbox", name: "action:" + name, checked: picked.indexOf(name) >= 0, onChange: function() {
-                    toggle(name);
-                  } }),
-                  h2("code", null, name)
-                );
-              })
-            );
-          })),
+          "div",
+          { className: "wbr-step-pane" },
           h2(
             Field,
-            { h: h2, label: tr("\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF09", "Extra action names (one per line)"), hint: tr("\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C", "For actions that are valid but not listed") },
-            h2("textarea", { name: "manual", className: "wbr-input", rows: 3, value: draft.manual || "", onChange: function(e) {
-              set({ manual: e.target.value });
-            } })
+            { h: h2, label: t("role_name") },
+            h2("input", {
+              ref: nameRef,
+              name: "name",
+              className: "wbr-input",
+              value: draft.name || "",
+              onChange: function(e) {
+                mark(0, false);
+                set({ name: e.target.value });
+              }
+            })
           ),
+          invalid[0] ? h2("p", { className: "wbr-field-error", role: "alert" }, t("role_name_required")) : null,
+          h2(
+            Field,
+            { h: h2, label: t("role_description") },
+            h2("input", {
+              name: "description",
+              className: "wbr-input",
+              value: draft.description || "",
+              onChange: function(e) {
+                set({ description: e.target.value });
+              }
+            })
+          )
+        );
+      }
+      function instructionsPane() {
+        var text = String(draft.instructions || "");
+        return h2(
+          "div",
+          { className: "wbr-step-pane" },
+          h2(
+            "section",
+            { className: "wbr-instructions" },
+            h2(
+              "div",
+              { className: "wbr-instructions-head" },
+              h2("strong", null, t("role_instructions")),
+              h2("span", { className: "wbr-count" }, t("role_chars", { n: text.trim().length })),
+              h2(
+                "div",
+                { className: "wbr-tabs", role: "tablist" },
+                h2("button", { type: "button", role: "tab", "aria-selected": view === "edit", className: "wbr-tab", onClick: function() {
+                  setView("edit");
+                } }, t("role_edit")),
+                h2("button", { type: "button", role: "tab", "aria-selected": view === "preview", className: "wbr-tab", onClick: function() {
+                  setView("preview");
+                } }, t("role_preview"))
+              )
+            ),
+            view === "edit" ? h2("textarea", {
+              ref: instructionsRef,
+              name: "instructions",
+              className: "wbr-input",
+              rows: 12,
+              value: draft.instructions || "",
+              onChange: function(e) {
+                mark(1, false);
+                set({ instructions: e.target.value });
+              }
+            }) : h2("div", { className: "wbr-preview" }, text.trim() ? h2(Body, { text, mode: "markdown" }) : h2("em", null, t("role_preview_empty")))
+          ),
+          invalid[1] ? h2("p", { className: "wbr-field-error", role: "alert" }, t("role_instructions_required")) : null
+        );
+      }
+      function actionsPane() {
+        var catalogRows = (catalog || []).filter(function(item) {
+          if (!query.trim()) return true;
+          return String(item.name + " " + (item.description || "")).toLowerCase().indexOf(query.trim().toLowerCase()) >= 0;
+        });
+        var table = groups.groupActions(catalogRows.map(function(item) {
+          return item.name;
+        }));
+        var byName = /* @__PURE__ */ Object.create(null);
+        (catalog || []).forEach(function(item) {
+          byName[item.name] = item;
+        });
+        return h2(
+          "div",
+          { className: "wbr-step-pane" },
+          h2(
+            "section",
+            { className: "wbr-actions" },
+            h2(
+              "div",
+              { className: "wbr-actions-head" },
+              h2("strong", null, t("role_actions_title")),
+              h2("span", { className: "wbr-count" }, t("role_actions_selected", { n: effective.length }))
+            ),
+            props.catalogError ? h2(Notice, { h: h2, kind: "warn", text: props.catalogError }) : null,
+            h2("input", {
+              ref: searchRef,
+              name: "actionSearch",
+              className: "wbr-input",
+              value: query,
+              placeholder: t("role_actions_search"),
+              onChange: function(e) {
+                setQuery(e.target.value);
+              }
+            }),
+            h2("div", { className: "wbr-actions-groups" }, table.map(function(group) {
+              return h2(
+                "div",
+                { key: group.domain, className: "wbr-actions-group" },
+                h2(
+                  "div",
+                  { className: "wbr-actions-grouphead" },
+                  h2("span", { className: "wbr-actions-domain" }, group.domain, h2("span", { className: "wbr-count" }, String(group.items.length))),
+                  h2("button", { type: "button", className: "wbr-mini", onClick: function() {
+                    toggleDomain(group.items, true);
+                  } }, t("role_actions_select_all")),
+                  h2("button", { type: "button", className: "wbr-mini", onClick: function() {
+                    toggleDomain(group.items, false);
+                  } }, t("role_actions_clear"))
+                ),
+                h2("div", { className: "wbr-actions-checks" }, group.items.map(function(name) {
+                  var item = byName[name] || {};
+                  return h2(
+                    "label",
+                    { key: name, className: "wbr-check", title: item.description || name },
+                    h2("input", { type: "checkbox", name: "action:" + name, checked: picked.indexOf(name) >= 0, onChange: function() {
+                      toggle(name);
+                    } }),
+                    h2("code", null, name)
+                  );
+                }))
+              );
+            })),
+            h2(
+              Field,
+              { h: h2, label: t("role_actions_manual"), hint: t("role_actions_manual_hint") },
+              h2("textarea", {
+                name: "manual",
+                className: "wbr-input",
+                rows: 3,
+                value: draft.manual || "",
+                onChange: function(e) {
+                  mark(2, false);
+                  set({ manual: e.target.value });
+                }
+              })
+            ),
+            unknown.length ? h2(
+              "div",
+              { className: "wbr-unknown", role: "alert" },
+              h2("strong", null, t("role_unknown_title")),
+              h2("span", null, unknown.join("\u3001")),
+              h2("small", null, t("role_unknown_hint"))
+            ) : null
+          )
+        );
+      }
+      function summaryRow(label, value) {
+        return h2(
+          "div",
+          { className: "wbr-summary-row" },
+          h2("dt", null, label),
+          h2("dd", null, value || t("role_summary_empty"))
+        );
+      }
+      function confirmPane() {
+        var chips = groups.groupActions(effective);
+        return h2(
+          "div",
+          { className: "wbr-step-pane" },
+          h2(
+            "dl",
+            { className: "wbr-summary" },
+            summaryRow(t("role_summary_name"), draft.name),
+            summaryRow(t("role_summary_description"), draft.description),
+            summaryRow(t("role_summary_actions"), t("role_summary_actions_value", { n: effective.length })),
+            summaryRow(t("role_summary_instructions"), t("role_summary_chars", { n: String(draft.instructions || "").trim().length })),
+            summaryRow(t("role_summary_effect"), t("role_summary_effect_value"))
+          ),
+          chips.length ? h2("div", { className: "wbr-chips" }, chips.map(function(group) {
+            return h2("code", { key: group.domain, className: "wbr-chip" }, group.domain + " " + group.items.length);
+          })) : null,
           unknown.length ? h2(
-            "div",
-            { className: "wbr-unknown", role: "alert" },
-            h2("strong", null, tr("\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5B58\u5728\uFF1A", "These actions do not exist: ")),
-            h2("span", null, unknown.join("\u3001")),
-            h2("small", null, tr("\u8BF7\u6539\u6210\u771F\u5B9E\u52A8\u4F5C\u540D\u540E\u518D\u4FDD\u5B58\uFF0C\u5426\u5219\u89D2\u8272\u6BCF\u6B21\u8C03\u7528\u90FD\u4F1A\u88AB\u62D2\u3002", "Fix the names before saving, otherwise every call from this role will be rejected."))
+            "p",
+            { className: "wbr-field-error", role: "alert" },
+            t("role_unknown_title") + " " + unknown.join("\u3001")
           ) : null
         );
       }
+      var panes = [basicPane, instructionsPane, actionsPane, confirmPane];
+      var labels = ["role_step_basic", "role_step_instructions", "role_step_actions", "role_step_confirm"];
+      var steps = labels.map(function(key) {
+        return { key, label: t(key) };
+      });
       return h2(
         "section",
         { className: "wb-card wbr-editor" },
         h2(
           "div",
           { className: "wbr-editor-head" },
-          h2("strong", null, draft.mode === "create" ? tr("\u65B0\u5EFA\u89D2\u8272", "New role") : tr("\u7F16\u8F91\u89D2\u8272", "Edit role")),
-          h2("small", null, draft.id || "")
+          h2("strong", null, draft.mode === "create" ? t("role_wizard_new") : t("role_wizard_edit")),
+          draft.id ? h2("code", null, draft.id) : null
         ),
-        h2(
-          Field,
-          { h: h2, label: tr("\u540D\u79F0", "Name") },
-          h2("input", { name: "name", className: "wbr-input", value: draft.name || "", onChange: function(e) {
-            set({ name: e.target.value });
-          } })
-        ),
-        h2(
-          Field,
-          { h: h2, label: tr("\u804C\u8D23\u7B80\u4ECB", "Description") },
-          h2("input", { name: "description", className: "wbr-input", value: draft.description || "", onChange: function(e) {
-            set({ description: e.target.value });
-          } })
-        ),
-        h2(
-          "section",
-          { className: "wbr-instructions" },
-          h2(
-            "div",
-            { className: "wbr-instructions-head" },
-            h2("strong", null, tr("\u89D2\u8272\u6307\u4EE4", "Instructions")),
-            h2(
-              "div",
-              { className: "wbr-tabs", role: "tablist" },
-              h2("button", { type: "button", role: "tab", "aria-selected": view === "edit", className: "wbr-tab", onClick: function() {
-                setView("edit");
-              } }, tr("\u7F16\u8F91", "Edit")),
-              h2("button", { type: "button", role: "tab", "aria-selected": view === "preview", className: "wbr-tab", onClick: function() {
-                setView("preview");
-              } }, tr("\u9884\u89C8", "Preview"))
-            )
-          ),
-          view === "edit" ? h2("textarea", { name: "instructions", className: "wbr-input", rows: 8, value: draft.instructions || "", onChange: function(e) {
-            set({ instructions: e.target.value });
-          } }) : h2("div", { className: "wbr-preview" }, (draft.instructions || "").trim() ? h2(Body, { text: draft.instructions, mode: "markdown" }) : h2("em", null, tr("\u8FD8\u6CA1\u6709\u5185\u5BB9", "Nothing to preview")))
-        ),
-        actionsPane(),
+        h2(Steps, {
+          h: h2,
+          steps,
+          current: step,
+          maxVisited,
+          invalid,
+          disabled: busy,
+          label: t("role_step_label"),
+          onJump: goTo,
+          className: "wbr-steps"
+        }),
+        panes[step](),
+        status ? h2("p", { className: "wbr-step-status", role: "status" }, status) : null,
         h2(
           "div",
-          { className: "wb-sec" },
-          h2(Btn, { h: h2, onClick: props.onSave, disabled: props.busy || unknown.length > 0 || !String(draft.name || "").trim() || !String(draft.instructions || "").trim() }, tr("\u4FDD\u5B58", "Save")),
-          h2(Btn, { h: h2, onClick: props.onCancel, disabled: props.busy }, tr("\u53D6\u6D88", "Cancel"))
+          { className: "wbr-wizard-foot" },
+          h2(Btn, { h: h2, onClick: props.onCancel, disabled: busy }, t("role_cancel")),
+          h2(
+            "div",
+            { className: "wbr-wizard-nav" },
+            step > 0 ? h2(Btn, { h: h2, onClick: goBack, disabled: busy }, t("role_back")) : null,
+            step < 3 ? h2(Btn, { h: h2, onClick: next, disabled: busy }, t("role_next_step")) : h2(Btn, { h: h2, onClick: submit, disabled: busy }, t("role_save"))
+          )
         )
       );
     }
     module2.exports = Editor;
+    module2.exports.firstFailing = firstFailing;
   }
 });
 
