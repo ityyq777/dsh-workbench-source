@@ -1,8 +1,14 @@
-# 自动化兼容保留包：不注册任何服务，只插入宿主行。
+# 自动化兼容保留包：不插入任何 loader 行（0.5.1 起）。
 #
 # 引擎（规则引擎、三张表、automation.* action 与自动化页）自 dsh-workbench-host 0.17.0
-# 起已内置于宿主，本包仅作为安装入口与市场条目保留，装不装都能用自动化。
-# 宿主行必须流式单行：块式会被插件市场算进 insertedIds，导致与其他 dsh-workbench 系
-# 插件冲突并整次回滚（见 docs/AGENTS规范/03-安装与交付.md）。
-- insert:
-    - { id: workbench, name: 'dsh-workbench' }
+# 起已内置于宿主，本包仅作为安装入口与市场条目保留，装不装都能用自动化；因此本包不再
+# 顺带插入宿主行，安装后也不加载任何插件行（宿主未装时本包不会替用户装宿主）。
+#
+# 为什么不再插宿主行：桌面端 removeBundle 会把这个包 patch 里 insert 的行与存活的 loader
+# 条目比对（@deepseek-ai/dsh-plugin-manager 的 bundleRows → contributions），命中就抛
+# `bundle-in-use`，前端显示「这个插件正在使用中」。宿主行由本包插入时它必然存活，于是
+# 这个包永远无法在桌面端移除。改成不插入任何行后 contributions 为空，移除不再被拦。
+#
+# 保留 `- insert: []` 而不是删掉文件：市场收录硬条件要求 dsh.bundle.patch 可读，
+# 空的 insert 列表在 js-yaml 与 DSH 的 applyPatches 里都是合法的「什么都不插」。
+- insert: []

@@ -11,6 +11,11 @@
  *
  * 因此这里刻意不 registerDomain、不建表、不注册 action、不带 client —— 一旦带 client
  * 就会多出一个插件视图，插件数从 12 变 13，连带要改共享控件覆盖断言与文档口径。
+ *
+ * 0.5.1 起 cordis.patch.yml 也不再插入宿主行（连本插件自己的行都没有）：桌面端移除
+ * 插件时会把 patch 里 insert 的行与存活的 loader 条目对拍，插了必然存活的行就永远报
+ * `bundle-in-use`。没有行可插，这个包就不会再加载本文件——下面的日志只在被直接 import
+ * 或将来加回行时才看得到，测试用 import 守着它。
  */
 
 import { createRequire } from "node:module";
@@ -43,6 +48,6 @@ export function apply(ctx) {
       since +
       " 起已内置于宿主，本包（兼容保留包 " +
       HERE.version +
-      "）不提供独立能力，无需安装，可安全卸载。",
+      "）不提供独立能力、不插入任何插件行；宿主需已安装，本包可安全卸载。",
   );
 }

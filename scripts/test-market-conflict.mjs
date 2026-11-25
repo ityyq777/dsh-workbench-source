@@ -13,10 +13,14 @@
  * - 因此共享行（宿主行、邮件的保险箱行）写成流式（flow style）：js-yaml 与 DSH 解析结果相同，
  *   市场那套逐行正则认不出来。
  *
- * 本脚本守三条：
+ * 例外：自动化兼容保留包（dsh-workbench-automation 0.5.1 起）不插入任何行 —— 它的 patch 插了
+ * 必然存活的宿主行，桌面端 removeBundle 就会永远判 `bundle-in-use`，所以这里要求它零行。
+ *
+ * 本脚本守四条：
  *   1. 每个子包的 patch 仍以 YAML 语义插入宿主行（独立安装可用），邮件仍插入保险箱行；
  *   2. 共享行必须是流式写法（块式会重新引爆市场冲突）；
- *   3. 各包在市场眼里的 insertedIds 两两不相交（市场装得上）。
+ *   3. 自动化兼容保留包不得插入任何行（否则桌面端移不掉它）；
+ *   4. 各包在市场眼里的 insertedIds 两两不相交（市场装得上）。
  *
  * 用法：
  *   node scripts/test-market-conflict.mjs            # 校验源码树
@@ -108,8 +112,12 @@ function ownRowId(packageName) {
   return packageName.startsWith("dsh-workbench-") ? `workbench-${packageName.slice("dsh-workbench-".length)}` : null;
 }
 
+/** 不插入任何 loader 行的兼容保留包：插了必存活的行就会被桌面端判 bundle-in-use。 */
+const ZERO_ROW_PACKAGES = new Set(["dsh-workbench-automation"]);
+
 /** 一个子包必须仍然插入的共享行。 */
 function requiredSharedRows(packageName) {
+  if (ZERO_ROW_PACKAGES.has(packageName)) return [];
   const rows = [{ id: "workbench", why: "宿主行：单独装子插件时靠它加载宿主" }];
   if (packageName === "dsh-workbench-mail") {
     rows.push({ id: "workbench-vault", why: "保险箱行：邮件依赖保险箱，邮件自己把它带进来" });
@@ -161,6 +169,15 @@ async function main() {
         for (const { id, why } of requiredSharedRows(manifest.name)) {
           check(yamlIds.includes(id), `${label}：patch 没有插入 ${id} —— ${why}`);
         }
+      }
+
+      // 1b. 兼容保留包必须零行：它插的宿主行必然存活，桌面端就永远移不掉它。
+      if (ZERO_ROW_PACKAGES.has(manifest.name)) {
+        check(
+          yamlIds.length === 0,
+          `${label}：兼容保留包不得插入任何 loader 行（现在插了 ${yamlIds.join(", ")}），` +
+            "否则桌面端 removeBundle 会判 bundle-in-use 而无法移除",
+        );
       }
 
       // 2. 共享行只能写在流式里：块式行正是市场统计本包 insertedIds 的来源。

@@ -129,15 +129,15 @@ const ADDON_META = {
     marketExtra: "桌面透明层依赖 Electron 外壳；弹幕库只存本机，不上传也不参与云同步。",
   },
   automation: {
-    description: "自动化兼容保留包：引擎自宿主 dsh-workbench-host 0.17.0 起已内化，本包不提供独立能力",
+    description: "自动化兼容保留包：引擎自宿主 dsh-workbench-host 0.17.0 起已内化，本包既不提供独立能力也不插入任何插件行",
     keywords: ["automation", "scheduler", "compat"],
     marketCategory: "workflow",
     marketEn:
-      "Compatibility placeholder for the DSH automation plugin. Since dsh-workbench-host 0.17.0 the rule engine, its three tables (host_automation_*), the 19 host.automation.* actions and the automation page live in the host; installing this package only registers the host row. The host and the standalone plugin (0.4.12) now coexist: each keeps its own actions and tables, so nobody needs to uninstall one to avoid double runs.",
+      "Compatibility placeholder for the DSH automation plugin. Since dsh-workbench-host 0.17.0 the rule engine, its three tables (host_automation_*), the 19 host.automation.* actions and the automation page live in the host; this package installs no plugin row of its own, so it adds nothing and can be removed at any time. The host must already be installed. The host and the standalone plugin (0.4.12) now coexist: each keeps its own actions and tables, so nobody needs to uninstall one to avoid double runs.",
     marketZh:
-      "DSH 自动化兼容保留包：自 dsh-workbench-host 0.17.0 起规则引擎、三张 host_automation_* 表、19 个 host.automation.* action 与自动化页都已内置于宿主，本包只插入宿主行，不含独立能力。宿主与独立插件（0.4.12）现在可以共存：各用各的 action 与表，不会互相执行对方的规则，也就不必为了避开双跑而卸载其中一个。",
+      "DSH 自动化兼容保留包：自 dsh-workbench-host 0.17.0 起已内置于宿主——规则引擎、三张 host_automation_* 表、19 个 host.automation.* action 与自动化页都在宿主里；本包不插入任何插件行、不含独立能力，装与不装行为一致，可随时卸载（宿主需已安装）。宿主与独立插件（0.4.12）现在可以共存：各用各的 action 与表，不会互相执行对方的规则，也就不必为了避开双跑而卸载其中一个。",
     marketExtra:
-      "引擎已在宿主里：装本包与不装行为一致，装后不会新增视图、表或 action。想继续用插件自带的自动化页面，可以装 0.4.12（仍可从 npm 取到），它现在与宿主的 host.automation.* 共存；两套规则分别落在 host_automation_* 与插件自己的 automation_* 表里。",
+      "引擎已在宿主里：装本包与不装行为一致，装后不会新增视图、表或 action，也不会替用户装宿主（宿主未装时先用同一个安装入口装 dsh-workbench-host）。想继续用插件自带的自动化页面，可以装 0.4.12（仍可从 npm 取到），它现在与宿主的 host.automation.* 共存；两套规则分别落在 host_automation_* 与插件自己的 automation_* 表里。",
   },
 };
 

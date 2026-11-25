@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-automation",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "兼容保留包：自动化引擎自 dsh-workbench-host 0.17.0 起已内置于宿主，本包不提供独立能力",
   "type": "module",
   "main": "lib/index.js",
