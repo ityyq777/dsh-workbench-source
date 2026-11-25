@@ -89,6 +89,8 @@ module.exports = function addonsPage(deps) {
           if (data && data.status === "listed" && data.versions && data.versions.length) {
             var versions = data.versions.map(function (item) { return String(item.version); });
             var latest = versions[0];
+            // 本地开发版本可能还没发布：把已装版本补进列表，下拉里显示的才是真实在跑的版本。
+            if (row.installed && versions.indexOf(row.installed) < 0) versions = [row.installed].concat(versions);
             // 只报告，不自动装：版本列表交给用户自己挑，切换动作要再点一次确认。
             setRow(row.id, {
               busy: "",
@@ -96,8 +98,10 @@ module.exports = function addonsPage(deps) {
               canSwitch: data.canSwitch !== false,
               versions: versions,
               pick: versions.indexOf(row.installed || "") >= 0 ? row.installed : latest,
-              text: latest !== row.installed ? t("plugins_newer") + " " + latest : t("plugins_latest"),
-              tone: latest !== row.installed ? "warn" : "ok",
+              // 「有没有新版」由服务端比过版本号（data.newer）：本地开发包可能比 registry 上的新，
+              // 只按「第一项不等于已装版本」判断会把旧版本写成可升级。
+              text: data.newer ? t("plugins_newer") + " " + latest : t("plugins_latest"),
+              tone: data.newer ? "warn" : "ok",
             });
           } else if (data && data.status === "listed") {
             setRow(row.id, { busy: "", latest: "", text: t("plugins_latest"), tone: "ok" });
@@ -216,20 +220,22 @@ module.exports = function addonsPage(deps) {
                   key: "vsel",
                   "aria-label": t("plugins_versions"),
                   value: live.pick || live.versions[0],
-                  disabled: busy,
+                  disabled: busy || live.canSwitch === false,
+                  title: live.canSwitch === false ? t("plugins_local") : "",
                   onChange: function (e) { setRow(row.id, { pick: e.target.value }); },
                   children: live.versions.map(function (version) {
                     var current = version === row.installed;
                     return jsx.jsx("option", { value: version, children: current ? version + " · " + t("plugins_current") : version, key: version });
                   }),
                 }));
-                var switchable = live.canSwitch !== false && !busy && (live.pick || live.versions[0]) !== row.installed;
-                actions.push(jsx.jsx(Btn, {
-                  h: jsx.jsx, key: "install", disabled: !switchable,
-                  title: live.canSwitch === false ? t("plugins_local") : "",
-                  children: live.busy === "installing" ? t("plugins_installing") : t("plugins_switch"),
-                  onClick: function () { installOne(row, live.pick || live.versions[0]); },
-                }));
+                // 本地 link 安装的包管理器不让切换：只列出可见版本并说明原因，不摆一个按不动的按钮。
+                if (live.canSwitch !== false) {
+                  actions.push(jsx.jsx(Btn, {
+                    h: jsx.jsx, key: "install", disabled: busy || (live.pick || live.versions[0]) === row.installed,
+                    children: live.busy === "installing" ? t("plugins_installing") : t("plugins_switch"),
+                    onClick: function () { installOne(row, live.pick || live.versions[0]); },
+                  }));
+                }
               }
             }
             if (row.command) {

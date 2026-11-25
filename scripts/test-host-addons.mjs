@@ -188,6 +188,14 @@ try {
   assert(localVersions.canSwitch === false, "本地安装不允许在这里切换版本");
   assert(localVersions.versions[0].version === "5.5.10", "版本要按语义化版本从新到旧排序");
   assert(fetched[0].includes("dsh-workbench-tasks"), "兜底要查声明的那个包名");
+  assert(localVersions.installed === "5.5.3" && localVersions.latest === "5.5.10", "兜底结果要带已装版本与最新版本");
+  assert(localVersions.newer === true, "registry 上有更新版本时要标出 newer");
+
+  // 本地开发包比 registry 上的新：不能写成「可升级」，否则用户会被引导降级。
+  const aheadLive = createHostAddonActions({ domains: domainsOf([{ id: "wb-addon-tasks", title: "任务", version: "5.5.20", update: { source: "npm", package: "dsh-workbench-tasks" } }]), ctx: () => undefined });
+  const aheadVersions = await aheadLive["host.addons.versions"].execute({ id: "wb-addon-tasks" });
+  assert(aheadVersions.installed === "5.5.20" && aheadVersions.latest === "5.5.10", "已装版本要取域自报的版本号");
+  assert(aheadVersions.newer === false, "已装版本比 registry 新时不得标记为可升级");
 
   const noManager = createHostAddonActions({ domains: domainsOf([{ id: "wb-addon-tasks", title: "任务", version: "5.5.3", update: { source: "npm", package: "dsh-workbench-tasks" } }]), ctx: () => ({ get: () => undefined }) });
   const noManagerVersions = await noManager["host.addons.versions"].execute({ id: "wb-addon-tasks" });

@@ -272,6 +272,29 @@ export function createHostAddonActions(ctx: AddonContext) {
     },
   };
 
+  /** 域自己声明的版本号（本地 link 安装时 registry 上可能还没有它）。 */
+  function declaredVersion(id: string): string {
+    const rec = ctx.domains.get(id);
+    const raw = rec?.def?.version;
+    return typeof raw === "string" ? raw.trim() : "";
+  }
+
+  /**
+   * 给版本结果补「已装版本 / 最新版本 / 是否真有新版」。
+   * 只看列表第一项不够：本地开发的包常常比 registry 上的新，界面不能把它写成「可升级」。
+   */
+  function versionSummary(listed: any, installed: string): Record<string, unknown> {
+    const first = listed?.versions?.[0]?.version;
+    const current = String(listed?.installed || installed || "");
+    const latest = first ? String(first) : "";
+    return {
+      ...(listed || {}),
+      installed: current || null,
+      latest: latest || null,
+      newer: Boolean(latest && current && compareVersions(latest, current) > 0),
+    };
+  }
+
   const versions = {
     description: "向 npm 查某个插件比当前已装版本更新的发布版本（只走官方 registry）。",
     input: {
@@ -292,7 +315,7 @@ export function createHostAddonActions(ctx: AddonContext) {
         // 没有插件管理器也能看版本：直接读 registry，切换动作仍只能给可复制的命令。
         try {
           const fallback = await registryVersions(target.package, target.update?.registry);
-          return { supported: true, ...fallback, manager: false, canSwitch: false, profile, package: target.package, id: target.id, note: "当前环境没有可用的插件管理器，只能查看版本；切换请复制命令执行。" };
+          return { ...versionSummary(fallback, declaredVersion(target.id)), supported: true, manager: false, canSwitch: false, profile, package: target.package, id: target.id, note: "当前环境没有可用的插件管理器，只能查看版本；切换请复制命令执行。" };
         } catch (error: any) {
           return {
             supported: false,
@@ -309,7 +332,7 @@ export function createHostAddonActions(ctx: AddonContext) {
         if (listed.problem === "not-updatable") {
           try {
             const fallback = await registryVersions(target.package, target.update?.registry);
-            return { supported: true, ...fallback, problem: listed.problem, problemText: problemText(listed.problem), canSwitch: false, package: target.package, id: target.id };
+            return { ...versionSummary(fallback, declaredVersion(target.id)), supported: true, problem: listed.problem, problemText: problemText(listed.problem), canSwitch: false, package: target.package, id: target.id };
           } catch (error: any) {
             return {
               supported: true,
