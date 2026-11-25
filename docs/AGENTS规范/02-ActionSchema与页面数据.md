@@ -125,6 +125,12 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 - 表的真实结构仍以 `PRAGMA table_info` 为准，声明只补展示与安全语义；两者不一致时界面会显示
   `exists: false` 的条目（声明了但库里没有），这是故意的漂移信号，不要把它静默过滤掉。
 
+
+另有一条只影响「怎么升级」的声明契约：`DomainDef.update`（`{ source: "npm", package, registry?, distTag? }`），
+由宿主的 `host.addons.*` 与首页「插件」页使用，规则见 [`03-安装与交付.md`](./03-安装与交付.md) 的
+「插件自己声明 npm 更新来源」一节。
+
+
 ## 插件页面必须自证数据源，不许走宿主统一接口
 
 宿主提供 `GET /workbench/api/schema`、`api.schema(domain)`、`capabilities.*`、
@@ -142,6 +148,11 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 3. 新增这类 action 同样是 agent 可见的 schema 变更：同步五处版本号、`docs/插件功能清单.md`
    与对应测试（参照 `test:action-schema`）。
 4. 判据很简单：**这个页面删掉宿主对应路由后还能不能用**。不能，就是踩了这条线。
+5. 唯一例外是**数据浏览**：2026-11 起各业务插件不再自带「数据」页，也不再注册
+   `<域>.dataTables` / `<域>.dataQuery`，只读浏览统一走宿主「数据」页（`wb.dataTables` /
+   `wb.dataQuery`）。这条不违反上面的原则——表由插件在 `registerDomain({ tables })` 里声明，
+   **表声明就是契约**，宿主只按声明做白名单式只读浏览，不碰任何业务写入路径。
+   回归：`pnpm test:data`（断言 12 个插件不再有数据页 action/视图）。
 
 历史教训：`Action 清单` 页最初读宿主 `GET /workbench/api/schema`，升级后宿主缺路由时
 整页报 `no schema api`；后改为各插件注册 `<域>.actionSchema` 自证清单，宿主接口保留但
