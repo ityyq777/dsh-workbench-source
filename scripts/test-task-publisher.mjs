@@ -1,13 +1,16 @@
 /**
- * 任务发布者回归：brief 纯函数与发布者角色（5.5.1 起不再提供 /wb-task-publisher 斜杠命令）。
+ * 任务发布者回归：brief 纯函数与发布者角色（5.5.4 起连同「命令」页与命令注册链一起删除）。
  * 纯内存假对象，不连数据库。
  */
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { apply } from "../packages/addons/tasks/lib/index.js";
 import { PUBLISHER_INSTRUCTIONS } from "../packages/addons/tasks/lib/publisher/brief.js";
 import { buildPublisherBrief } from "../packages/addons/tasks/lib/publisher/brief.js";
-import { TASK_COMMANDS } from "../packages/addons/tasks/lib/publisher/catalog.js";
-import { registerPublisherCommand } from "../packages/addons/tasks/lib/publisher/command.js";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 let checks = 0;
 function check(name, fn) {
@@ -40,20 +43,15 @@ check("真实插件注册角色及职责边界", () => {
 });
 
 // 1) brief 必含：原话逐字、五步 SOP、输出格式、边界、sessionId
-// 斜杠命令已下架：目录为空，注册入口不注册任何命令也不抛错；发布者角色仍在（见上一条）。
-check("斜杠命令已下架", () => {
-  assert.ok(Array.isArray(TASK_COMMANDS), "命令目录应保持数组形态");
-  assert.equal(TASK_COMMANDS.length, 0, "5.5.1 起不再提供斜杠命令");
-  const registered = [];
-  const commands = { register(def) { registered.push(def); return () => {}; } };
-  const dispose = registerPublisherCommand({ workbench: {}, get: (name) => (name === "commands" ? commands : undefined) });
-  assert.equal(typeof dispose, "function");
-  assert.equal(registered.length, 0, "空目录不应注册任何命令");
-  dispose();
-  // 没有 commands 服务 / 没有 ctx / 探测抛错都不报错。
-  for (const ctx of [undefined, {}, { get: () => undefined }, { get() { throw new Error("no service"); } }]) {
-    assert.equal(typeof registerPublisherCommand(ctx), "function");
-  }
+// 斜杠命令与「命令」页在 5.5.4 已整体删除：文件不存在、不再有 tasks.commands action。
+check("命令链已整体删除", () => {
+  assert.equal(existsSync(join(ROOT, "packages/addons/tasks/lib/publisher/catalog.js")), false, "catalog.js 应已删除");
+  assert.equal(existsSync(join(ROOT, "packages/addons/tasks/lib/publisher/command.js")), false, "command.js 应已删除");
+  assert.equal(existsSync(join(ROOT, "packages/addons/tasks/client/views/commands.cjs")), false, "命令页应已删除");
+  const lib = readFileSync(join(ROOT, "packages/addons/tasks/lib/index.js"), "utf8");
+  assert.ok(!lib.includes("tasks.commands"), "lib/index.js 不应再注册 tasks.commands");
+  const client = readFileSync(join(ROOT, "packages/addons/tasks/client/client.src.cjs"), "utf8");
+  assert.ok(!client.includes("commands"), "客户端不应再有命令页签");
 });
 
 check("brief 结构完整", () => {

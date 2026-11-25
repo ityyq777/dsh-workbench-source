@@ -29,10 +29,7 @@ import { registerTaskActions } from "./tasks.js";
 import { registerTreeActions } from "./tree/tree.js";
 import { registerOverviewAction } from "./stats/overview.js";
 import { registerConfigActions } from "./infra/config.js";
-import { registerDataActions } from "./infra/data.js";
-import { registerPublisherCommand } from "./publisher/command.js";
 import { TASK_ROLES } from "./publisher/roles.js";
-import { commandCatalog } from "./publisher/catalog.js";
 
 export const inject = ["workbench"];
 
@@ -57,22 +54,6 @@ function trackActions(api) {
     };
   }
   return defs;
-}
-
-/**
- * 只读命令目录：「命令」页与 agent 都用它发现本插件注册了哪些斜杠命令。
- * 数据来自 publisher/catalog.js 的同一份数组，页面不重复维护文案。
- */
-function registerCommandsAction(api) {
-  api.action("tasks.commands", {
-    description: "只读：返回本插件注册的斜杠命令目录（名称、用途、用法、输入提示、字符上限、示例、说明，含只读提示词模板），供「命令」页渲染；不执行命令、不写库、不产生审计",
-    input: { type: "object", properties: {}, additionalProperties: false },
-    examples: [{}],
-    execute: () => {
-      const commands = commandCatalog();
-      return { count: commands.length, commands: commands };
-    },
-  });
 }
 
 function registerActionSchemaAction(api, defs, domain) {
@@ -108,8 +89,6 @@ export function setup(api) {
   registerTreeActions(api);
   registerOverviewAction(api);
   registerConfigActions(api);
-  registerDataActions(api);
-  registerCommandsAction(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-tasks");
   if (typeof api.registerSearchProvider === "function") {
     api.registerSearchProvider({
@@ -134,8 +113,10 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tasks",
         title: "任务",
-        description: "任务树 + 统计/记录/时间线/配置/数据五个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表与只读数据浏览",
+        description: "任务树 + 统计/记录/时间线/工作区/配置/Action 六个视图：紧急/已关闭/已开启/已完成/总览，可按标签筛选（需安装标签插件），附统计报表（数据浏览走宿主统一「数据」页）",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-tasks" },
         category: "work",
         roles: TASK_ROLES,
         tables: ["task", "task_node", "task_timeline", "task_timeline_link", "task_workspace", "task_workspace_link"],
@@ -149,7 +130,6 @@ export function apply(ctx) {
           { id: "tasks", title: { zh: "记录", en: "Records" } },
           { id: "timeline", title: { zh: "时间线", en: "Timeline" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
           summary: "记录可执行、可交付的工作项（任务），支持任务树、时间线、重启链与工作区关联。",
@@ -242,8 +222,4 @@ export function apply(ctx) {
       }),
     "tasks-domain",
   );
-  // 斜杠命令：目录为空（5.5.1 起 /wb-task-publisher 已下架）时 registerPublisherCommand
-  // 直接返回空清理函数；缺少 commands 服务时同样静默跳过，不影响插件加载。
-  // 注册入口保留：日后目录里加回命令即可自动生效，「命令」页与 tasks.commands 同步。
-  ctx.effect(() => registerPublisherCommand(ctx), "tasks-publisher-command");
 }

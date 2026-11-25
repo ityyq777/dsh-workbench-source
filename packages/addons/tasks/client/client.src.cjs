@@ -16,7 +16,6 @@
   var WorkspaceFilter = require("./ui/workspacefilter.cjs");
   var statsView = require("./views/stats.cjs");
   var configView = require("./views/config.cjs");
-  var dataView = require("./views/data.cjs");
   var actionSchemaView = require("./views/actions.cjs");
 
   var COPY = require("./ui/copy.cjs");
@@ -38,18 +37,6 @@
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon;
   var createOverlay = require("../../lib/overlay.cjs");
   var workspaceView = require("./views/workspace-view.cjs")({ React: React, Icon: Icon, createOverlay: createOverlay });
-  // 命令页的模板正文复用描述/感受的渲染与切换控件，由入口注入；视图自身保持零 require。
-  var commandsView = require("./views/commands.cjs")({
-    React: React,
-    Icon: Icon,
-    Body: require("../../lib/markdown.cjs").createBody(React),
-    BodyMode: require("./ui/body-mode.cjs")(React),
-    bodyStyles: require("../../lib/body-styles.cjs"),
-    bodyCopy: require("../../lib/body-copy.cjs"),
-    useConfig: configView.useConfig,
-    // 折叠面板共享控件：命令页的提示词模板与宿主其它面板保持同一观感。
-    Disclosure: require("../../lib/disclosure.cjs").createDisclosure(React).Disclosure,
-  });
   // 标签页标题左侧图标：宿主统一按 size 14 渲染，两边都传 14 兜底。
   function tabIcon(name) { return function TasksTabIcon() { return React.createElement(Icon, { name: name, size: 14 }); }; }
 
@@ -394,8 +381,6 @@
       { id: "timeline", icon: tabIcon("timeline"), title: { zh: "时间线", en: "Timeline" }, component: TimelineView },
       { id: "workspace", icon: tabIcon("folder"), title: { zh: "工作区", en: "Workspaces" }, component: workspaceView.WorkspaceView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
-      { id: "commands", icon: tabIcon("terminal"), title: { zh: "命令", en: "Commands" }, component: commandsView.CommandsView },
       { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: actionSchemaView.ActionSchemaView },
     ],
   });

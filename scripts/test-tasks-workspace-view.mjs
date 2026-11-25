@@ -35,7 +35,7 @@ for (const name of ["taskWorkspaces.list", "taskWorkspaces.create", "taskWorkspa
 }
 assert.deepEqual(
   PKG.wb.addon.views,
-  ["stats", "tasks", "timeline", "workspace", "config", "data", "commands", "actions"],
+  ["stats", "tasks", "timeline", "workspace", "config", "actions"],
   "package.json 的 wb.addon.views 必须与实际页签一致",
 );
 
