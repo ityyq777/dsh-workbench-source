@@ -617,14 +617,13 @@ var require_locale2 = __commonJS({
         role_retry: "\u91CD\u8BD5",
         role_error: "\u65E0\u6CD5\u8BFB\u53D6\u6216\u4FDD\u5B58\u4F1A\u8BDD\u8BBE\u7F6E",
         role_loading: "\u8BFB\u53D6\u4E2D\u2026",
-        role_search: "\u641C\u7D22\u89D2\u8272\uFF08\u540D\u79F0\u3001\u57DF\u3001\u8BF4\u660E\u6216\u52A8\u4F5C\uFF09",
+        role_search: "\u641C\u7D22\u89D2\u8272\uFF08\u540D\u79F0\u3001\u57DF\u6216\u8BF4\u660E\uFF09",
         role_search_clear: "\u6E05\u7A7A\u641C\u7D22",
         role_search_empty: "\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272",
         role_search_count: "\u5339\u914D {shown} / \u5171 {total} \u4E2A\u89D2\u8272",
         role_hint: "\u2191\u2193 \u9009\u62E9 \xB7 Enter \u786E\u8BA4 \xB7 Esc \u5173\u95ED",
         role_step_basic: "\u57FA\u672C\u4FE1\u606F",
         role_step_instructions: "\u89D2\u8272\u6307\u4EE4",
-        role_step_actions: "\u53C2\u8003\u52A8\u4F5C",
         role_step_confirm: "\u786E\u8BA4\u4E0E\u4FDD\u5B58",
         role_step_label: "\u521B\u5EFA\u6B65\u9AA4",
         role_wizard_new: "\u65B0\u5EFA\u89D2\u8272",
@@ -634,28 +633,17 @@ var require_locale2 = __commonJS({
         role_name_required: "\u8BF7\u5148\u586B\u5199\u89D2\u8272\u540D\u79F0",
         role_instructions: "\u89D2\u8272\u6307\u4EE4",
         role_instructions_required: "\u8BF7\u5148\u586B\u5199\u89D2\u8272\u6307\u4EE4",
+        role_instructions_hint: "\u6307\u4EE4\u91CC\u53EF\u4EE5\u63D0\u9192\u5E38\u7528\u52A8\u4F5C\uFF08\u5982 tasks.create\u3001tasks.update\uFF09\uFF0C\u8FD9\u662F\u63D0\u793A\u4E0D\u662F\u767D\u540D\u5355\uFF1A\u6A21\u578B\u4ECD\u53EF\u81EA\u4E3B\u8C03\u7528\u5176\u4ED6\u52A8\u4F5C\u3002",
         role_edit: "\u7F16\u8F91",
         role_preview: "\u9884\u89C8",
         role_preview_empty: "\u8FD8\u6CA1\u6709\u5185\u5BB9",
         role_chars: "{n} \u5B57",
-        role_actions_title: "\u53C2\u8003\u52A8\u4F5C\uFF08\u4E0D\u9650\u5236\u6743\u9650\uFF09",
-        role_actions_selected: "\u5DF2\u9009 {n} \u9879",
-        role_actions_hint: "\u8FD9\u91CC\u53EA\u7528\u4E8E\u5C55\u793A\u4E0E\u6309\u52A8\u4F5C\u540D\u68C0\u7D22\uFF1A\u9009\u4E86\u89D2\u8272\u4E5F\u80FD\u8C03\u4EFB\u610F\u52A8\u4F5C\uFF0C\u89D2\u8272\u8BE5\u505A\u4EC0\u4E48\u7531\u4E0A\u9762\u7684\u89D2\u8272\u6307\u4EE4\u7EA6\u675F\u3002",
-        role_actions_search: "\u7B5B\u9009\u52A8\u4F5C\u540D\u6216\u8BF4\u660E",
-        role_actions_select_all: "\u5168\u9009",
-        role_actions_clear: "\u6E05\u7A7A\u672C\u57DF",
-        role_actions_manual: "\u624B\u52A8\u8865\u5145\u52A8\u4F5C\u540D\uFF08\u6BCF\u884C\u4E00\u4E2A\uFF0C\u4EC5\u4F5C\u53C2\u8003\uFF09",
-        role_actions_manual_hint: "\u7528\u4E8E\u76EE\u5F55\u91CC\u6682\u672A\u5217\u51FA\u3001\u4F46\u786E\u5B9E\u5B58\u5728\u7684\u52A8\u4F5C\uFF1B\u5199\u5728\u8FD9\u91CC\u4E0D\u5F71\u54CD\u6743\u9650",
-        role_unknown_title: "\u8FD9\u4E9B\u52A8\u4F5C\u4E0D\u5728\u76EE\u5F55\u91CC\uFF1A",
-        role_unknown_hint: "\u53EA\u5F71\u54CD\u5C55\u793A\u4E0E\u68C0\u7D22\uFF1A\u89D2\u8272\u80FD\u505A\u4EC0\u4E48\u7531\u4E0A\u9762\u7684\u89D2\u8272\u6307\u4EE4\u7EA6\u675F\uFF0C\u5BBF\u4E3B\u4E0D\u518D\u6309\u52A8\u4F5C\u540D\u5355\u62E6\u622A\u3002",
         role_back: "\u4E0A\u4E00\u6B65",
         role_next_step: "\u4E0B\u4E00\u6B65",
         role_save: "\u4FDD\u5B58",
         role_cancel: "\u53D6\u6D88",
         role_summary_name: "\u540D\u79F0",
         role_summary_description: "\u804C\u8D23\u7B80\u4ECB",
-        role_summary_actions: "\u53C2\u8003\u52A8\u4F5C",
-        role_summary_actions_value: "\u5DF2\u9009 {n} \u9879",
         role_summary_instructions: "\u6307\u4EE4\u957F\u5EA6",
         role_summary_chars: "{n} \u5B57",
         role_summary_effect: "\u751F\u6548\u65F6\u673A",
@@ -1017,14 +1005,13 @@ var require_locale2 = __commonJS({
         role_retry: "Retry",
         role_error: "Could not read or save session settings",
         role_loading: "Loading\u2026",
-        role_search: "Search roles (name, domain, description or action)",
+        role_search: "Search roles (name, domain or description)",
         role_search_clear: "Clear search",
         role_search_empty: "No matching roles",
         role_search_count: "{shown} of {total} roles match",
         role_hint: "\u2191\u2193 select \xB7 Enter confirm \xB7 Esc close",
         role_step_basic: "Basics",
         role_step_instructions: "Instructions",
-        role_step_actions: "Reference actions",
         role_step_confirm: "Review",
         role_step_label: "Setup steps",
         role_wizard_new: "New role",
@@ -1034,28 +1021,17 @@ var require_locale2 = __commonJS({
         role_name_required: "Enter a role name first",
         role_instructions: "Instructions",
         role_instructions_required: "Enter role instructions first",
+        role_instructions_hint: "Instructions may remind the model which actions are useful (e.g. tasks.create); this is a hint, not an allow-list \u2014 it can still call anything else.",
         role_edit: "Edit",
         role_preview: "Preview",
         role_preview_empty: "Nothing to preview",
         role_chars: "{n} chars",
-        role_actions_title: "Reference actions (not a permission list)",
-        role_actions_selected: "{n} selected",
-        role_actions_hint: "Display and search only: a selected role can still call any action, and what it should do is defined by its instructions.",
-        role_actions_search: "Filter actions by name or description",
-        role_actions_select_all: "All",
-        role_actions_clear: "Clear domain",
-        role_actions_manual: "Extra action names (one per line, reference only)",
-        role_actions_manual_hint: "Valid actions missing from the catalog; listing them grants no permission",
-        role_unknown_title: "Not in the action catalog:",
-        role_unknown_hint: "Display and search only: what the role may do is defined by its instructions, the host no longer blocks actions by this list.",
         role_back: "Back",
         role_next_step: "Next",
         role_save: "Save",
         role_cancel: "Cancel",
         role_summary_name: "Name",
         role_summary_description: "Description",
-        role_summary_actions: "Reference actions",
-        role_summary_actions_value: "{n} selected",
         role_summary_instructions: "Instruction length",
         role_summary_chars: "{n} chars",
         role_summary_effect: "Takes effect",
@@ -2036,8 +2012,6 @@ var require_styles = __commonJS({
 .wbr-row-name{font-weight:600;font-size:13px;overflow-wrap:anywhere}
 .wbr-row-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--wb-muted)}
 .wbr-row-meta code{font-size:11px;overflow-wrap:anywhere}
-.wbr-row-counts{display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--wb-muted)}
-.wbr-row-counts small{color:var(--wb-muted);opacity:.85}
 .wbr-detail{border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .wbr-detail-empty{padding:0;border:0;background:transparent}
 .wbr-detail-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -2045,19 +2019,15 @@ var require_styles = __commonJS({
 .wbr-detail-head code{font-size:11.5px;color:var(--wb-muted);overflow-wrap:anywhere}
 .wbr-detail-head small{font-size:11.5px;color:var(--wb-muted)}
 .wbr-detail-desc{margin:0;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.wbr-detail-actions{display:flex;flex-direction:column;gap:8px}
-.wbr-detail-group{display:flex;flex-direction:column;gap:5px}
-.wbr-detail-domain{font-size:11.5px;color:var(--wb-muted);font-weight:600}
-.wbr-chips{display:flex;gap:6px;flex-wrap:wrap}
-.wbr-chip{font-size:11.5px;line-height:1.5;padding:2px 7px;border-radius:6px;border:1px solid var(--wb-line);background:color-mix(in oklab,currentColor 4%,transparent);white-space:nowrap}
 .wbr-editor{display:flex;flex-direction:column;gap:12px}
 .wbr-steps .wbctl-step-list{margin:0}
 .wbr-step-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wbr-field-error{margin:0;font-size:12px;color:var(--wb-danger)}
 .wbr-step-status{margin:0;font-size:12px;color:var(--wb-muted)}
 .wbr-editor-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.wbr-editor-head small{color:var(--wb-muted);font-size:11.5px}
+.wbr-editor-head code{color:var(--wb-muted);font-size:11.5px;overflow-wrap:anywhere}
 .wbr-instructions{display:flex;flex-direction:column;gap:6px}
+.wbr-instructions-hint{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
 .wbr-instructions-head{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
 .wbr-instructions-head .wbr-tabs{margin-inline-start:auto}
 .wbr-tabs{display:inline-flex;gap:2px;border:1px solid var(--wb-line);border-radius:8px;padding:2px}
@@ -2065,25 +2035,7 @@ var require_styles = __commonJS({
 .wbr-tab[aria-selected=true]{background:color-mix(in oklab,var(--wb-accent) 14%,transparent);color:var(--wb-accent)}
 .wbr-tab:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-preview{border:1px dashed var(--wb-line);border-radius:8px;padding:8px 10px;min-height:3em;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.wbr-actions{display:flex;flex-direction:column;gap:8px;border:1px solid var(--wb-line);border-radius:10px;padding:10px}
-.wbr-actions-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .wbr-count{font-size:11.5px;color:var(--wb-muted);font-weight:400}
-.wbr-actions-groups{display:flex;flex-direction:column;gap:8px;max-height:min(46dvh,420px);overflow:auto}
-.wbr-actions-group{display:flex;flex-direction:column;gap:6px}
-.wbr-actions-grouphead{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.wbr-actions-domain{flex:1 1 auto;min-width:0;font-size:11.5px;font-weight:600;color:var(--wb-muted);display:flex;gap:6px;overflow-wrap:anywhere}
-.wbr-actions-checks{display:flex;flex-wrap:wrap;gap:6px}
-.wbr-mini{font:inherit;font-size:11px;line-height:1.5;border:1px solid var(--wb-line);background:transparent;color:var(--wb-muted);border-radius:6px;padding:1px 6px;cursor:pointer}
-.wbr-mini:hover{border-color:var(--wb-accent);color:var(--wb-accent)}
-.wbr-mini:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
-.wbr-check{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;border:1px solid var(--wb-line);border-radius:6px;padding:2px 7px;cursor:pointer}
-.wbr-check:has(input:checked){border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,transparent)}
-.wbr-check:focus-within{outline:2px solid var(--wb-accent);outline-offset:1px}
-.wbr-check code{font-size:11.5px}
-.wbr-unknown{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--wb-warn)}
-.wbr-unknown-line{margin:0;font-size:12px;color:var(--wb-warn)}
-.wbr-actions-hint{margin:0;font-size:11.5px;line-height:1.5;color:var(--wb-muted)}
-.wbr-unknown small{color:var(--wb-muted)}
 .wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
 .wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}
 .wbr-summary-row dt{color:var(--wb-muted);font-size:12px}
@@ -2093,7 +2045,6 @@ var require_styles = __commonJS({
 @media(max-width:760px){
   .wbr-split{grid-template-columns:minmax(0,1fr)}
   .wbr-rows{max-height:none}
-  .wbr-actions-groups{max-height:none}
 }
 @media(max-width:520px){
   .wbr-summary-row{grid-template-columns:minmax(0,1fr);gap:2px}
@@ -12546,28 +12497,6 @@ var require_description = __commonJS({
 var require_catalog_groups = __commonJS({
   "packages/shell/client/conversation/catalog-groups.cjs"(exports2, module2) {
     "use strict";
-    function domainOf(name) {
-      var text = String(name || "");
-      var at = text.indexOf(".");
-      return at > 0 ? text.slice(0, at) : text;
-    }
-    function groupActions(names) {
-      var order = [], map = /* @__PURE__ */ Object.create(null);
-      (names || []).forEach(function(raw) {
-        var name = String(raw || "").trim();
-        if (!name) return;
-        var domain = domainOf(name);
-        if (!map[domain]) {
-          map[domain] = [];
-          order.push(domain);
-        }
-        if (map[domain].indexOf(name) < 0) map[domain].push(name);
-      });
-      order.sort();
-      return order.map(function(domain) {
-        return { domain, items: map[domain].sort() };
-      });
-    }
     function dedupe(list) {
       var out = [];
       (list || []).forEach(function(raw) {
@@ -12575,23 +12504,6 @@ var require_catalog_groups = __commonJS({
         if (name && out.indexOf(name) < 0) out.push(name);
       });
       return out;
-    }
-    function parseManual(text) {
-      return dedupe(String(text || "").split(/[\s,，]+/));
-    }
-    function validateActions(names, catalog) {
-      var actions = dedupe(names);
-      if (!catalog) return { actions, unknown: [] };
-      var known = /* @__PURE__ */ Object.create(null);
-      catalog.forEach(function(item) {
-        if (item && item.name) known[String(item.name)] = true;
-      });
-      return {
-        actions,
-        unknown: actions.filter(function(name) {
-          return !known[name];
-        })
-      };
     }
     function domainKey(role) {
       if (!role) return "";
@@ -12607,7 +12519,7 @@ var require_catalog_groups = __commonJS({
         if (source && role.source !== source) return false;
         if (domain && domainKey(role) !== domain) return false;
         if (!q) return true;
-        var text = [role.name, role.description, role.instructions, (role.actions || []).join(" "), role.id].join(" ").toLowerCase();
+        var text = [role.name, role.description, role.instructions, role.id].join(" ").toLowerCase();
         return text.indexOf(q) >= 0;
       });
     }
@@ -12620,12 +12532,8 @@ var require_catalog_groups = __commonJS({
       return seen.sort();
     }
     module2.exports = {
-      domainOf,
       domainKey,
-      groupActions,
       dedupe,
-      parseManual,
-      validateActions,
       filterRoles,
       domainsOf
     };
@@ -12641,11 +12549,9 @@ var require_catalog_editor = __commonJS({
     var common = require_client_common()("wbr");
     var Btn = common.Btn;
     var Field = common.Field;
-    var Notice = common.Notice;
     var Body = require_markdown().createBody(React);
     var Steps = require_stepper().Steps;
     var LOCALE2 = require_locale2();
-    var groups = require_catalog_groups();
     function translator(lang) {
       var dict = LOCALE2[lang] || LOCALE2.zh;
       return function(key, values) {
@@ -12671,17 +12577,10 @@ var require_catalog_editor = __commonJS({
       var invalidState = React.useState({}), invalid = invalidState[0], setInvalid = invalidState[1];
       var statusState = React.useState(""), status = statusState[0], setStatus = statusState[1];
       var tabState = React.useState("edit"), view = tabState[0], setView = tabState[1];
-      var pickState = React.useState(""), query = pickState[0], setQuery = pickState[1];
-      var nameRef = React.useRef(null), instructionsRef = React.useRef(null);
-      var searchRef = React.useRef(null), saveRef = React.useRef(null);
-      var catalog = props.catalog;
-      var picked = draft.actions || [];
-      var manual = groups.parseManual(draft.manual);
-      var effective = groups.dedupe(picked.concat(manual));
-      var unknown = groups.validateActions(effective, catalog).unknown;
+      var nameRef = React.useRef(null), instructionsRef = React.useRef(null), saveRef = React.useRef(null);
       var busy = !!props.busy;
       React.useEffect(function() {
-        var refs = [nameRef, instructionsRef, searchRef, saveRef];
+        var refs = [nameRef, instructionsRef, saveRef];
         var node = refs[step] && refs[step].current;
         if (node && node.focus) node.focus();
       }, [step]);
@@ -12691,28 +12590,12 @@ var require_catalog_editor = __commonJS({
         else delete next2[index];
         setInvalid(next2);
       }
-      function toggle(name) {
-        set({ actions: picked.indexOf(name) >= 0 ? picked.filter(function(x) {
-          return x !== name;
-        }) : picked.concat([name]) });
-      }
-      function toggleDomain(items, on) {
-        var next2 = picked.slice();
-        items.forEach(function(name) {
-          var at = next2.indexOf(name);
-          if (on && at < 0) next2.push(name);
-          if (!on && at >= 0) next2.splice(at, 1);
-        });
-        set({ actions: next2 });
-      }
       function goBack() {
         setStatus("");
         setStep(Math.max(0, step - 1));
       }
       function blockedText(index) {
-        if (index === 0) return t("role_name_required");
-        if (index === 1) return t("role_instructions_required");
-        return t("role_unknown_hint");
+        return index === 0 ? t("role_name_required") : t("role_instructions_required");
       }
       function next() {
         var blocked = firstFailing(draft);
@@ -12724,7 +12607,7 @@ var require_catalog_editor = __commonJS({
         }
         mark(step, false);
         setStatus("");
-        var to = Math.min(3, step + 1);
+        var to = Math.min(2, step + 1);
         setStep(to);
         setMaxVisited(Math.max(maxVisited, to));
       }
@@ -12805,7 +12688,7 @@ var require_catalog_editor = __commonJS({
               ref: instructionsRef,
               name: "instructions",
               className: "wbr-input",
-              rows: 12,
+              rows: 14,
               value: draft.instructions || "",
               onChange: function(e) {
                 mark(1, false);
@@ -12813,95 +12696,8 @@ var require_catalog_editor = __commonJS({
               }
             }) : h2("div", { className: "wbr-preview" }, text.trim() ? h2(Body, { text, mode: "markdown" }) : h2("em", null, t("role_preview_empty")))
           ),
+          h2("p", { className: "wbr-instructions-hint" }, t("role_instructions_hint")),
           invalid[1] ? h2("p", { className: "wbr-field-error", role: "alert" }, t("role_instructions_required")) : null
-        );
-      }
-      function actionsPane() {
-        var catalogRows = (catalog || []).filter(function(item) {
-          if (!query.trim()) return true;
-          return String(item.name + " " + (item.description || "")).toLowerCase().indexOf(query.trim().toLowerCase()) >= 0;
-        });
-        var table = groups.groupActions(catalogRows.map(function(item) {
-          return item.name;
-        }));
-        var byName = /* @__PURE__ */ Object.create(null);
-        (catalog || []).forEach(function(item) {
-          byName[item.name] = item;
-        });
-        return h2(
-          "div",
-          { className: "wbr-step-pane" },
-          h2(
-            "section",
-            { className: "wbr-actions" },
-            h2(
-              "div",
-              { className: "wbr-actions-head" },
-              h2("strong", null, t("role_actions_title")),
-              h2("span", { className: "wbr-count" }, t("role_actions_selected", { n: effective.length }))
-            ),
-            h2("p", { className: "wbr-actions-hint" }, t("role_actions_hint")),
-            props.catalogError ? h2(Notice, { h: h2, kind: "warn", text: props.catalogError }) : null,
-            h2("input", {
-              ref: searchRef,
-              name: "actionSearch",
-              className: "wbr-input",
-              value: query,
-              placeholder: t("role_actions_search"),
-              onChange: function(e) {
-                setQuery(e.target.value);
-              }
-            }),
-            h2("div", { className: "wbr-actions-groups" }, table.map(function(group) {
-              return h2(
-                "div",
-                { key: group.domain, className: "wbr-actions-group" },
-                h2(
-                  "div",
-                  { className: "wbr-actions-grouphead" },
-                  h2("span", { className: "wbr-actions-domain" }, group.domain, h2("span", { className: "wbr-count" }, String(group.items.length))),
-                  h2("button", { type: "button", className: "wbr-mini", onClick: function() {
-                    toggleDomain(group.items, true);
-                  } }, t("role_actions_select_all")),
-                  h2("button", { type: "button", className: "wbr-mini", onClick: function() {
-                    toggleDomain(group.items, false);
-                  } }, t("role_actions_clear"))
-                ),
-                h2("div", { className: "wbr-actions-checks" }, group.items.map(function(name) {
-                  var item = byName[name] || {};
-                  return h2(
-                    "label",
-                    { key: name, className: "wbr-check", title: item.description || name },
-                    h2("input", { type: "checkbox", name: "action:" + name, checked: picked.indexOf(name) >= 0, onChange: function() {
-                      toggle(name);
-                    } }),
-                    h2("code", null, name)
-                  );
-                }))
-              );
-            })),
-            h2(
-              Field,
-              { h: h2, label: t("role_actions_manual"), hint: t("role_actions_manual_hint") },
-              h2("textarea", {
-                name: "manual",
-                className: "wbr-input",
-                rows: 3,
-                value: draft.manual || "",
-                onChange: function(e) {
-                  mark(2, false);
-                  set({ manual: e.target.value });
-                }
-              })
-            ),
-            unknown.length ? h2(
-              "div",
-              { className: "wbr-unknown", role: "status" },
-              h2("strong", null, t("role_unknown_title")),
-              h2("span", null, unknown.join("\u3001")),
-              h2("small", null, t("role_unknown_hint"))
-            ) : null
-          )
         );
       }
       function summaryRow(label, value) {
@@ -12913,7 +12709,6 @@ var require_catalog_editor = __commonJS({
         );
       }
       function confirmPane() {
-        var chips = groups.groupActions(effective);
         return h2(
           "div",
           { className: "wbr-step-pane" },
@@ -12922,22 +12717,13 @@ var require_catalog_editor = __commonJS({
             { className: "wbr-summary" },
             summaryRow(t("role_summary_name"), draft.name),
             summaryRow(t("role_summary_description"), draft.description),
-            summaryRow(t("role_summary_actions"), t("role_summary_actions_value", { n: effective.length })),
             summaryRow(t("role_summary_instructions"), t("role_summary_chars", { n: String(draft.instructions || "").trim().length })),
             summaryRow(t("role_summary_effect"), t("role_summary_effect_value"))
-          ),
-          chips.length ? h2("div", { className: "wbr-chips" }, chips.map(function(group) {
-            return h2("code", { key: group.domain, className: "wbr-chip" }, group.domain + " " + group.items.length);
-          })) : null,
-          unknown.length ? h2(
-            "p",
-            { className: "wbr-unknown-line", role: "status" },
-            t("role_unknown_title") + " " + unknown.join("\u3001")
-          ) : null
+          )
         );
       }
-      var panes = [basicPane, instructionsPane, actionsPane, confirmPane];
-      var labels = ["role_step_basic", "role_step_instructions", "role_step_actions", "role_step_confirm"];
+      var panes = [basicPane, instructionsPane, confirmPane];
+      var labels = ["role_step_basic", "role_step_instructions", "role_step_confirm"];
       var steps = labels.map(function(key) {
         return { key, label: t(key) };
       });
@@ -12947,7 +12733,7 @@ var require_catalog_editor = __commonJS({
         h2(
           "div",
           { className: "wbr-editor-head" },
-          h2("strong", null, draft.mode === "create" ? t("role_wizard_new") : t("role_wizard_edit")),
+          h2("strong", null, t(draft.mode === "create" ? "role_wizard_new" : "role_wizard_edit")),
           draft.id ? h2("code", null, draft.id) : null
         ),
         h2(Steps, {
@@ -12962,7 +12748,7 @@ var require_catalog_editor = __commonJS({
           className: "wbr-steps"
         }),
         panes[step](),
-        status ? h2("p", { className: "wbr-step-status", role: "status" }, status) : null,
+        status ? h2("p", { className: "wbr-step-status", role: "alert" }, status) : null,
         h2(
           "div",
           { className: "wbr-wizard-foot" },
@@ -12971,7 +12757,7 @@ var require_catalog_editor = __commonJS({
             "div",
             { className: "wbr-wizard-nav" },
             step > 0 ? h2(Btn, { h: h2, onClick: goBack, disabled: busy }, t("role_back")) : null,
-            step < 3 ? h2(Btn, { h: h2, onClick: next, disabled: busy }, t("role_next_step")) : h2(Btn, { h: h2, onClick: submit, disabled: busy }, t("role_save"))
+            step < 2 ? h2(Btn, { h: h2, onClick: next, disabled: busy }, t("role_next_step")) : h2(Btn, { h: h2, ref: saveRef, onClick: submit, disabled: busy }, t("role_save"))
           )
         )
       );
@@ -12997,22 +12783,13 @@ var require_catalog = __commonJS({
     var groups = require_catalog_groups();
     var Editor = require_catalog_editor();
     var endpoint = "/role-catalog";
-    var ACTIONS_ENDPOINT = "/domains/wb-shell/actions/actions.list";
     function catalogRows(response) {
       var value = unwrap(response);
       if (!Array.isArray(value && value.roles)) throw new Error("Invalid role catalog");
       return value.roles;
     }
-    function actionRows(response) {
-      var value = unwrap(response);
-      var list = value && value.actions;
-      if (!Array.isArray(list)) return null;
-      return list.filter(function(item) {
-        return item && typeof item.name === "string";
-      });
-    }
     function blankDraft() {
-      return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [], manual: "" };
+      return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [] };
     }
     function draftOf(role) {
       return {
@@ -13021,19 +12798,17 @@ var require_catalog = __commonJS({
         name: role.name || "",
         description: role.description || "",
         instructions: role.instructions || "",
-        actions: (role.actions || []).slice(),
-        manual: ""
+        actions: (role.actions || []).slice()
       };
     }
     function payloadOf(draft) {
-      var actions = groups.dedupe((draft.actions || []).concat(groups.parseManual(draft.manual)));
       return {
         op: draft.mode,
         ...draft.id ? { id: draft.id } : {},
         name: String(draft.name || "").trim(),
         description: String(draft.description || "").trim(),
         instructions: String(draft.instructions || "").trim(),
-        actions
+        actions: groups.dedupe(draft.actions || [])
       };
     }
     function RoleCatalog(props) {
@@ -13048,8 +12823,6 @@ var require_catalog = __commonJS({
       var draftState = React.useState(null), draft = draftState[0], setDraft = draftState[1];
       var deleteState = React.useState(""), pendingDelete = deleteState[0], setDelete = deleteState[1];
       var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1];
-      var catalogState = React.useState(null), catalog = catalogState[0], setCatalog = catalogState[1];
-      var catalogErrorState = React.useState(""), catalogError = catalogErrorState[0], setCatalogError = catalogErrorState[1];
       var lock = React.useRef(false), sequence = React.useRef(0);
       async function refresh() {
         var req = ++sequence.current;
@@ -13062,17 +12835,8 @@ var require_catalog = __commonJS({
           if (req === sequence.current) setError(e.message);
         }
       }
-      async function loadActions() {
-        try {
-          var list2 = actionRows(await props.api.post(ACTIONS_ENDPOINT, { detail: true }));
-          if (list2) setCatalog(list2);
-        } catch (e) {
-          setCatalogError(tr("\u52A8\u4F5C\u76EE\u5F55\u8BFB\u53D6\u5931\u8D25\uFF1A\u4FDD\u5B58\u65F6\u4ECD\u6309\u670D\u52A1\u7AEF\u6821\u9A8C", "Could not load the action catalog; the server still validates on save"));
-        }
-      }
       React.useEffect(function() {
         refresh();
-        loadActions();
         var stream2 = new EventSource("/workbench/api/events");
         var events = ["role-catalog", "domains-changed", "open"];
         events.forEach(function(event) {
@@ -13101,12 +12865,7 @@ var require_catalog = __commonJS({
           setBusy(false);
         }
       }
-      function save() {
-        var checked = groups.validateActions((draft.actions || []).concat(groups.parseManual(draft.manual)), catalog);
-        if (checked.unknown.length) {
-          setError(tr("\u52A8\u4F5C\u540D\u4E0D\u5B58\u5728\uFF1A", "Unknown actions: ") + checked.unknown.join("\u3001"));
-          return;
-        }
+      function submit() {
         mutate(payloadOf(draft));
       }
       var filtered = groups.filterRoles(rows || [], filter);
@@ -13121,7 +12880,7 @@ var require_catalog = __commonJS({
             name: "search",
             className: "wbr-input wbr-search",
             value: filter.q,
-            placeholder: tr("\u641C\u7D22\u540D\u79F0\u3001\u7B80\u4ECB\u3001\u6307\u4EE4\u6216\u52A8\u4F5C", "Search name, description, instructions or actions"),
+            placeholder: tr("\u641C\u7D22\u540D\u79F0\u3001\u7B80\u4ECB\u6216\u6307\u4EE4", "Search name, description or instructions"),
             "aria-label": tr("\u641C\u7D22\u89D2\u8272", "Search roles"),
             onChange: function(e) {
               setFilter(Object.assign({}, filter, { q: e.target.value }));
@@ -13176,7 +12935,6 @@ var require_catalog = __commonJS({
         if (!rows.length) return h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") });
         if (!filtered.length) return h2(Empty, { h: h2, text: tr("\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272\uFF0C\u8BD5\u8BD5\u6E05\u7A7A\u7B5B\u9009", "No role matches these filters") });
         return h2("div", { className: "wbr-rows", role: "list" }, filtered.map(function(role) {
-          var counts = groups.groupActions(role.actions || []);
           return h2(
             "button",
             {
@@ -13192,22 +12950,13 @@ var require_catalog = __commonJS({
               }
             },
             h2("span", { className: "wbr-row-name" }, role.name),
-            h2("span", { className: "wbr-row-meta" }, badge(role), h2("code", null, role.id), h2("small", null, "v" + role.version)),
-            h2(
-              "span",
-              { className: "wbr-row-counts" },
-              tr(String((role.actions || []).length) + " \u9879\u52A8\u4F5C", String((role.actions || []).length) + " actions"),
-              counts.length ? h2("small", null, counts.map(function(group) {
-                return group.domain + " " + group.items.length;
-              }).join(" \xB7 ")) : null
-            )
+            h2("span", { className: "wbr-row-meta" }, badge(role), h2("code", null, role.id), h2("small", null, "v" + role.version))
           );
         }));
       }
       function detail() {
         if (!current) return h2("div", { className: "wbr-detail wbr-detail-empty" }, h2(Empty, { h: h2, text: tr("\u4ECE\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u89D2\u8272\u67E5\u770B\u8BE6\u60C5", "Pick a role on the left") }));
         var editable = current.source === "user";
-        var table = groups.groupActions(current.actions || []);
         return h2(
           "article",
           { className: "wbr-detail" },
@@ -13221,21 +12970,6 @@ var require_catalog = __commonJS({
           ),
           current.description ? h2("p", { className: "wbr-detail-desc" }, current.description) : null,
           h2(Description, { text: current.instructions, lang: props.lang, bodyMode: "markdown" }),
-          h2(
-            "section",
-            { className: "wbr-detail-actions" },
-            h2("strong", null, tr("\u52A8\u4F5C ", "Actions ") + (current.actions || []).length + tr(" \u9879", "")),
-            table.length ? table.map(function(group) {
-              return h2(
-                "div",
-                { key: group.domain, className: "wbr-detail-group" },
-                h2("span", { className: "wbr-detail-domain" }, group.domain + " \xB7 " + group.items.length),
-                h2("span", { className: "wbr-chips" }, group.items.map(function(name) {
-                  return h2("code", { key: name, className: "wbr-chip" }, name);
-                }))
-              );
-            }) : h2(Empty, { h: h2, text: tr("\u672A\u9009\u62E9\u52A8\u4F5C", "No actions") })
-          ),
           h2(
             "div",
             { className: "wb-sec" },
@@ -13265,7 +12999,7 @@ var require_catalog = __commonJS({
       return h2("div", { className: "wb-root" }, h2(
         "div",
         { className: "wb-inner wb-wide wb-stack" },
-        props.head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u6309\u6765\u6E90\u4E0E\u57DF\u67E5\u770B\u89D2\u8272\uFF0C\u6307\u4EE4\u53EF\u8BFB\u3001\u52A8\u4F5C\u53EF\u67E5\u3001\u4FDD\u5B58\u524D\u6821\u9A8C\u52A8\u4F5C\u540D", "Browse roles by source and domain; readable instructions, grouped actions, validated names")),
+        props.head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u6309\u6765\u6E90\u4E0E\u57DF\u67E5\u770B\u89D2\u8272\uFF1A\u6307\u4EE4\u53EF\u8BFB\u3001\u53EF\u7F16\u8F91\uFF0C\u52A8\u4F5C\u7531\u6307\u4EE4\u7EA6\u5B9A\u800C\u4E0D\u505A\u9650\u5236", "Browse roles by source and domain; instructions are readable and editable, actions are described by the instructions rather than restricted")),
         toolbar(),
         error ? h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), h2(Btn, { h: h2, onClick: refresh }, tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"))) : null,
         draft ? h2(Editor, {
@@ -13273,10 +13007,8 @@ var require_catalog = __commonJS({
           lang: props.lang,
           draft,
           setDraft,
-          catalog,
-          catalogError,
           busy,
-          onSave: save,
+          onSave: submit,
           onCancel: function() {
             setDraft(null);
           }

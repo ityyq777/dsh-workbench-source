@@ -51,25 +51,12 @@ const ROLES = [
   },
 ];
 
-// 动作目录夹具：覆盖多域、40 项以上，用来核对窄屏下动作列表的滚动与「全选/清空本域」。
-const DOMAINS = [
-  ["tasks", 12], ["tags", 8], ["sites", 10], ["storage", 8], ["wb", 7],
-];
-// 角色自己引用的真实动作也要在目录里，否则预览页会一直停在「不存在的动作」拦截态。
-const REAL = ["tasks.create", "tasks.list", "tasks.complete", "tags.list", "sites.list", "sites.update"];
-const ACTIONS = REAL.map((name) => ({
-  name, domain: "wb-addon-" + name.split(".")[0], description: "角色已引用的动作", origins: ["agent", "ui"],
-})).concat(DOMAINS.flatMap(([domain, count]) => Array.from({ length: count }, (_, i) => ({
-  name: domain + ".action" + (i + 1), domain: "wb-addon-" + domain,
-  description: domain + " 域的第 " + (i + 1) + " 个动作", origins: ["agent", "ui"],
-}))));
-
 const dict = {
   zh: {
     role_title: "工作台角色", role_none: "不使用工作台角色", role_none_desc: "沿用当前 DSH 会话设置",
     role_missing: "角色已不可用，请重新选择", role_next: "选择将从下一轮对话生效。", role_close: "关闭",
     role_retry: "重试", role_error: "无法读取或保存会话设置", role_loading: "读取中…",
-    role_search: "搜索角色（名称、域、说明或动作）", role_search_clear: "清空搜索",
+    role_search: "搜索角色（名称、域或说明）", role_search_clear: "清空搜索",
     role_search_empty: "没有匹配的角色", role_search_count: "匹配 {shown} / 共 {total} 个角色",
     role_hint: "↑↓ 选择 · Enter 确认 · Esc 关闭",
   },
@@ -77,7 +64,7 @@ const dict = {
     role_title: "Workbench role", role_none: "No workbench role", role_none_desc: "Use the current DSH session settings",
     role_missing: "Role unavailable. Choose another role.", role_next: "Changes apply to the next turn.", role_close: "Close",
     role_retry: "Retry", role_error: "Could not read or save session settings", role_loading: "Loading…",
-    role_search: "Search roles (name, domain, description or action)", role_search_clear: "Clear search",
+    role_search: "Search roles (name, domain or description)", role_search_clear: "Clear search",
     role_search_empty: "No matching roles", role_search_count: "{shown} of {total} roles match",
     role_hint: "↑↓ select · Enter confirm · Esc close",
   },
@@ -112,9 +99,6 @@ if (view === "wizard") {
   var api = {
     get: function () { return Promise.resolve({ ok: true, roles: roles }); },
     post: function (path) {
-      if (path === "/domains/wb-shell/actions/actions.list") {
-        return Promise.resolve({ ok: true, result: { actions: window.__WB_ACTIONS__ } });
-      }
       return Promise.resolve({ ok: true, roles: roles });
     },
   };
@@ -173,7 +157,7 @@ const frame = `<!doctype html><html lang="zh"><head><meta charset="utf-8" />
 <style>${PALETTE}
 html[data-width=mobile] body{width:100%}
 </style></head><body><div id="root"></div>
-<script>window.__WB_ROLES__=${JSON.stringify(ROLES)};window.__WB_ACTIONS__=${JSON.stringify(ACTIONS)};window.__WB_DICT__=${JSON.stringify(dict)};</script>
+<script>window.__WB_ROLES__=${JSON.stringify(ROLES)};window.__WB_DICT__=${JSON.stringify(dict)};</script>
 <script src="bundle.js"></script></body></html>`;
 writeFileSync(join(OUT, "frame.html"), frame);
 

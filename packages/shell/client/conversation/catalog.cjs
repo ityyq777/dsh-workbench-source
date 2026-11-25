@@ -4,9 +4,11 @@
  *
  * 职责边界：页面只管「读目录、筛选、看详情、编辑提交」。指令的 markdown 渲染复用
  * packages/addons/lib/description.cjs（内部走有界的 markdown.cjs，不引第三方包），
- * 动作分组与名校验复用同目录的 catalog-groups.cjs，编辑器在 catalog-editor.cjs。
+ * 过滤与域分组复用同目录的 catalog-groups.cjs，编辑器在 catalog-editor.cjs。
  *
- * 角色权限机制不在这里：白名单判定仍由宿主 tool-policy 做，本页只保证「写不错动作名」。
+ * 角色不限制动作：这一页既不再拉动作目录，也不再让用户勾选 action。角色对动作的
+ * 期望写在角色指令（SOP）里，由模型自己遵守；写进草稿的 actions 原样带回，
+ * 只是为了不把已有角色数据抹掉。
  */
 var React = require("react");
 var h = React.createElement;
@@ -17,7 +19,6 @@ var groups = require("./catalog-groups.cjs");
 var Editor = require("./catalog-editor.cjs");
 
 var endpoint = "/role-catalog";
-var ACTIONS_ENDPOINT = "/domains/wb-shell/actions/actions.list";
 
 function catalogRows(response) {
   var value = unwrap(response);
@@ -25,15 +26,8 @@ function catalogRows(response) {
   return value.roles;
 }
 
-function actionRows(response) {
-  var value = unwrap(response);
-  var list = value && value.actions;
-  if (!Array.isArray(list)) return null;
-  return list.filter(function (item) { return item && typeof item.name === "string"; });
-}
-
 function blankDraft() {
-  return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [], manual: "" };
+  return { mode: "create", id: "", name: "", description: "", instructions: "", actions: [] };
 }
 
 function draftOf(role) {
@@ -44,19 +38,18 @@ function draftOf(role) {
     description: role.description || "",
     instructions: role.instructions || "",
     actions: (role.actions || []).slice(),
-    manual: "",
   };
 }
 
+/** 提交载荷：actions 只是原样带上已有值，界面不再编辑它。 */
 function payloadOf(draft) {
-  var actions = groups.dedupe((draft.actions || []).concat(groups.parseManual(draft.manual)));
   return {
     op: draft.mode,
     ...(draft.id ? { id: draft.id } : {}),
     name: String(draft.name || "").trim(),
     description: String(draft.description || "").trim(),
     instructions: String(draft.instructions || "").trim(),
-    actions: actions,
+    actions: groups.dedupe(draft.actions || []),
   };
 }
 
@@ -70,8 +63,6 @@ function RoleCatalog(props) {
   var draftState = React.useState(null), draft = draftState[0], setDraft = draftState[1];
   var deleteState = React.useState(""), pendingDelete = deleteState[0], setDelete = deleteState[1];
   var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1];
-  var catalogState = React.useState(null), catalog = catalogState[0], setCatalog = catalogState[1];
-  var catalogErrorState = React.useState(""), catalogError = catalogErrorState[0], setCatalogError = catalogErrorState[1];
   var lock = React.useRef(false), sequence = React.useRef(0);
 
   async function refresh() {
@@ -86,19 +77,8 @@ function RoleCatalog(props) {
     }
   }
 
-  async function loadActions() {
-    try {
-      var list = actionRows(await props.api.post(ACTIONS_ENDPOINT, { detail: true }));
-      if (list) setCatalog(list);
-    } catch (e) {
-      // 动作目录取不到只影响勾选与「存在性」提示，不该挡住看角色。
-      setCatalogError(tr("动作目录读取失败：保存时仍按服务端校验", "Could not load the action catalog; the server still validates on save"));
-    }
-  }
-
   React.useEffect(function () {
     refresh();
-    loadActions();
     var stream = new EventSource("/workbench/api/events");
     var events = ["role-catalog", "domains-changed", "open"];
     events.forEach(function (event) { stream.addEventListener(event, refresh); });
@@ -127,13 +107,7 @@ function RoleCatalog(props) {
     }
   }
 
-  function save() {
-    var checked = groups.validateActions((draft.actions || []).concat(groups.parseManual(draft.manual)), catalog);
-    if (checked.unknown.length) {
-      // 校验已经由编辑器红字展示；这里再挡一次，防止有人绕过按钮直接触发。
-      setError(tr("动作名不存在：", "Unknown actions: ") + checked.unknown.join("、"));
-      return;
-    }
+  function submit() {
     mutate(payloadOf(draft));
   }
 
@@ -146,7 +120,7 @@ function RoleCatalog(props) {
         name: "search",
         className: "wbr-input wbr-search",
         value: filter.q,
-        placeholder: tr("搜索名称、简介、指令或动作", "Search name, description, instructions or actions"),
+        placeholder: tr("搜索名称、简介或指令", "Search name, description or instructions"),
         "aria-label": tr("搜索角色", "Search roles"),
         onChange: function (e) { setFilter(Object.assign({}, filter, { q: e.target.value })); },
       }),
@@ -184,7 +158,6 @@ function RoleCatalog(props) {
     if (!rows.length) return h(Empty, { h: h, text: tr("暂无角色", "No roles") });
     if (!filtered.length) return h(Empty, { h: h, text: tr("没有匹配的角色，试试清空筛选", "No role matches these filters") });
     return h("div", { className: "wbr-rows", role: "list" }, filtered.map(function (role) {
-      var counts = groups.groupActions(role.actions || []);
       return h("button", {
         key: role.id,
         type: "button",
@@ -194,16 +167,13 @@ function RoleCatalog(props) {
         onClick: function () { setSelected(role.id); setDraft(null); setDelete(""); },
       },
         h("span", { className: "wbr-row-name" }, role.name),
-        h("span", { className: "wbr-row-meta" }, badge(role), h("code", null, role.id), h("small", null, "v" + role.version)),
-        h("span", { className: "wbr-row-counts" }, tr(String((role.actions || []).length) + " 项动作", String((role.actions || []).length) + " actions"),
-          counts.length ? h("small", null, counts.map(function (group) { return group.domain + " " + group.items.length; }).join(" · ")) : null));
+        h("span", { className: "wbr-row-meta" }, badge(role), h("code", null, role.id), h("small", null, "v" + role.version)));
     }));
   }
 
   function detail() {
     if (!current) return h("div", { className: "wbr-detail wbr-detail-empty" }, h(Empty, { h: h, text: tr("从左侧选择一个角色查看详情", "Pick a role on the left") }));
     var editable = current.source === "user";
-    var table = groups.groupActions(current.actions || []);
     return h("article", { className: "wbr-detail" },
       h("header", { className: "wbr-detail-head" },
         h("strong", null, current.name),
@@ -212,15 +182,6 @@ function RoleCatalog(props) {
         h("small", null, "v" + current.version + " · " + (current.domain || "user"))),
       current.description ? h("p", { className: "wbr-detail-desc" }, current.description) : null,
       h(Description, { text: current.instructions, lang: props.lang, bodyMode: "markdown" }),
-      h("section", { className: "wbr-detail-actions" },
-        h("strong", null, tr("动作 ", "Actions ") + (current.actions || []).length + tr(" 项", "")),
-        table.length ? table.map(function (group) {
-          return h("div", { key: group.domain, className: "wbr-detail-group" },
-            h("span", { className: "wbr-detail-domain" }, group.domain + " · " + group.items.length),
-            h("span", { className: "wbr-chips" }, group.items.map(function (name) {
-              return h("code", { key: name, className: "wbr-chip" }, name);
-            })));
-        }) : h(Empty, { h: h, text: tr("未选择动作", "No actions") })),
       h("div", { className: "wb-sec" },
         h(Btn, { h: h, onClick: function () { mutate({ op: "copy", id: current.id }); }, disabled: busy || !!draft }, tr("复制为新角色", "Duplicate as a new role")),
         editable ? h(Btn, { h: h, onClick: function () { setDraft(draftOf(current)); }, disabled: busy || !!draft }, tr("编辑", "Edit")) : null,
@@ -232,13 +193,13 @@ function RoleCatalog(props) {
   }
 
   return h("div", { className: "wb-root" }, h("div", { className: "wb-inner wb-wide wb-stack" },
-    props.head(tr("角色管理", "Role management"), tr("按来源与域查看角色，指令可读、动作可查、保存前校验动作名", "Browse roles by source and domain; readable instructions, grouped actions, validated names")),
+    props.head(tr("角色管理", "Role management"), tr("按来源与域查看角色：指令可读、可编辑，动作由指令约定而不做限制", "Browse roles by source and domain; instructions are readable and editable, actions are described by the instructions rather than restricted")),
     toolbar(),
     error ? h("div", { role: "alert" }, h(Notice, { h: h, kind: "error", text: error }), h(Btn, { h: h, onClick: refresh }, tr("重新加载", "Reload"))) : null,
     draft
       ? h(Editor, {
-        h: h, lang: props.lang, draft: draft, setDraft: setDraft, catalog: catalog,
-        catalogError: catalogError, busy: busy, onSave: save, onCancel: function () { setDraft(null); },
+        h: h, lang: props.lang, draft: draft, setDraft: setDraft,
+        busy: busy, onSave: submit, onCancel: function () { setDraft(null); },
       })
       : h("div", { className: "wbr-split" }, h("div", { className: "wbr-list" }, list()), detail())));
 }
