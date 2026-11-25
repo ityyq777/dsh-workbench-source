@@ -242,7 +242,8 @@ export function apply(ctx) {
       }),
     "tasks-domain",
   );
-  // 斜杠命令：缺少 commands 服务时 registerPublisherCommand 内部静默跳过，
-  // 不影响插件加载（ACP/无 UI 环境没有该服务）。
+  // 斜杠命令：目录为空（5.5.1 起 /wb-task-publisher 已下架）时 registerPublisherCommand
+  // 直接返回空清理函数；缺少 commands 服务时同样静默跳过，不影响插件加载。
+  // 注册入口保留：日后目录里加回命令即可自动生效，「命令」页与 tasks.commands 同步。
   ctx.effect(() => registerPublisherCommand(ctx), "tasks-publisher-command");
 }

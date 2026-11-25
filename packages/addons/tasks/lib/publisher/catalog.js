@@ -2,13 +2,15 @@
  * 斜杠命令目录：`/命令` 页与 `tasks.commands` 的唯一事实来源。
  *
  * 只放元信息（名称、用途、用法、输入提示、示例、字符上限与说明），
- * 命令正文一律由 `buildBrief` 现场生成——例如发布命令的 SOP 正文仍在 brief.js，
+ * 命令正文一律由 `buildBrief` 现场生成——例如发布 SOP 正文仍在 brief.js，
  * 目录里不复制一份，避免两处文字随版本漂移。
  *
- * 新增一个斜杠命令：在 TASK_COMMANDS 里加一条，再把 handler 的注册交给 command.js 的循环，
- * 页面、tasks.commands 与注册逻辑会自动跟上。
+ * 当前目录为空：`/wb-task-publisher` 已下架（5.5.1），发布任务改在输入区选择
+ * 「任务发布者」角色。目录、注册循环与「命令」页都保留，日后要恢复或新增命令，
+ * 在 TASK_COMMANDS 里加一条即可，页面与 tasks.commands 自动跟上。
  */
-import { buildPublisherBrief, MAX_REQUIREMENT_LENGTH } from "./brief.js";
+// 目录条目的正文生成函数（buildBrief）由条目自己带上，目录不 import brief.js：
+// 发布 SOP 的正文只在 brief.js 维护，这里只做元信息与投影。
 
 /** 只读模板里替换需求与会话 id 的占位符；页面提示「换回你的原话/当前会话 id」即为此。 */
 export const TEMPLATE_PLACEHOLDERS = {
@@ -17,40 +19,10 @@ export const TEMPLATE_PLACEHOLDERS = {
 };
 
 export const TASK_COMMANDS = [
-  {
-    name: "wb-task-publisher",
-    roleId: "wb-addon-tasks/publisher",
-    title: { zh: "发布任务", en: "Publish task" },
-    summary: {
-      zh: "按调研、润色、归属、时间线、标签、查重的固定流程发布任务",
-      en: "Publish a task through the fixed flow: research, polish, ownership, timeline, tags, dedupe",
-    },
-    usage: {
-      zh: "/wb-task-publisher <需求描述>",
-      en: "/wb-task-publisher <requirement>",
-    },
-    inputHint: {
-      zh: "<需求描述，可附截图/文档>",
-      en: "<requirement; screenshots or docs allowed>",
-    },
-    attachments: true,
-    limit: { field: { zh: "需求描述", en: "requirement" }, max: MAX_REQUIREMENT_LENGTH },
-    examples: [
-      { text: "/wb-task-publisher 记录页筛选栏加一组常用筛选快捷按钮" },
-      { text: "/wb-task-publisher 时间线页支持按成员任务状态过滤（可附截图）" },
-      { text: "/wb-task-publisher 修复配置页重置按钮不生效（附复现步骤）" },
-    ],
-    sentText: {
-      zh: "本次需求已交给任务发布者。需要连续发布时，可在输入框选择该角色。",
-      en: "Sent this request to the task publisher. Select the role in the composer for continued use.",
-    },
-    notes: {
-      zh: "仅本次请求使用任务发布者。可附截图或文档，宿主会为本轮加载下方工作规则。",
-      en: "Uses the task publisher for this request only. Screenshots and documents are supported. The host loads the workflow below for this turn.",
-    },
-    buildBrief: (options) => buildPublisherBrief(options),
-  },
+  // 5.5.1 起为空：唯一的斜杠命令 wb-task-publisher 已下架，发布任务改由输入区选择
+  // 「任务发布者」角色（roles.js 的 publisher）。保留目录结构与页面，供日后新增命令。
 ];
+
 
 /** 按名称取目录条目；找不到返回 undefined。 */
 export function findCommand(name) {

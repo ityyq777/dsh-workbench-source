@@ -4,12 +4,11 @@
  *
  * 命令的元信息与正文生成函数都在 catalog.js：这里只做注册循环，
  * 新增命令时改目录即可，不用再写一遍 register 调用。
+ *
+ * 5.5.1 起目录为空（`/wb-task-publisher` 下架，改用输入区角色入口），
+ * 注册循环保留：目录为空时直接返回空清理函数，不碰 commands 服务、不抛错。
  */
 import { TASK_COMMANDS, usageText } from "./catalog.js";
-
-export const PUBLISHER_COMMAND = TASK_COMMANDS[0].name;
-
-export const PUBLISHER_USAGE = usageText(TASK_COMMANDS[0], "zh");
 
 function newMessageId() {
   const c = globalThis.crypto;
@@ -22,8 +21,11 @@ function sessionIdOf(agent) {
   return String((agent && agent.session && agent.session.id) || (agent && agent.id) || "");
 }
 
-/** 注册目录里的全部命令，返回清理函数。commands 服务缺失时返回空清理函数且不报错。 */
+/** 注册目录里的全部命令，返回清理函数。目录为空或 commands 服务缺失时返回空清理函数且不报错。 */
 export function registerPublisherCommand(ctx) {
+  // 目录为空：没有任何命令要注册，连服务都不去探测（无 UI 环境也不会报错）。
+  if (!Array.isArray(TASK_COMMANDS) || TASK_COMMANDS.length === 0) return () => {};
+
   let commands;
   try {
     commands = ctx && typeof ctx.get === "function" ? ctx.get("commands") : undefined;

@@ -1,12 +1,13 @@
 /**
- * /wb-task-publisher 回归：brief 纯函数、命令注册、空参数、超长、附件顺序、无 commands 服务。
+ * 任务发布者回归：brief 纯函数与发布者角色（5.5.1 起不再提供 /wb-task-publisher 斜杠命令）。
  * 纯内存假对象，不连数据库。
  */
 import assert from "node:assert/strict";
 import { apply } from "../packages/addons/tasks/lib/index.js";
 import { PUBLISHER_INSTRUCTIONS } from "../packages/addons/tasks/lib/publisher/brief.js";
-import { buildPublisherBrief, MAX_REQUIREMENT_LENGTH } from "../packages/addons/tasks/lib/publisher/brief.js";
-import { registerPublisherCommand, PUBLISHER_USAGE, PUBLISHER_COMMAND } from "../packages/addons/tasks/lib/publisher/command.js";
+import { buildPublisherBrief } from "../packages/addons/tasks/lib/publisher/brief.js";
+import { TASK_COMMANDS } from "../packages/addons/tasks/lib/publisher/catalog.js";
+import { registerPublisherCommand } from "../packages/addons/tasks/lib/publisher/command.js";
 
 let checks = 0;
 function check(name, fn) {
@@ -17,36 +18,6 @@ function check(name, fn) {
     console.error("FAIL:", name);
     throw error;
   }
-}
-
-function fakeCommands() {
-  const defs = new Map();
-  let disposed = 0;
-  return {
-    defs,
-    register(def) {
-      defs.set(def.name, def);
-      return () => {
-        disposed++;
-      };
-    },
-    disposed: () => disposed,
-  };
-}
-
-function fakeCtx(commands, bindMessageRole = () => () => {}) {
-  return { workbench: { bindMessageRole }, get: (name) => (name === "commands" ? commands : undefined) };
-}
-
-function fakeAgent(sessionId) {
-  const calls = [];
-  return {
-    calls,
-    session: { id: sessionId || "session-1" },
-    followup(message) {
-      calls.push(message);
-    },
-  };
 }
 
 check("真实插件注册角色及职责边界", () => {
@@ -68,17 +39,23 @@ check("真实插件注册角色及职责边界", () => {
   assert.match(publisher.instructions, /tasks.update 只用于回修本轮自己刚发布的任务/);
 });
 
-check("角色绑定失败不投递", () => {
-  const commands = fakeCommands();
-  registerPublisherCommand(fakeCtx(commands, () => { throw new Error("角色已卸载"); }));
-  const agent = fakeAgent();
-  const result = commands.defs.get(PUBLISHER_COMMAND).handler({ agent, rawInput: "发布" });
-  assert.equal(result.kind, "error");
-  assert.match(result.text, /角色已卸载/);
-  assert.deepEqual(agent.calls, []);
+// 1) brief 必含：原话逐字、五步 SOP、输出格式、边界、sessionId
+// 斜杠命令已下架：目录为空，注册入口不注册任何命令也不抛错；发布者角色仍在（见上一条）。
+check("斜杠命令已下架", () => {
+  assert.ok(Array.isArray(TASK_COMMANDS), "命令目录应保持数组形态");
+  assert.equal(TASK_COMMANDS.length, 0, "5.5.1 起不再提供斜杠命令");
+  const registered = [];
+  const commands = { register(def) { registered.push(def); return () => {}; } };
+  const dispose = registerPublisherCommand({ workbench: {}, get: (name) => (name === "commands" ? commands : undefined) });
+  assert.equal(typeof dispose, "function");
+  assert.equal(registered.length, 0, "空目录不应注册任何命令");
+  dispose();
+  // 没有 commands 服务 / 没有 ctx / 探测抛错都不报错。
+  for (const ctx of [undefined, {}, { get: () => undefined }, { get() { throw new Error("no service"); } }]) {
+    assert.equal(typeof registerPublisherCommand(ctx), "function");
+  }
 });
 
-// 1) brief 必含：原话逐字、五步 SOP、输出格式、边界、sessionId
 check("brief 结构完整", () => {
   const brief = buildPublisherBrief({
     requirement: "记录页加常用筛选快捷按钮",
@@ -194,99 +171,6 @@ check("preview 不影响正式 brief", () => {
   assert.equal(restored, real, "预览换回真实值后应与正式 brief 逐字一致");
 });
 
-// 3) 注册：名称、描述、input、recordInput=false、handler 返回用法
-check("注册与空参数", () => {
-  const commands = fakeCommands();
-  const dispose = registerPublisherCommand(fakeCtx(commands));
-  const def = commands.defs.get(PUBLISHER_COMMAND);
-  assert.ok(def, "未注册命令");
-  assert.equal(def.recordInput, false);
-  assert.equal(def.input.attachments, true);
-  assert.match(def.input.hint, /需求描述/);
-  assert.ok(def.description.length > 0);
-  const agent = fakeAgent();
-  const result = def.handler({ agent, rawInput: "   " });
-  assert.equal(result.kind, "success");
-  assert.equal(result.text, PUBLISHER_USAGE);
-  assert.equal(agent.calls.length, 0, "空参数不应触发 followup");
-  dispose();
-  assert.equal(commands.disposed(), 1, "disposer 应转发到 commands.register 的清理函数");
-});
-
-// 4) 正常参数：followup 一次，内容含原话与 SOP，消息结构正确
-check("正常发布引导", () => {
-  const commands = fakeCommands();
-  registerPublisherCommand(fakeCtx(commands));
-  const def = commands.defs.get(PUBLISHER_COMMAND);
-  const agent = fakeAgent("sess-9");
-  const result = def.handler({ agent, rawInput: "给时间线页加状态过滤" });
-  assert.equal(result.kind, "success");
-  assert.match(result.text, /本次需求已交给任务发布者/);
-  assert.equal(agent.calls.length, 1);
-  const msg = agent.calls[0];
-  assert.equal(msg.role, "user");
-  assert.equal(msg.source.kind, "user");
-  assert.ok(typeof msg.id === "string" && msg.id.length > 0);
-  assert.equal(msg.content.length, 1);
-  assert.equal(msg.content[0].type, "text");
-  assert.ok(msg.content[0].text.includes("给时间线页加状态过滤"));
-  assert.equal(msg.content[0].text, "给时间线页加状态过滤", "角色规则只由宿主注入");
-});
-
-// 5) 附件在文本之前，顺序保持
-check("附件顺序", () => {
-  const commands = fakeCommands();
-  registerPublisherCommand(fakeCtx(commands));
-  const def = commands.defs.get(PUBLISHER_COMMAND);
-  const agent = fakeAgent();
-  const att1 = { type: "image", url: "a.png" };
-  const att2 = { type: "file", name: "b.txt" };
-  def.handler({ agent, rawInput: "需求", attachments: [att1, att2] });
-  const msg = agent.calls[0];
-  assert.equal(msg.content.length, 3);
-  assert.deepEqual(msg.content[0], att1);
-  assert.deepEqual(msg.content[1], att2);
-  assert.equal(msg.content[2].type, "text");
-  assert.ok(msg.content[2].text.includes("需求"));
-});
-
-// 6) 超长返回 error，不 followup
-check("超长需求", () => {
-  const commands = fakeCommands();
-  registerPublisherCommand(fakeCtx(commands));
-  const def = commands.defs.get(PUBLISHER_COMMAND);
-  const agent = fakeAgent();
-  const result = def.handler({ agent, rawInput: "a".repeat(MAX_REQUIREMENT_LENGTH + 1) });
-  assert.equal(result.kind, "error");
-  assert.match(result.text, /字符上限/);
-  assert.equal(agent.calls.length, 0);
-});
-
-// 7) 无 commands 服务：不报错、返回可调用 disposer
-check("无 commands 服务", () => {
-  const dispose = registerPublisherCommand({ get: () => undefined });
-  assert.equal(typeof dispose, "function");
-  dispose();
-  const dispose2 = registerPublisherCommand({});
-  assert.equal(typeof dispose2, "function");
-});
-
-// 8) get 抛错时静默跳过
-check("commands 探测抛错", () => {
-  const dispose = registerPublisherCommand({ get() { throw new Error("no service"); } });
-  assert.equal(typeof dispose, "function");
-});
-
-// 9) agent 不支持 followup 时返回 error
-check("agent 不支持 followup", () => {
-  const commands = fakeCommands();
-  registerPublisherCommand(fakeCtx(commands));
-  const def = commands.defs.get(PUBLISHER_COMMAND);
-  const result = def.handler({ agent: {}, rawInput: "需求" });
-  assert.equal(result.kind, "error");
-  assert.match(result.text, /无法接收下一轮消息/);
-});
-
 // 10) 工作区规则只落在 SOP C/E，不进「边界规则」，且边界仍是 2 条
 check("工作区归属不挤进边界规则", () => {
   const brief = buildPublisherBrief({ requirement: "给记录页加批量接取", sessionId: "s-ws" });
@@ -298,4 +182,4 @@ check("工作区归属不挤进边界规则", () => {
   assert.equal(boundaryBlock.includes("tags"), false, "标签口径不应重复写进边界规则");
 });
 
-console.log("TASK PUBLISHER PASS:", checks, "checks (brief, preview, registration, empty, attachments, too long, no-commands, followup, workspace)");
+console.log("TASK PUBLISHER PASS:", checks, "checks (roles, no slash command, brief, preview, workspace)");

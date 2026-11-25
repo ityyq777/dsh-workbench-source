@@ -16,7 +16,9 @@ module.exports = function (deps) {
   var COPY = {
     zh: {
       title: "命令", hint: "只读 · 数据来自 tasks.commands",
-      loading: "正在读取命令目录…", empty: "本插件还没有注册斜杠命令。",
+      loading: "正在读取命令目录…",
+      // 5.5.1 起目录为空：空态要指出去哪里发布任务，不能只说「没有命令」。
+      empty: "本插件不提供斜杠命令。发布任务请在输入区选择「任务发布者」角色。",
       retry: "重试", error: "命令目录加载失败",
       count: function (n) { return n + " 条命令"; },
       usage: "用法", input: "输入", examples: "示例", limit: "上限",
@@ -31,7 +33,8 @@ module.exports = function (deps) {
     },
     en: {
       title: "Commands", hint: "Read-only · from tasks.commands",
-      loading: "Loading command catalog…", empty: "No slash commands registered yet.",
+      loading: "Loading command catalog…",
+      empty: "This plugin provides no slash commands. To publish a task, pick the Task publisher role in the composer.",
       retry: "Retry", error: "Failed to load command catalog",
       count: function (n) { return n + (n === 1 ? " command" : " commands"); },
       usage: "Usage", input: "Input", examples: "Examples", limit: "Limit",

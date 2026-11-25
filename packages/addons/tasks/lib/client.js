@@ -9023,7 +9023,8 @@ var require_commands = __commonJS({
           title: "\u547D\u4EE4",
           hint: "\u53EA\u8BFB \xB7 \u6570\u636E\u6765\u81EA tasks.commands",
           loading: "\u6B63\u5728\u8BFB\u53D6\u547D\u4EE4\u76EE\u5F55\u2026",
-          empty: "\u672C\u63D2\u4EF6\u8FD8\u6CA1\u6709\u6CE8\u518C\u659C\u6760\u547D\u4EE4\u3002",
+          // 5.5.1 起目录为空：空态要指出去哪里发布任务，不能只说「没有命令」。
+          empty: "\u672C\u63D2\u4EF6\u4E0D\u63D0\u4F9B\u659C\u6760\u547D\u4EE4\u3002\u53D1\u5E03\u4EFB\u52A1\u8BF7\u5728\u8F93\u5165\u533A\u9009\u62E9\u300C\u4EFB\u52A1\u53D1\u5E03\u8005\u300D\u89D2\u8272\u3002",
           retry: "\u91CD\u8BD5",
           error: "\u547D\u4EE4\u76EE\u5F55\u52A0\u8F7D\u5931\u8D25",
           count: function(n) {
@@ -9052,7 +9053,7 @@ var require_commands = __commonJS({
           title: "Commands",
           hint: "Read-only \xB7 from tasks.commands",
           loading: "Loading command catalog\u2026",
-          empty: "No slash commands registered yet.",
+          empty: "This plugin provides no slash commands. To publish a task, pick the Task publisher role in the composer.",
           retry: "Retry",
           error: "Failed to load command catalog",
           count: function(n) {
@@ -15219,7 +15220,7 @@ var require_timeline_view = __commonJS({
   var TimelineView = require_timeline_view()({ React, COPY, injectCss, statusInfo, configView, CFG_FALLBACK, TaskItem, EditModal, DoneModal, TimelineModal, CreateModal });
   host.registerAddon({
     id: "wb-addon-tasks",
-    version: "5.5.0",
+    version: "5.5.1",
     icon: ICONS["list-checks"],
     // 贡献声明写在 registerAddon 里：卸载任务插件时宿主按 addonId 一起撤销，
     // 不会在邮件里留一个渲染即报错的孤儿按钮。

@@ -1,6 +1,6 @@
-// 「命令」页 + tasks.commands 回归：
-// 1) 目录唯一事实来源的形状与去重（catalog.js 不复制 SOP 正文）；
-// 2) command.js 按目录注册斜杠命令，空输入/超长/无 followup/附件顺序都走同一套逻辑；
+// 「命令」页 + tasks.commands 回归（5.5.1：/wb-task-publisher 已下架）：
+// 1) 目录唯一事实来源为空数组、不再出现已下架命令名（catalog.js 不复制 SOP 正文）；
+// 2) command.js 空目录不注册、不探测 commands 服务、不抛错（注册循环保留给日后命令）；
 // 3) 客户端页面只用本插件 action tasks.commands 取数，加载/错误/空/正常四态与重试可用。
 // 运行：node scripts/test-tasks-commands.mjs（构建后连 lib/client.js 由 test:clients 覆盖）。
 import assert from "node:assert/strict";
@@ -20,85 +20,61 @@ const CLIENT_SRC = resolve(ROOT, "packages/addons/tasks/client/client.src.cjs");
 const { TASK_COMMANDS, commandCatalog, findCommand, usageText } = await import(
   "file://" + resolve(ROOT, "packages/addons/tasks/lib/publisher/catalog.js")
 );
-const { PUBLISHER_COMMAND, PUBLISHER_USAGE, registerPublisherCommand } = await import(
+const { registerPublisherCommand } = await import(
   "file://" + resolve(ROOT, "packages/addons/tasks/lib/publisher/command.js")
 );
-const { MAX_REQUIREMENT_LENGTH } = await import(
-  "file://" + resolve(ROOT, "packages/addons/tasks/lib/publisher/brief.js")
-);
 
-// ── 1. 目录：数组化、字段齐全、名称唯一、正文不双写 ──
-assert.ok(Array.isArray(TASK_COMMANDS) && TASK_COMMANDS.length >= 1, "命令目录应为非空数组");
-const names = TASK_COMMANDS.map((entry) => entry.name);
-assert.equal(new Set(names).size, names.length, "命令名不得重复");
-for (const entry of TASK_COMMANDS) {
-  assert.match(entry.name, /^[a-z][a-z0-9-]*$/, "命令名只允许小写字母/数字/连字符：" + entry.name);
-  for (const lang of ["zh", "en"]) {
-    assert.ok(entry.title[lang], entry.name + " 缺 title." + lang);
-    assert.ok(entry.summary[lang], entry.name + " 缺 summary." + lang);
-    assert.ok(entry.usage[lang], entry.name + " 缺 usage." + lang);
-    assert.ok(entry.inputHint[lang], entry.name + " 缺 inputHint." + lang);
-    assert.ok(entry.sentText[lang], entry.name + " 缺 sentText." + lang);
-    assert.ok(entry.notes[lang], entry.name + " 缺 notes." + lang);
-  }
-  assert.equal(typeof entry.buildBrief, "function", entry.name + " 必须自己生成正文（buildBrief）");
-  assert.ok(entry.examples.length >= 1, entry.name + " 至少给一个示例");
-  assert.ok(entry.limit && entry.limit.max > 0, entry.name + " 应有字符上限");
-}
+// ── 1. 目录：5.5.1 起为空，页面与 action 仍派生自同一份目录 ──
+assert.ok(Array.isArray(TASK_COMMANDS), "命令目录应保持数组形态（可以为空）");
+assert.equal(TASK_COMMANDS.length, 0, "5.5.1 起不再提供任何斜杠命令");
 
-// 目录只放元信息：SOP 正文仍在 brief.js，目录源码里不能出现正文骨架。
+// 目录源码（去掉注释，注释里保留「为什么下架」的说明）不能残留已下架的命令名，也不能复制 SOP 正文。
 const catalogSource = readFileSync(resolve(ROOT, "packages/addons/tasks/lib/publisher/catalog.js"), "utf8");
-for (const marker of ["## ", "边界规则", "获得授权后再创建", "A. 调研现状", "dedupeKey"]) {
-  assert.equal(catalogSource.includes(marker), false, "命令目录不应复制发布模版正文：" + marker);
-}
+const catalogCode = catalogSource.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+assert.equal(catalogCode.includes("wb-task-publisher"), false, "目录里不得再出现已下架的命令名");
+assert.equal(catalogCode.includes("## "), false, "命令目录不应复制发布模版正文");
 
-// 投影是纯数据：可直接 JSON 序列化，且不含函数。
+// 投影是纯数据：空目录返回空数组，仍可直接 JSON 序列化。
 const catalog = commandCatalog();
+assert.deepEqual(catalog, [], "tasks.commands 的 commands 应为空数组");
 assert.deepEqual(JSON.parse(JSON.stringify(catalog)), catalog, "tasks.commands 返回值必须可 JSON 序列化");
-assert.equal(catalog.length, TASK_COMMANDS.length);
-for (const item of catalog) {
-  assert.equal(Object.keys(item).filter((key) => typeof item[key] === "function").length, 0, "投影不应含函数");
-  assert.ok(item.examples.every((text) => typeof text === "string" && text.startsWith("/" + item.name)), "示例应是可复制的完整命令");
-}
-// 模板：每条命令都带非空只读模板，骨架与占位符齐全，且与正式 brief 同源。
-for (const item of catalog) {
-  assert.equal(typeof item.template, "string", item.name + " 应带只读模板 template");
-  assert.ok(item.template.trim().length > 200, item.name + " 的模板不应为空");
-  for (const marker of ["A. 调研现状", "## 输出格式", "## 边界规则", "## 会话信息"]) {
-    assert.ok(item.template.includes(marker), item.name + " 的模板缺骨架：" + marker);
-  }
-  for (const holder of ["{需求描述}", "<sessionId>", "<生成时间>"]) {
-    assert.ok(item.template.includes(holder), item.name + " 的模板缺占位符：" + holder);
-  }
-}
-const SAMPLE = catalog[0];
-const REAL_SID = "session-real-command-1";
-const REAL_REQ = "把命令页的模板展示补齐";
-const realBrief = TASK_COMMANDS[0].buildBrief({
-  requirement: REAL_REQ,
-  sessionId: REAL_SID,
-  now: new Date("2026-11-11T08:00:00.000Z"),
-});
-const restored = SAMPLE.template
-  .split("{需求描述}").join(REAL_REQ)
-  .split("<sessionId>").join(REAL_SID)
-  .split("<生成时间>").join("2026-11-11T08:00:00.000Z");
-assert.equal(restored, realBrief, "模板换回真实值后应与正式 brief 逐字一致");
-assert.equal(SAMPLE.template.includes(REAL_SID), false, "模板不得泄露真实会话 id");
 
-const publisher = findCommand(PUBLISHER_COMMAND);
-assert.ok(publisher, "findCommand 应能按名称取到发布命令");
-assert.equal(publisher.limit.max, MAX_REQUIREMENT_LENGTH, "目录上限应与 brief.js 的常量一致");
+// 已下架的命令查不到；用法渲染器保留给日后新增命令。
+assert.equal(findCommand("wb-task-publisher"), undefined, "已下架的命令不应再被 findCommand 取到");
 assert.equal(findCommand("no-such-command"), undefined);
 
-// 用法文案由目录生成：首行用法、含全部示例、末段说明。
-assert.equal(PUBLISHER_USAGE, usageText(publisher, "zh"));
-assert.ok(PUBLISHER_USAGE.startsWith("用法：/wb-task-publisher <需求描述>"), PUBLISHER_USAGE);
-for (const item of publisher.examples) assert.ok(PUBLISHER_USAGE.includes("  " + item.text), "用法应列全示例：" + item.text);
-assert.ok(PUBLISHER_USAGE.includes(publisher.notes.zh), "用法应收尾于说明");
-assert.ok(!PUBLISHER_USAGE.includes("\n\n\n"), "用法不应出现连续空行");
+// 投影与用法文案仍对「日后新增的命令」成立：临时塞一条样例，断言后清空。
+const SAMPLE_ENTRY = {
+  name: "wb-sample",
+  title: { zh: "样例命令", en: "Sample command" },
+  summary: { zh: "样例用途", en: "Sample purpose" },
+  usage: { zh: "/wb-sample <参数>", en: "/wb-sample <arg>" },
+  inputHint: { zh: "<参数>", en: "<arg>" },
+  attachments: true,
+  limit: { field: { zh: "参数", en: "arg" }, max: 100 },
+  examples: [{ text: "/wb-sample 示例参数" }],
+  notes: { zh: "样例说明", en: "Sample notes" },
+  sentText: { zh: "已送出", en: "Sent" },
+  buildBrief: () => "A. 调研现状\n## 输出格式\n## 边界规则\n## 会话信息\n{需求描述}<sessionId><生成时间>",
+};
+TASK_COMMANDS.push(SAMPLE_ENTRY);
+const projected = commandCatalog();
+TASK_COMMANDS.pop();
+assert.equal(projected.length, 1);
+assert.deepEqual(JSON.parse(JSON.stringify(projected)), projected, "投影必须可 JSON 序列化");
+assert.equal(Object.keys(projected[0]).filter((key) => typeof projected[0][key] === "function").length, 0, "投影不应含函数");
+assert.deepEqual(projected[0].examples, ["/wb-sample 示例参数"], "示例应投影成字符串数组");
+assert.equal(projected[0].template, SAMPLE_ENTRY.buildBrief(), "模板由 buildBrief 现场渲染");
+assert.equal(projected[0].limit.max, 100);
 
-// ── 2. 注册：按目录逐条注册，handler 行为复用同一套校验 ──
+const sampleUsage = usageText(SAMPLE_ENTRY, "zh");
+assert.ok(sampleUsage.startsWith("用法：/wb-sample <参数>"), sampleUsage);
+assert.ok(sampleUsage.includes("  /wb-sample 示例参数"), "用法应列全示例");
+assert.ok(sampleUsage.includes(SAMPLE_ENTRY.notes.zh), "用法应收尾于说明");
+assert.ok(!sampleUsage.includes("\n\n\n"), "用法不应出现连续空行");
+assert.ok(usageText(SAMPLE_ENTRY, "en").startsWith("Usage: /wb-sample <arg>"));
+
+// ── 2. 注册：空目录不注册、不探测服务、不抛错 ──
 function fakeCommands() {
   const registered = [];
   const disposed = [];
@@ -114,58 +90,25 @@ function fakeCommands() {
 }
 
 const commands = fakeCommands();
-const bindings = [];
-const cleanup = registerPublisherCommand({ workbench: { bindMessageRole(...args) { bindings.push(args); return () => bindings.pop(); } }, get: (name) => (name === "commands" ? commands : undefined) });
-assert.equal(commands.registered.length, TASK_COMMANDS.length, "目录里每条命令都应注册");
-for (const [i, def] of commands.registered.entries()) {
-  const entry = TASK_COMMANDS[i];
-  assert.equal(def.name, entry.name);
-  assert.ok(def.description.includes(entry.summary.zh), "注册描述应包含目录用途");
-  assert.equal(def.input.hint, entry.inputHint.zh);
-  assert.equal(def.input.attachments, entry.attachments !== false);
-  assert.equal(def.recordInput, false, "正文随 followup 进入历史，不重复记命令日志");
+let probes = 0;
+const cleanup = registerPublisherCommand({
+  workbench: { bindMessageRole: () => () => {} },
+  get: (name) => {
+    probes++;
+    return name === "commands" ? commands : undefined;
+  },
+});
+assert.equal(typeof cleanup, "function", "空目录也要返回可调用的清理函数");
+assert.equal(commands.registered.length, 0, "空目录不应注册任何命令");
+assert.equal(probes, 0, "空目录连 commands 服务都不应探测");
+assert.equal(cleanup(), undefined);
+
+// 没有 commands 服务、没有 ctx、服务探测抛错：都不报错也不注册。
+for (const ctx of [undefined, {}, { get: () => undefined }, { get() { throw new Error("no service"); } }]) {
+  const dispose = registerPublisherCommand(ctx);
+  assert.equal(typeof dispose, "function");
+  assert.equal(dispose(), undefined);
 }
-
-const def = commands.registered[0];
-const usage = def.handler({ agent: null, rawInput: "   " });
-assert.equal(usage.kind, "success");
-assert.equal(usage.text, usageText(TASK_COMMANDS[0], "zh"), "空输入应回用法说明");
-
-const tooLong = def.handler({ agent: null, rawInput: "x".repeat(MAX_REQUIREMENT_LENGTH + 1) });
-assert.equal(tooLong.kind, "error");
-assert.ok(tooLong.text.includes("超过 " + MAX_REQUIREMENT_LENGTH + " 字符上限"), tooLong.text);
-
-const noAgent = def.handler({ agent: null, rawInput: "记录页加筛选快捷按钮" });
-assert.equal(noAgent.kind, "error");
-assert.ok(noAgent.text.includes("没有送出"), noAgent.text);
-
-const sent = [];
-const agent = { session: { id: "session-abc" }, followup: (msg) => sent.push(msg) };
-const ok = def.handler({ agent, rawInput: "  记录页加筛选快捷按钮  ", attachments: [{ type: "image", url: "a" }, { type: "file", url: "b" }] });
-assert.equal(ok.kind, "success");
-assert.equal(ok.text, TASK_COMMANDS[0].sentText.zh);
-assert.equal(sent.length, 1);
-assert.equal(sent[0].role, "user");
-assert.equal(sent[0].content[0].type, "image", "附件顺序应原样保留在前");
-assert.equal(sent[0].content[1].type, "file");
-assert.equal(sent[0].content[2].type, "text");
-const brief = sent[0].content[2].text;
-assert.ok(brief.includes("记录页加筛选快捷按钮"), "正文应带用户原话");
-assert.equal(brief, "  记录页加筛选快捷按钮  ", "用户原话和前后空格应原样保留");
-assert.deepEqual(bindings, [["session-abc", sent[0].id, "wb-addon-tasks/publisher"]]);
-
-const failing = def.handler({ agent: { session: agent.session, followup: () => { throw new Error("boom"); } }, rawInput: "x" });
-assert.equal(failing.kind, "error");
-assert.ok(failing.text.includes("boom"));
-assert.equal(bindings.length, 1, "投递失败必须撤销对应的一次性绑定");
-
-cleanup();
-assert.equal(commands.disposed.length, TASK_COMMANDS.length, "清理函数应逐条释放注册");
-
-// 没有 commands 服务（ACP / 无 UI）时不报错、不注册。
-const silent = registerPublisherCommand({ get: () => undefined });
-assert.equal(typeof silent, "function");
-assert.equal(registerPublisherCommand(undefined)(), undefined);
 
 // 客户端源码必须注册「命令」页签，且位于「数据」与「Action」之间、走本插件 action。
 const clientSource = readFileSync(CLIENT_SRC, "utf8");
@@ -185,6 +128,20 @@ assert.match(
   /views\/commands\.cjs"\)\(\{[\s\S]*?Body: require\("\.\.\/\.\.\/lib\/markdown\.cjs"\)/,
   "入口应把共享 Markdown 正文组件注入命令页",
 );
+
+// 页面渲染用的样命令：目录已空，但「命令」页仍要渲染任何 future 命令，故用固定样例。
+const VIEW_FIXTURE = {
+  name: "wb-sample",
+  title: { zh: "样例命令", en: "Sample command" },
+  summary: { zh: "样例命令的用途", en: "Purpose of the sample command" },
+  usage: { zh: "/wb-sample <参数>", en: "/wb-sample <arg>" },
+  inputHint: { zh: "<参数>", en: "<arg>" },
+  attachments: true,
+  limit: { field: { zh: "参数", en: "arg" }, max: 100 },
+  examples: ["/wb-sample 示例参数"],
+  notes: { zh: "样例命令说明", en: "Sample command notes" },
+  template: "A. 调研现状\n## 输出格式\n## 边界规则\n## 会话信息\n{需求描述}<sessionId><生成时间>",
+};
 
 // ── 3. 页面四态 ──
 // 共享正文组件由客户端入口注入；这里用真实 markdown/body-toggle 覆盖渲染与切换，
@@ -261,7 +218,8 @@ async function mountWith(api, lang, opts) {
   assert.equal(calls.length, 1);
   assert.equal(calls[0][0], "tasks.commands");
   assert.deepEqual(JSON.parse(JSON.stringify(calls[0][1])), {});
-  assert.ok(text(tree).includes("本插件还没有注册斜杠命令"), "空目录应显示空态");
+  assert.ok(text(tree).includes("本插件不提供斜杠命令"), "空目录应显示空态");
+  assert.ok(text(tree).includes("任务发布者」角色"), "空态应指出去输入区选角色发布任务");
 }
 
 // 错误态 + 重试：action 不可用时降级，重试再次调用同一 action。
@@ -284,14 +242,14 @@ async function mountWith(api, lang, opts) {
   retry.props.onClick();
   tree = await settle(rt);
   assert.equal(calls.length >= 2, true, "重试应再次调用 action");
-  assert.ok(text(tree).includes("本插件还没有注册斜杠命令"), "重试成功后回到空态");
+  assert.ok(text(tree).includes("本插件不提供斜杠命令"), "重试成功后回到空态");
 }
 
 // 正常态：名称、用途、用法、输入、示例、上限、说明与复制按钮。
 {
   const fixture = [
-    catalog[0],
-    Object.assign({}, catalog[0], {
+    VIEW_FIXTURE,
+    Object.assign({}, VIEW_FIXTURE, {
       name: "wb-other-command",
       title: { zh: "另一条命令", en: "Another command" },
       summary: { zh: "第二条命令的用途", en: "Purpose of the second command" },
@@ -312,7 +270,7 @@ async function mountWith(api, lang, opts) {
     assert.ok(body.includes("最多 " + item.limit.max + " 字符"), "应显示字符上限");
     assert.ok(body.includes(item.notes.zh), "应显示说明：" + item.name);
   }
-  assert.ok(find(tree, (n) => n.type === "code" && text(n) === "/" + PUBLISHER_COMMAND), "命令名应渲染成代码片段");
+  assert.ok(find(tree, (n) => n.type === "code" && text(n) === "/" + VIEW_FIXTURE.name), "命令名应渲染成代码片段");
   // 提示词模板：默认折叠，正文与描述/感受同款（Markdown 渲染 + 逐块纯文本切换）。
   const details = walk(tree).filter((n) => n.type === "details");
   assert.equal(details.length, fixture.length, "每条命令都应有「提示词模板」折叠区");
@@ -345,7 +303,7 @@ async function mountWith(api, lang, opts) {
     "模板区不得出现可编辑控件",
   );
   const copies = walk(tree).filter((n) => n.type === "button" && text(n) === "复制");
-  assert.ok(copies.length >= catalog.length, "用法与示例都应可复制");
+  assert.ok(copies.length >= fixture.length, "用法与示例都应可复制");
   copies[0].props.onClick();
   const copied = await settle(rt);
   assert.ok(text(copied).includes("已复制"), "复制成功后应有反馈");
@@ -353,7 +311,7 @@ async function mountWith(api, lang, opts) {
 
 // 初始模式跟随 ui.bodyMode：配置为纯文本时模板直接按文本渲染，仍可切回 Markdown。
 {
-  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
+  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: [VIEW_FIXTURE] } }) };
   const rt = await mountWith(api, "zh", { bodyMode: "text" });
   let tree = await settle(rt);
   assert.equal(walk(tree).some((n) => n.type === "h2"), false, "配置为纯文本时不应渲染 Markdown 标题");
@@ -371,7 +329,7 @@ async function mountWith(api, lang, opts) {
 
 // 配置未就绪时先留在加载态，不渲染空目录或旧内容。
 {
-  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
+  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: [VIEW_FIXTURE] } }) };
   const rt = await mountWith(api, "zh", { configReady: false });
   const tree = await settle(rt);
   assert.ok(text(tree).includes("正在读取命令目录"), "配置未就绪时应保持加载态");
@@ -380,12 +338,12 @@ async function mountWith(api, lang, opts) {
 
 // 英文界面取 en 文案。
 {
-  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: catalog } }) };
+  const api = { call: () => Promise.resolve({ ok: true, result: { count: 1, commands: [VIEW_FIXTURE] } }) };
   const rt = await mountWith(api, "en");
   const body = text(await settle(rt));
   assert.ok(body.includes("Commands") && body.includes("Read-only"), body.slice(0, 120));
-  assert.ok(body.includes(catalog[0].summary.en), "英文界面应显示 en 用途");
+  assert.ok(body.includes(VIEW_FIXTURE.summary.en), "英文界面应显示 en 用途");
   assert.ok(body.includes("Prompt template"), "英文界面应显示模板折叠区");
 }
 
-console.log("TASKS COMMANDS PASS: catalog, template markdown/plain toggle, registration, usage/handler, client view 4 states");
+console.log("TASKS COMMANDS PASS: 空目录 + 已下架命令名清除 + 空目录不注册 + client view 4 states");
