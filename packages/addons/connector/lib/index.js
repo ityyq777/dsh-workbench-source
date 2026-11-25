@@ -28,6 +28,8 @@ export function createDomain(host) {
     title: "连接器",
     description: "把 RSS、Webhook 等外部内容接进工作台；来源定义可同步，凭据与本机状态不出机器。",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-connector" },
     category: "auto",
     tables: ["connector_source", "connector_source_state", "connector_item", "connector_run"],
     sync: {
@@ -39,7 +41,6 @@ export function createDomain(host) {
       { id: "items", title: "内容", icon: "inbox" },
       { id: "runs", title: "运行记录", icon: "history" },
       { id: "config", title: "设置", icon: "sliders" },
-      { id: "data", title: "数据", icon: "database" },
       { id: "actions", title: "Action 清单", icon: "list" },
     ],
     capability: {

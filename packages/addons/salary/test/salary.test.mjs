@@ -1,6 +1,7 @@
 /** 工资引擎单测：派生口径、日期校验、同日多笔、统计与软删除。 */
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { bindClock, ensureSchema } from "../lib/db/db.js";
 import { createSalary } from "../lib/domain/salary.js";
@@ -124,14 +125,18 @@ test("年度统计：月桶求和、月均、环比与最近月构成", () => {
   assert.equal(s.monthly[7].performanceBonus, 0);
 });
 
-test("软删除后不再返回，dataQuery 白名单", () => {
+test("软删除后不再返回，且不再提供数据页查询", () => {
   const sal = fresh();
   const { item } = sal.create({ payDate: "2026-10-15", netPay: 100 });
   assert.deepEqual(sal.remove({ id: item.id }), { deleted: true, id: item.id });
   assert.equal(sal.list({}).total, 0);
   assert.throws(() => sal.get({ id: item.id }), /不存在/);
-  assert.throws(() => sal.dataQuery({ table: "sqlite_master" }), /不允许/);
-  assert.equal(sal.dataQuery({ table: "salary_record" }).rows.length, 1);
+  // 数据浏览已收敛到宿主统一「数据」页，插件不再注册 salary.dataTables/salary.dataQuery。
+  assert.equal(typeof sal.dataQuery, "undefined", "引擎不再实现 dataQuery");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.ok(!pkg.wb.addon.toolActions.includes("salary.dataTables"));
+  assert.ok(!pkg.wb.addon.toolActions.includes("salary.dataQuery"));
+  assert.ok(!pkg.wb.addon.views.includes("data"), "视图清单不再有数据页");
 });
 
 test("status 返回最近一笔与今年累计", () => {

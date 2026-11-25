@@ -1,6 +1,5 @@
 /** 工资 action：读、写都允许 agent（用户口述后可直接落库）；数据页查询仅 UI。 */
 import { EMPLOYMENT_VALUES, MONEY_FIELDS } from "./model.js";
-import { COLUMNS } from "../db/db.js";
 
 const obj = (properties, required = []) => ({ type: "object", properties, required, additionalProperties: false });
 const str = (description) => ({ type: "string", description });
@@ -109,26 +108,6 @@ export function registerSalaryActions(api, salary) {
     description: "软删除一笔工资（会写库；记录不再出现在列表与统计中）",
     input: obj({ id: str("工资记录 id") }, ["id"]),
     execute: (args) => salary.remove({ id: args.id }),
-  });
-  action("salary.dataTables", {
-    description: "只读：工资域可浏览的表与列",
-    input: obj({}),
-    execute: () => ({
-      tables: [{
-        name: "salary_record",
-        columns: COLUMNS,
-      }],
-    }),
-  });
-  action("salary.dataQuery", {
-    origins: ["ui", "agent"],
-    originsDefault: ["ui"],
-    description: "只读：白名单表查询（仅 UI；limit ≤ 100）",
-    input: obj({ table: { type: "string", enum: ["salary_record"] }, limit: num("1–100，默认 20") }, ["table"]),
-    execute: (args, ctx) => {
-      if (ctx && ctx.origin && ctx.origin !== "ui" && ctx.origin !== "agent") throw new Error("该操作只允许在界面中执行");
-      return salary.dataQuery({ table: args.table, limit: args.limit });
-    },
   });
   action("salary.actionSchema", {
     description: "只读：本插件注册的 action 清单",

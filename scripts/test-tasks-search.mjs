@@ -83,13 +83,16 @@ try {
   const exported = await call('tasks.export', { titleKey: 'uniqueneedle' });
   assert.deepEqual(JSON.parse(exported.content).tasks.map(t => t.id).sort(), ids.sort());
   const exactIds = await call('tasks.export', { ids: [ids[0]], titleKey: 'absent' }); assert.equal(exactIds.count, 1);
-  const data = await call('tasks.dataQuery', { table: 'task', search: 'uniqueneedle' }); assert.equal(data.total, 3);
-  const byId = await call('tasks.dataQuery', { table: 'task', search: ids[0] }); assert.equal(byId.total, 1, 'all TEXT column search remains supported');
+  // 插件数据页已下线：数据浏览走宿主统一「数据」页，检索只经 tasks.list / tasks.export。
+  for (const gone of ['tasks.dataTables', 'tasks.dataQuery']) {
+    const missing = await host.invoke(gone, {}, 'agent');
+    assert.ok(missing && missing.isError, gone + ' 应已下线');
+  }
   for (const keyword of ['%', '_', '\\', '.*+?^$' + '{}()|[]', '中文', '<script>alert(1)</script>']) {
     const id = (await call('tasks.create', { tableId: fixtureTableId, title: 'literal fixture', review: keyword })).id;
     const result = await call('tasks.list', { titleKey: keyword }); assert.equal(result.total, 1); assert.equal(result.records[0].id, id);
     assert.equal((await call('tasks.export', { titleKey: keyword })).count, 1);
-    assert.equal((await call('tasks.dataQuery', { table: 'task', search: keyword })).total, 1); cases++;
+    cases++;
   }
   assert.equal((await call('tasks.list', { titleKey: '   ' })).total, 10);
   assert.equal((await call('tasks.list', { titleKey: 'absent' })).total, 0);

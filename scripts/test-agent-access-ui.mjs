@@ -294,7 +294,7 @@ const roster = {
     const at = vault.indexOf('api.action("' + name + '"');
     assert.ok(vault.slice(at, at + 120).includes('origins: ["plugin"]'), name + " 必须声明 plugin 来源");
   }
-  for (const name of ["vault.setup", "vault.secretReveal", "vault.dataQuery", "vault.lease"]) {
+  for (const name of ["vault.setup", "vault.secretReveal", "vault.lease"]) {
     assert.ok(vault.includes('], "' + name + '")'), name + " 的原 guard 必须保留（来源数组放开也不能绕过它）");
   }
 

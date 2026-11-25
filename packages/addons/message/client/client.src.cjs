@@ -20,7 +20,6 @@
   var configView = require("./views/config.cjs");
   var inboxFactory = require("./views/inbox.cjs");
   var statsFactory = require("./views/stats.cjs");
-  var DataView = require("./views/data.cjs").DataView;
   var ActionSchemaView = require("./views/actions.cjs").ActionSchemaView;
   var notifier = require("./notify/notifier.cjs");
   var floatMount = require("./float/mount.cjs");
@@ -63,7 +62,6 @@
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: Stats },
       { id: "inbox", icon: tabIcon("inbox"), title: { zh: "收件箱", en: "Inbox" }, component: Inbox },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: Config },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: DataView },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: ActionSchemaView },
     ],
   });

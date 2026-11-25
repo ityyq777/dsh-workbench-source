@@ -1,9 +1,4 @@
 /** 联系人 action：写操作仅 UI，读操作允许 agent。 */
-const TABLES = {
-  contact: ["id", "name", "org", "title", "birthday", "updated_at"],
-  contact_group: ["id", "name", "color", "updated_at"],
-  contact_field: ["id", "contact_id", "kind", "label", "value"],
-};
 function deny(origin) { if (origin !== "ui" && origin !== "agent") { const e = new Error("该操作只允许在界面中执行"); e.status = 403; throw e; } }
 
 export function registerContactActions(api, engine) {
@@ -44,18 +39,5 @@ export function registerContactActions(api, engine) {
   action("contacts.importVcf", { origins: ["ui", "agent"],
     originsDefault: ["ui"], description: "导入 vCard 文本；仅 UI", input: { type: "object", properties: { text: { type: "string" } }, required: ["text"] }, execute: (args, ctx) => { deny(ctx.origin); return engine.importVcf(args.text); } });
   action("contacts.exportVcf", { description: "导出 vCard 文本，可指定 id 列表", input: { type: "object", properties: { ids: { type: "array" } } }, execute: (args) => engine.exportVcf(args.ids) });
-  action("contacts.dataTables", { description: "数据页白名单", input: { type: "object", properties: {} }, execute: () => ({ tables: Object.keys(TABLES), columns: TABLES }) });
-  action("contacts.dataQuery", {
-    description: "白名单只读查询；仅 UI",
-    input: { type: "object", properties: { table: { type: "string" }, limit: { type: "number" }, offset: { type: "number" } }, required: ["table"] },
-    execute: (args, ctx) => {
-      deny(ctx.origin);
-      const table = String(args.table || "");
-      if (!TABLES[table]) throw new Error("表不在白名单：" + table);
-      const limit = Math.max(1, Math.min(200, Number(args.limit) || 50));
-      const offset = Math.max(0, Number(args.offset) || 0);
-      return { table, rows: api.db.prepare("SELECT " + TABLES[table].join(",") + " FROM " + table + " ORDER BY rowid DESC LIMIT ? OFFSET ?").all(limit, offset) };
-    },
-  });
   action("contacts.actionSchema", { description: "本域 action 清单与输入 schema", input: { type: "object", properties: {} }, execute: () => ({ shellVersion: api.shellVersion || "", domains: [{ id: "wb-addon-contacts", version: (api.addon && api.addon.version) || "0.1.0" }], actions: defs }) });
 }

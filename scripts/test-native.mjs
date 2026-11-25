@@ -240,8 +240,8 @@ try {
   assert(noChange.result.changed === false, "taskNodes.update 空更新未返回 changed=false");
   try { await call("taskNodes.update", { id: descTableId }); assert(false, "taskNodes.update 无字段未报错"); } catch (e) { /* 预期 */ }
   await call("taskNodes.update", { id: descTableId, description: "备份往返描述 omega" });
-  const nodeData = await call("tasks.dataQuery", { table: "task_node", search: "omega" });
-  assert((nodeData.result.rows || []).some((r) => String(r.description || "").includes("omega")), "数据页查询未带出表描述列");
+  const nodeChildren = await call("taskNodes.children", { id: fixtureTableId });
+  assert((nodeChildren.result || []).some((r) => String(r.description || "").includes("omega")), "备份往返未带出表描述列");
 
   // ── 4.3 自描述契约：字段字典、方向、默认值必须与实现一致 ──
   const capTasks = await call("capabilities.get", { domain: "tasks" });
@@ -485,11 +485,10 @@ try {
 
   // ── 10. 任务依赖已整体移除（5.0.0） ──
   assert(!names.includes("tasks.depends") && !names.includes("tasks.link") && !names.includes("tasks.unlink"), "依赖 action 仍被注册");
-  const tableNames = (await call("tasks.dataTables")).result.tables.map((t) => t.name);
-  assert(tableNames.indexOf("task_dep") < 0, "task_dep 表仍出现在数据页");
-  let depQueryErr = null;
-  try { await call("tasks.dataQuery", { table: "task_dep", pageSize: 10 }); } catch (e) { depQueryErr = e; }
-  assert(depQueryErr && String(depQueryErr.message).includes("task_dep"), "task_dep 表未被移除");
+  // 插件数据页 action 已下线（数据浏览走宿主统一「数据」页），依赖表只能看库结构。
+  const tablesGone = await host.invoke("tasks.dataTables", {}, "agent");
+  assert(tablesGone && tablesGone.isError, "tasks.dataTables 应已下线");
+  assert.equal(host.db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='task_dep'").get().n, 0, "task_dep 表未被移除");
 
   // ── 11. 任务手动排序接口已移除（数据库迁移另见 test-task-sort-removal.mjs） ──
   assert(!names.includes("tasks.reorder"), "tasks.reorder 仍被注册");

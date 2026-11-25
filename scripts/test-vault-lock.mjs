@@ -123,22 +123,6 @@ assert.equal(listedWhileLocked, 0, '锁定期间不请求列表接口');
   assert.equal(listedWhileSetsLocked, 0, '集合页锁定时不请求列表/详情');
 }
 
-// C3. 数据页锁定态整页让位：不渲染数据浏览器，也不请求表清单/行数据。
-{
-  let dataCalls = 0;
-  const dataApi = {
-    call(name, args) {
-      if (name.startsWith('vault.data')) dataCalls += 1;
-      return api.call(name, args);
-    },
-  };
-  const page = mountView('packages/addons/vault/client/views/data.cjs', { api: dataApi });
-  const lockedTree = await settle(page);
-  assert.match(text(lockedTree), /保险箱已锁定/, '数据页锁定时给提示卡');
-  assert.equal(classes(lockedTree).some(c => c.includes('wbv-data')), false, '数据页锁定时不渲染数据浏览器');
-  assert.equal(dataCalls, 0, '数据页锁定时不请求数据');
-}
-
 // D. 迟到的响应不许回填：集合页请求发出后立刻锁定，响应晚到也要被丢弃。
 rawCall('vault.unlock', { passphrase: pass });
 let releaseSetList = null;
@@ -170,13 +154,13 @@ assert.equal(text(recovered).includes('读取集合…'), false, '解锁后重�
 assert.equal(text(recovered).includes('迟到的集合'), false, '丢弃的那份迟到响应不会借着解锁复活');
 assert.match(text(recovered), /还没有集合/, '解锁后展示的是真实后端结果');
 
-// F. 源码契约：凭据/集合/分组/数据页都接守卫，锁定时不保留明文/弹窗/列表状态。
-for (const file of ['secrets', 'groups', 'sets', 'data']) {
+// F. 源码契约：凭据/集合/分组页都接守卫，锁定时不保留明文/弹窗/列表状态。
+for (const file of ['secrets', 'groups', 'sets']) {
   const code = readFileSync(resolve(root, 'packages/addons/vault/client/views/' + file + '.cjs'), 'utf8');
   assert.match(code, /require\("\.\.\/ui\/lock\.cjs"\)/, file + ' 必须接入 ui/lock.cjs');
   assert.match(code, /if \(!guard\.ready\)/, file + ' 状态未就绪先给占位');
   assert.match(code, /if \(guard\.locked\) return h\(Lock\.Panel/, file + ' 锁定只渲染提示卡');
-  if (file !== 'data') assert.match(code, /inflight\.seq !== seq/, file + ' 在途响应必须能作废');
+  assert.match(code, /inflight\.seq !== seq/, file + ' 在途响应必须能作废');
 }
 const setsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/sets.cjs'), 'utf8');
 assert.doesNotMatch(setsCode, /var readOnly = guard\.locked;/, '集合页不再保留只读列表分支');
@@ -184,9 +168,6 @@ assert.match(setsCode, /load\(\);\n  \}, \[guard\.ready, guard\.locked\]\);/, '�
 for (const clear of ['listS[1]({ loading: false, items: [], error: "" })', 'detailS[1]({ setId: "", secrets: [], groups: [], error: "" })', 'draftS[1](null)', 'pickS[1]([])', 'delS[1](null)']) {
   assert.ok(setsCode.includes(clear), '集合页锁定时必须清空：' + clear);
 }
-const dataCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/data.cjs'), 'utf8');
-assert.match(dataCode, /if \(guard\.locked\) return h\(Lock\.Panel/, '数据页锁定只渲染提示卡');
-assert.match(dataCode, /return h\(Inner, props\);/, '数据页解锁后才渲染共享数据浏览器');
 const secretsCode = readFileSync(resolve(root, 'packages/addons/vault/client/views/secrets.cjs'), 'utf8');
 for (const clear of ['revealS[1](null)', 'unlockS[1](null)', 'editingS[1](false)', 'showSecretS[1](false)']) {
   assert.ok(secretsCode.includes(clear), '锁定时必须清空：' + clear);
@@ -195,5 +176,5 @@ const groupsCode = readFileSync(resolve(root, 'packages/addons/vault/client/view
 for (const clear of ['openS[1](null)', 'createS[1](null)', 'delS[1](null)']) assert.ok(groupsCode.includes(clear), '锁定时必须收起：' + clear);
 
 // 页面里的 10ms 轮询在测试结束前仍会触发，直接结束进程，避免关库后再被轮询读到。
-console.log('VAULT LOCK PASS: 凭据/集合/分组/数据页未解锁只给提示卡、锁定时清空列表/详情/弹窗且不发请求、迟到响应不回填、重新解锁自动恢复');
+console.log('VAULT LOCK PASS: 凭据/集合/分组页未解锁只给提示卡、锁定时清空列表/详情/弹窗且不发请求、迟到响应不回填、重新解锁自动恢复');
 process.exit(0);

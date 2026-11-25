@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-salary",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "description": "个人工作台工资记录：按日期记录日结/月结工资、收入项、扣款项与实发统计",
   "type": "module",
   "main": "lib/index.js",
@@ -14,7 +14,7 @@
     "addon": {
       "id": "wb-addon-salary",
       "title": "工资",
-      "version": "0.4.13",
+      "version": "0.4.14",
       "minShell": "0.8.0",
       "tables": [
         "salary_record"
@@ -22,7 +22,6 @@
       "views": [
         "records",
         "stats",
-        "data",
         "actions"
       ],
       "toolActions": [
@@ -33,8 +32,6 @@
         "salary.recordCreate",
         "salary.recordUpdate",
         "salary.recordDelete",
-        "salary.dataTables",
-        "salary.dataQuery",
         "salary.actionSchema"
       ],
       "client": "lib/client.js"

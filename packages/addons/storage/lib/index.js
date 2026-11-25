@@ -10,7 +10,6 @@ const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { ensureStorageTagSource } from "./domain/tags.js";
 import { registerStorageActions } from "./domain/storage.js";
 import { registerConfigActions } from "./infra/config.js";
-import { registerDataActions } from "./infra/data.js";
 import { exportStorageData, importStorageData } from "./infra/backup.js";
 export const inject = ["workbench"];
 export const storageSync = { tables: [{ name: "storage", mode: "row" }, { name: "storage_config_scheme", mode: "row" }] };
@@ -57,7 +56,6 @@ export function setup(api) {
   const actionDefs = trackActions(api);
   registerStorageActions(api);
   registerConfigActions(api);
-  registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-storage");
   api.log("storage domain ready");
 }
@@ -72,6 +70,8 @@ export function apply(ctx) {
         title: "储物",
         description: "储物：记录物品名称、品牌、单位、库存文本、存放位置、图片URL、备注与可选标签",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-storage" },
         category: "assets",
         tables: ["storage"],
         sync: storageSync,
@@ -80,7 +80,6 @@ export function apply(ctx) {
           { id: "stats", title: { zh: "统计", en: "Statistics" } },
           { id: "storage", title: { zh: "记录", en: "Records" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
           taskOwnership: { boundary: "物品登记使用 storage.create；开发、修复 storage 功能的工作项使用 tasks.create，不把物品记成任务。", query: "storage" },

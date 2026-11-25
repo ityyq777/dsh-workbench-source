@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 const { ensureSchema } = await import("../lib/db/db.js");
 const { createMail } = await import("../lib/domain/mail.js");
@@ -57,14 +58,18 @@ test("已有远端缓存的账户可以轮换凭据，但不能把旧 UID 改绑
   assert.equal(m.updateAccount({ id: a.id, secretId: "rotated" }).secretId, "rotated");
 });
 
-test("消息详情与 dataQuery 白名单", () => {
+test("消息详情，且不再提供数据页查询", () => {
   const { m, db } = make();
   const a = m.createAccount({ name: "A", email: "a@test", imapHost: "i", smtpHost: "s" });
   seedMessage(db, a.id);
   assert.equal(m.message("msg1").subject, "你好");
-  assert.equal(m.dataQuery({ table: "mail_message" }).rows.length, 1);
-  assert.throws(() => m.dataQuery({ table: "sqlite_master" }), /不允许/);
   assert.throws(() => m.message("nope"), /不存在/);
+  // 数据浏览已收敛到宿主统一「数据」页，插件不再注册 mail.dataTables/mail.dataQuery。
+  assert.equal(typeof m.dataQuery, "undefined", "引擎不再实现 dataQuery");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.ok(!pkg.wb.addon.toolActions.includes("mail.dataTables"));
+  assert.ok(!pkg.wb.addon.toolActions.includes("mail.dataQuery"));
+  assert.ok(!pkg.wb.addon.views.includes("data"), "视图清单不再有数据页");
 });
 
 test("正文按需下载：本地已缓存时不重复联网，本地副本直接返回", async () => {

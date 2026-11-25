@@ -6,12 +6,13 @@ import { createContext, runInContext } from "node:vm";
  * 在 vm 沙箱里加载浏览器侧 CJS（视图/样式），用 deps 顶替外部依赖（如 require("react")）。
  * 相对路径依赖按需递归加载，与 esbuild 打包时的解析口径一致。
  */
-export function loadCjs(entryFile, deps = {}) {
-  const sandbox = createContext({
+export function loadCjs(entryFile, deps = {}, globals = {}) {
+  // globals 用来补浏览器侧全局（document/navigator/定时器替身等），宿主数据页组件需要它们。
+  const sandbox = createContext(Object.assign({
     console, Promise, Set, Map, WeakMap, JSON, Object, Array, String, Number, Boolean,
     Error, RegExp, Date, Math, Symbol, parseInt, parseFloat, isNaN, isFinite, encodeURIComponent, decodeURIComponent,
     setTimeout, clearTimeout, setInterval, clearInterval,
-  });
+  }, globals));
   const cache = new Map();
   function load(file) {
     if (cache.has(file)) return cache.get(file).exports;

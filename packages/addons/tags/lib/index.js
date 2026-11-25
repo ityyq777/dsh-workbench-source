@@ -14,7 +14,6 @@ import { tagSync } from "./infra/sync.js";
 import { registerTagActions } from "./domain/tags.js";
 import { ensureSourceSchema, registerSourceActions } from "./domain/sources.js";
 import { registerConfigActions } from "./infra/config.js";
-import { registerDataActions } from "./infra/data.js";
 
 export const inject = ["workbench"];
 
@@ -68,7 +67,6 @@ export function setup(api) {
   registerTagActions(api);
   registerSourceActions(api);
   registerConfigActions(api);
-  registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-tags");
   if (typeof api.registerSearchProvider === "function") {
     api.registerSearchProvider({
@@ -93,8 +91,10 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-tags",
         title: "标签",
-        description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置/数据四个视图",
+        description: "创建与管理标签，为站点等业务提供标签归类；含统计/记录/配置三个视图",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-tags" },
         category: "work",
         tables: ["tag", "tag_mapping"],
         sync: tagSync,
@@ -102,7 +102,6 @@ export function apply(ctx) {
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "tags", title: { zh: "记录", en: "Records" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
           taskOwnership: { boundary: "标签归类记录使用 tags.create；开发、修复标签插件的工作项使用 tasks.create。", query: "tags" },

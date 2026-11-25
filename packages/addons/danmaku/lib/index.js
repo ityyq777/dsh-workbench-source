@@ -21,7 +21,6 @@ import { createPlayer } from "./player.js";
 import { createSupervisor } from "./desktop/supervisor.js";
 import { registerManageActions } from "./actions/manage.js";
 import { registerConfigActions } from "./actions/config.js";
-import { registerDataActions } from "./actions/data.js";
 import { registerSchemaAction, trackActions } from "./actions/schema.js";
 
 export const inject = ["workbench"];
@@ -74,7 +73,6 @@ export function setup(api) {
   const actionDefs = trackActions(api);
   registerManageActions(api, deps);
   registerConfigActions(api, deps);
-  registerDataActions(api);
   registerSchemaAction(api, actionDefs, DOMAIN);
 
   // 按当前配置启动调度器；桌面层只在 surface 需要时起步，失败也不影响界面层。
@@ -155,8 +153,10 @@ export function apply(ctx) {
         id: DOMAIN,
         title: "弹幕",
         description:
-          "把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面；单一宿主调度、SSE 与 Electron helper 双投递，含弹幕库/配置/数据/Action 四个视图",
+          "把自建弹幕轮播在整个 DSH 界面，并可叠加到整个桌面；单一宿主调度、SSE 与 Electron helper 双投递，含弹幕库/配置/Action 三个视图",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-danmaku" },
         category: "comm",
         tables: TABLES,
         // 只同步配置方案表，业务数据仍只在本机。
@@ -166,7 +166,6 @@ export function apply(ctx) {
         views: [
           { id: "library", title: { zh: "弹幕库", en: "Library" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
           { id: "actions", title: { zh: "Action", en: "Actions" } },
         ],
         capability: {

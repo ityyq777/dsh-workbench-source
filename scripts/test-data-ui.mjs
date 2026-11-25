@@ -1,10 +1,34 @@
-/** Shared data browser rendering/interaction regressions. Run after build:clients. */
+/**
+ * 宿主统一「数据」页（共享组件 packages/addons/lib/data-view.cjs）的渲染与交互回归自测。
+ *
+ * 12 个业务插件不再自带数据页，本脚本直接实例化共享组件：目录/页签/字段/筛选/软删/
+ * 系统列/分页/刷新/错误/表索引全部覆盖，不依赖任何插件的构建产物。
+ */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
-import { createContext, runInContext } from "node:vm";
-import { createReact } from "./data-ui-harness.mjs";
+import { createReact, loadCjs } from "./data-ui-harness.mjs";
+
+const dataViewFile = fileURLToPath(new URL("../packages/addons/lib/data-view.cjs", import.meta.url));
+
+/** 数据页的配置外壳：真视图用各插件的 useConfig，这里只按模板读出分页大小。 */
+function makeUseConfig(rt, domain) {
+  return function useConfig(api, fallback) {
+    const React = rt.React;
+    const state = React.useState({ ready: false, values: Object.assign({}, fallback) });
+    React.useEffect(() => {
+      let alive = true;
+      Promise.resolve(api.call(domain + ".configGet"))
+        .then(reply => {
+          if (!alive) return;
+          const body = reply && reply.result !== undefined ? reply.result : reply;
+          state[1]({ ready: true, values: Object.assign({}, fallback, (body && body.values) || {}) });
+        })
+        .catch(() => { if (alive) state[1]({ ready: true, values: Object.assign({}, fallback) }); });
+      return () => { alive = false; };
+    }, [api]);
+    return state[0];
+  };
+}
 const longRemark = "长备注全文".repeat(50);
 function walk(node, out = []) {
   if (Array.isArray(node)) { node.forEach(n => walk(n, out)); return out; }
@@ -26,31 +50,19 @@ async function exercise(domain, prefix, table) {
     { name: "uk_dependency", columns: ["task_id", "depends_on_id"], origin: "c", unique: true },
     { name: "sqlite_autoindex_" + table + "_2", columns: ["name", "stock"], origin: "u", unique: true },
   ];
-  const sandbox = {
-    console, URL,
+  const globals = {
     setTimeout(fn, delay) { const id = ++timerId; timers.set(id, { fn, delay }); return id; },
     clearTimeout(id) { timers.delete(id); },
     navigator: { language: "zh-CN", clipboard: { writeText: async () => {} } },
     document: {
       documentElement: { lang: "zh" }, head: { appendChild: el => styles.push(el) },
+      body: { appendChild() {}, removeChild() {} },
       getElementById: () => null, createElement: () => ({ setAttribute() {} }),
       addEventListener: (name, fn) => listeners.set(name, fn),
       removeEventListener: name => listeners.delete(name),
     },
-    __WB_HOST__: { registerAddon: addon => { sandbox.addon = addon; } },
   };
-  sandbox.window = sandbox;
-  createContext(sandbox);
-  if (process.argv.includes("--source")) {
-    const bundle = await build({ entryPoints: [fileURLToPath(new URL("../packages/addons/" + domain + "/client/client.src.cjs", import.meta.url))],
-      bundle: true, write: false, format: "cjs", platform: "browser", external: ["react"], logLevel: "silent" });
-    sandbox.module = { exports: {} }; sandbox.exports = sandbox.module.exports;
-    sandbox.require = name => name === "react" ? rt.React : {};
-    runInContext(bundle.outputFiles[0].text, sandbox);
-  } else {
-    runInContext(readFileSync(new URL("../packages/addons/" + domain + "/lib/client.js", import.meta.url), "utf8"), sandbox);
-    sandbox.__ModuleLoader__.modules["dsh-workbench-" + domain](name => name === "react" ? rt.React : {});
-  }
+  const createDataView = loadCjs(dataViewFile, { react: rt.React }, globals);
   const columns = [
     { name: "id", kind: "id", type: "TEXT", pk: true }, { name: "name", kind: "text", type: "TEXT" },
     { name: "stock", kind: "text", type: "TEXT" }, { name: "img_list", kind: "text", type: "TEXT" },
@@ -91,15 +103,13 @@ async function exercise(domain, prefix, table) {
   const cls = suffix => nodes(n => (n.props.className || "").split(" ").includes(prefix + "-data-" + suffix));
   const button = label => nodes(n => n.type === "button" && text(n) === label)[0];
   const filter = name => nodes(n => n.type === "input" && n.props["aria-label"] === "筛选… " + name)[0];
-  const view = sandbox.addon.views.find(v => v.id === "data").component;
+  const view = createDataView({
+    domain, prefix, tables: [table, secondTable], useConfig: makeUseConfig(rt, domain),
+  }).DataView;
   rt.mount(view, { api, lang: "zh" });
   function assertLoading() {
     const busy = nodes(n => n.props["aria-busy"] === true || n.props["aria-busy"] === "true");
     assert(busy.some(n => (String(n.props["aria-label"] || "") + text(n)).includes("载入中")), domain + " exposes an accessible loading name and busy state");
-    if (domain === "storage") {
-      assert(busy.some(n => n.props.role === "status" && String(n.props["aria-label"]).includes("载入中")));
-      assert.equal(nodes(n => (n.props.className || "").split(" ").includes("wbi-skeleton-card")).length, 3);
-    }
   }
   assertLoading();
   await settle();
@@ -125,23 +135,15 @@ async function exercise(domain, prefix, table) {
   assert(filter("deleted_at"));
   const queryCount = () => calls.filter(c => c.action.endsWith("dataQuery")).length;
   let before = queryCount(); button("刷新").props.onClick(); await settle(); assert(queryCount() > before);
-  if (domain === "storage") {
-    assert(nodes(n => n.type === "td" && n.props.title === "1~2").every(n => !n.props.className.includes("num")));
-    assert(nodes(n => n.type === "img").length >= 2);
-    assert(nodes(n => n.type === "img").every(n => n.props.loading === "lazy" && n.props.referrerPolicy === "no-referrer"));
-    assert(nodes(n => n.type === "span" && n.props.title === longRemark).every(n => text(n).length === 81));
-    const remarkCell = nodes(n => n.type === "td" && n.props.title === longRemark)[0];
-    remarkCell.props.onDoubleClick(); await settle(); assert(nodes(n => n.type === "pre" && text(n) === longRemark).length);
-    button("关闭").props.onClick(); await settle();
-    nodes(n => n.type === "button" && String(n.props["aria-label"]).startsWith("预览图片"))[0].props.onClick({ stopPropagation() {} }); await settle();
-    assert.equal(cls("gallery").length, 1); assert.equal(walk(cls("gallery")).filter(n => n.type === "img").length, 2);
-    listeners.get("keydown")({ key: "Escape" }); await settle(); assert.equal(cls("gallery").length, 0);
-    for (const bad of ['not json', '["javascript:alert(1)"]', '["https://user:secret@example.com/a.png"]']) {
-      records[10].img_list = bad; button("刷新").props.onClick(); await settle();
-      assert(nodes(n => n.type === "td" && n.props.title === bad).some(n => text(n) === bad));
-      assert(!nodes(n => n.type === "img").some(n => /javascript:|secret/.test(n.props.src)));
-    }
-  }
+  // 文本列不右对齐；长文本双击开抽屉，抽屉用 pre 展示全文，Esc 可关。
+  assert(nodes(n => n.type === "td" && n.props.title === "1~2").every(n => !n.props.className.includes("num")));
+  const remarkCell = nodes(n => n.type === "td" && n.props.title === longRemark)[0];
+  remarkCell.props.onDoubleClick(); await settle();
+  assert(nodes(n => n.type === "pre" && text(n) === longRemark).length, "双击单元格打开全文抽屉");
+  assert.equal(cls("drawer").length, 1);
+  button("关闭").props.onClick(); await settle(); assert.equal(cls("drawer").length, 0);
+  remarkCell.props.onDoubleClick(); await settle();
+  listeners.get("keydown")({ key: "Escape" }); await settle(); assert.equal(cls("drawer").length, 0, "Esc 关闭抽屉");
   nodes(n => n.props.role === "tab" && text(n) === "表索引")[0].props.onClick(); await settle();
   assert.equal(cls("idx").length, 1); assert(text(rt.tree).includes(table));
   assert.equal(cls("stab").length, 2, "directory contains real tables only");
@@ -266,35 +268,5 @@ async function exercise(domain, prefix, table) {
   for (const hook of rt.hooks) if (hook && hook.cleanup) hook.cleanup();
   console.log("DATA UI PASS", domain, "directory/tabs/fields/filter/deleted/system/paging/refresh/errors/index");
 }
-for (const args of [["tasks", "wbt", "task"], ["tags", "wbg", "tag"], ["sites", "wbs", "site"], ["storage", "wbi", "storage"]]) await exercise(...args);
-
-// 兼容层：声明列优先、行派生兜底；0 行表不再退化成空列。
-const requireLegacy = (await import("node:module")).createRequire(import.meta.url);
-const createLegacyData = requireLegacy("../packages/addons/lib/legacy-data.cjs");
-function legacyApi(tables, rows) {
-  return {
-    async call(action, args) {
-      assert(action.startsWith("demo."), "compat layer must only call its own domain: " + action);
-      if (action === "demo.dataTables") return { ok: true, result: { tables } };
-      return { ok: true, result: { table: args.table, rows, limit: args.limit, offset: args.offset } };
-    },
-  };
-}
-{
-  const legacy = createLegacyData("demo", { paged: true });
-  const empty = legacyApi([{ name: "t", columns: ["id", "name", { name: "note", type: "TEXT", label: "备注" }] }], []);
-  const r1 = await legacy.query(empty, { table: "t", page: 1, pageSize: 10 });
-  assert.equal(r1.columns.length, 3, "0 行表也返回声明列");
-  assert.deepEqual(r1.columns.map(c => c.name), ["id", "name", "note"]);
-  assert.equal(r1.columns[2].label, "备注");
-  assert.equal(r1.columns[0].type, "TEXT", "字符串列名归一成 TEXT");
-  assert.equal(r1.total, 0); assert.equal(r1.pages, 1); assert.equal(r1.page, 1);
-  const derived = legacyApi([{ name: "t", columns: [] }], [{ a: 1, b: "x" }]);
-  const r2 = await legacy.query(derived, { table: "t", page: 1, pageSize: 10 });
-  assert.deepEqual(r2.columns.map(c => c.name), ["a", "b"], "没有声明列时按行派生");
-  assert.equal(r2.columns.every(c => c.type === "TEXT"), true);
-  const mixed = legacyApi([{ name: "t", columns: ["id"] }], [{ id: "r1", extra: "y" }]);
-  const r3 = await legacy.query(mixed, { table: "t", page: 1, pageSize: 10 });
-  assert.deepEqual(r3.columns.map(c => c.name), ["id", "extra"], "行里多出来的列补在声明列之后");
-  console.log("DATA COMPAT PASS: 声明列优先 / 行派生兜底 / 空表列 / 分页字段");
-}
+await exercise("tasks", "wbt", "task");
+console.log("DATA UI PASS: 宿主统一数据页（共享 data-view.cjs）覆盖目录/三页签/字段/筛选/软删/系统列/分页/刷新/错误/表索引缓存");

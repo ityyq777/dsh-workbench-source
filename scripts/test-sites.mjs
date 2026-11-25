@@ -244,12 +244,10 @@ accErr = null;
 try { await call("sites.vaultGroups", { siteId: accSiteB }); } catch (e) { accErr = e; }
 assert(accErr && accErr.message.indexOf("站点不存在") >= 0, "deleted site has no groups query");
 
-// 数据页：账号表已下线
-const dataTables = call("sites.dataTables", {});
-assert(!dataTables.tables.some(function (t) { return t.name === "site_account"; }), "dataTables no site_account");
-accErr = null;
-try { call("sites.dataQuery", { table: "site_account", pageSize: 50 }); } catch (e) { accErr = e; }
-assert(accErr && accErr.message.indexOf("未知数据表") >= 0, "dataQuery rejects removed table: " + (accErr && accErr.message));
+// 数据页 action 已下线（数据浏览走宿主统一「数据」页，白名单来自表声明）；
+// 账号表 site_account 早在 0.1.x 就并进保险箱，这里守住「不可能再有入口读到它」。
+assert(defs["sites.dataTables"] === undefined, "站点插件不应再注册 sites.dataTables");
+assert(defs["sites.dataQuery"] === undefined, "站点插件不应再注册 sites.dataQuery");
 
 // 声明表：DomainDef.tables 与 package.json 只能列本域自建的表，tag_mapping 归标签域独占
 const domainDefs = [];

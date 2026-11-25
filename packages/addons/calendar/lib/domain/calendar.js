@@ -109,11 +109,5 @@ export function createCalendar({ db, host, log }) {
     const like = "%" + String(q || "").replace(/[\\%_]/g, "\\$&") + "%";
     return all("SELECT id,title,description,start_at FROM calendar_event WHERE deleted_at IS NULL AND (title LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\' OR location LIKE ? ESCAPE '\\') ORDER BY start_at DESC LIMIT ?", like, like, like, limit).map((r) => ({ id: r.id, title: r.title, snippet: r.description || "", at: r.start_at, view: "events" }));
   }
-  function dataQuery(input = {}) {
-    const allow = ["calendar", "calendar_event", "calendar_attendee", "calendar_reminder"];
-    if (!allow.includes(input.table)) throw new Error("不允许查询该表");
-    const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
-    return { table: input.table, rows: all("SELECT * FROM " + input.table + " LIMIT ?", limit) };
-  }
-  return { status, listCalendars, createCalendar, updateCalendar, deleteCalendar, eventsBetween, event, createEvent, updateEvent, deleteEvent, remind, stats, search, dataQuery };
+  return { status, listCalendars, createCalendar, updateCalendar, deleteCalendar, eventsBetween, event, createEvent, updateEvent, deleteEvent, remind, stats, search };
 }

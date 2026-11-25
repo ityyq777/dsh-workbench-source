@@ -106,8 +106,8 @@ async function runMode() {
 
     const listed = await call("tasks.list", {});
     assert(listed.result.records.length >= 1 && !listed.result.notices, "不传标签参数时 tasks.list 应正常返回且无 notice");
-    const tables = await call("tasks.dataTables", { stats: true });
-    assert(tables.result.tables.some((t) => t.name === "task"), "数据页表清单异常");
+    // 插件数据页已下线（数据浏览走宿主统一「数据」页），独立模式下也不该冒出来。
+    await expectError("tasks.dataTables", {}, "没有该 action");
   } else if (mode === "storage") {
     const caps = await call("storage.capabilities");
     assert(caps.result.tags === false, "独立物品插件应关闭标签能力");
@@ -143,8 +143,8 @@ async function runMode() {
     assert(site.result.site && site.result.site.id, "不传标签参数时 sites.create 应正常");
     await expectError("sites.update", { id: site.result.site.id, tagIds: ["t1"] }, "标签域未安装");
 
-    const tables = await call("sites.dataTables", { stats: true });
-    assert(tables.result.tables.some((t) => t.name === "site"), "数据页表清单异常");
+    // 插件数据页已下线（数据浏览走宿主统一「数据」页），独立模式下也不该冒出来。
+    await expectError("sites.dataTables", {}, "没有该 action");
   }
 
   rmSync(home, { recursive: true, force: true });

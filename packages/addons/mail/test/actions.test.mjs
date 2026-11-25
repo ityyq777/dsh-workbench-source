@@ -66,7 +66,7 @@ test('草稿与附件硬锁只留给界面；发信支持 agent 但默认不给'
 
 test('保险箱锁定时读接口一律 VAULT_LOCKED，无隐私的动作仍放行', async () => {
   const locked = register({ locked: true, initialized: true });
-  for (const name of ['mail.status', 'mail.accountList', 'mail.mailboxList', 'mail.messageList', 'mail.messageGet', 'mail.messageBody', 'mail.attachmentDownload', 'mail.draftList', 'mail.draftGet', 'mail.dataQuery', 'mail.dataTables', 'mail.serverSearch', 'mail.sync', 'mail.messageDelete']) {
+  for (const name of ['mail.status', 'mail.accountList', 'mail.mailboxList', 'mail.messageList', 'mail.messageGet', 'mail.messageBody', 'mail.attachmentDownload', 'mail.draftList', 'mail.draftGet', 'mail.serverSearch', 'mail.sync', 'mail.messageDelete']) {
     const def = locked.get(name);
     await assert.rejects(
       () => def.execute({ id: 'm', key: 'k', q: 'x', accountId: 'a', mailbox: 'INBOX', table: 'mail_message', force: false }, { origin: 'ui' }),

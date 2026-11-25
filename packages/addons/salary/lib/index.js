@@ -21,7 +21,6 @@ export function setup(api) {
 const VIEWS = [
   { id: "records", title: { zh: "工资记录", en: "Records" } },
   { id: "stats", title: { zh: "统计", en: "Stats" } },
-  { id: "data", title: { zh: "数据", en: "Data" } },
   { id: "actions", title: { zh: "Action", en: "Actions" } },
 ];
 
@@ -33,6 +32,8 @@ export function apply(ctx) {
     title: "工资",
     description: "按日期记录日结/月结工资：用工类型、收入项、税前扣款、社保公积金、个税与实发",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-salary" },
     category: "finance",
     tables: ["salary_record"],
     sync: { tables: [] },

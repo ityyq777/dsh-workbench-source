@@ -20,7 +20,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     inbox: GLYPHS["inbox"],
     history: GLYPHS["history"],
     sliders: GLYPHS["sliders-horizontal"],
-    database: GLYPHS["database"],
     list: GLYPHS["list"],
   };
 
@@ -51,7 +50,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       { id: "items", icon: tabIcon("inbox"), title: { zh: "内容", en: "Items" }, component: withProps(require("./views/items.cjs"), "内容") },
       { id: "runs", icon: tabIcon("history"), title: { zh: "运行记录", en: "Runs" }, component: withProps(require("./views/runs.cjs"), "运行记录") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
   });

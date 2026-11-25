@@ -16,7 +16,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     calendar: GLYPHS["calendar-days"],
     grid: GLYPHS["calendar"],
     sliders: GLYPHS["sliders-horizontal"],
-    database: GLYPHS["database"],
     list: GLYPHS["list"],
   };
   function Icon(props) { var C = ICONS[props.name] || ICONS.calendar; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" }); }
@@ -36,7 +35,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       { id: "events", icon: tabIcon("calendar"), title: { zh: "日程", en: "Agenda" }, component: withProps(require("./views/events.cjs"), "日程") },
       { id: "calendars", icon: tabIcon("grid"), title: { zh: "日历", en: "Calendars" }, component: withProps(require("./views/calendars.cjs"), "日历") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
   });

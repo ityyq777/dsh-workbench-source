@@ -334,11 +334,6 @@ export function createSalary({ db, host, log }) {
     return all("SELECT * FROM salary_record WHERE deleted_at IS NULL ORDER BY pay_date, created_at").map(salaryRow);
   }
 
-  function dataQuery(input = {}) {
-    if (input.table !== "salary_record") throw new Error("不允许查询该表");
-    const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
-    return { table: input.table, rows: all("SELECT * FROM salary_record LIMIT ?", limit).map(salaryRow) };
-  }
 
-  return { status, list, get, create, update, remove, stats, dump, dataQuery, record };
+  return { status, list, get, create, update, remove, stats, dump, record };
 }

@@ -15,7 +15,6 @@ import { createRequire } from "node:module";
 // 版本号只认 package.json：首页插件卡读的就是这里注册的 version。
 const ADDON_VERSION = createRequire(import.meta.url)("../package.json").version;
 import { configValues, registerConfigActions } from "./infra/config.js";
-import { registerDataActions } from "./infra/data.js";
 import { pruneMessages, registerMessageActions } from "./domain/messages.js";
 import { registerEventConsumers } from "./domain/events.js";
 
@@ -66,7 +65,6 @@ export function setup(api) {
   const actionDefs = trackActions(api);
   registerMessageActions(api);
   registerConfigActions(api);
-  registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-message");
   // 邮件新信提醒不再由邮件插件直调 message.send，改成订阅宿主事件队列。
   registerEventConsumers(api);
@@ -136,8 +134,10 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-message",
         title: "消息",
-        description: "统一消息入口：子插件与 agent 都能发消息，含未读计数、提示音与保留期清理；含统计、收件箱、配置、数据与 Action 五个视图",
+        description: "统一消息入口：子插件与 agent 都能发消息，含未读计数、提示音与保留期清理；含统计、收件箱、配置与 Action 四个视图（数据浏览走宿主统一「数据」页）",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-message" },
         category: "comm",
         tables: ["message"],
         // 事件授权清单：只订阅邮件同步事件，没有对外发布的事件。
@@ -155,7 +155,6 @@ export function apply(ctx) {
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "inbox", title: { zh: "收件箱", en: "Inbox" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
           { id: "actions", title: { zh: "Action", en: "Actions" } },
         ],
         capability: {

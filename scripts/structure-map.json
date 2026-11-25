@@ -69,7 +69,6 @@
         "tag-options.js": "tagging/tag-options.js",
         "backup.js": "infra/backup.js",
         "sync.js": "infra/sync.js",
-        "data.js": "infra/data.js",
         "config.js": "infra/config.js"
       }
     },
@@ -96,7 +95,6 @@
         "stats.cjs": "views/stats.cjs",
         "timeline-view.cjs": "views/timeline-view.cjs",
         "config.cjs": "views/config.cjs",
-        "data.cjs": "views/data.cjs",
         "styles.cjs": "ui/styles.cjs",
         "copy.cjs": "ui/copy.cjs",
         "icons.cjs": "ui/icons.cjs",
@@ -154,7 +152,6 @@
         "overview.js": "stats/overview.js",
         "backup.js": "infra/backup.js",
         "config.js": "infra/config.js",
-        "data.js": "infra/data.js",
         "sync.js": "infra/sync.js"
       }
     },
@@ -169,7 +166,6 @@
         "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
-        "data.cjs": "views/data.cjs",
         "stats.cjs": "views/stats.cjs",
         "copy.cjs": "ui/copy.cjs",
         "styles.cjs": "ui/styles.cjs",
@@ -193,7 +189,6 @@
         "stats.js": "stats/stats.js",
         "backup.js": "infra/backup.js",
         "config.js": "infra/config.js",
-        "data.js": "infra/data.js",
         "sync.js": "infra/sync.js"
       }
     },
@@ -207,7 +202,6 @@
         "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
-        "data.cjs": "views/data.cjs",
         "stats.cjs": "views/stats.cjs",
         "charts.cjs": "stats/charts.cjs",
         "top-tags.cjs": "stats/top-tags.cjs"
@@ -229,8 +223,7 @@
         "deletion.js": "domain/deletion.js",
         "tags.js": "domain/tags.js",
         "backup.js": "infra/backup.js",
-        "config.js": "infra/config.js",
-        "data.js": "infra/data.js"
+        "config.js": "infra/config.js"
       }
     },
     "storage/client": {
@@ -243,11 +236,9 @@
         "views/actions.cjs": "views/actions.cjs",
         "client.src.cjs": "client.src.cjs",
         "config.cjs": "views/config.cjs",
-        "data.cjs": "views/data.cjs",
         "stats.cjs": "views/stats.cjs",
         "records.cjs": "views/records.cjs",
         "config-copy.cjs": "ui/config-copy.cjs",
-        "data-columns.cjs": "ui/data-columns.cjs",
         "icons.cjs": "ui/icons.cjs",
         "selection.cjs": "ui/selection.cjs",
         "styles.cjs": "ui/styles.cjs",
@@ -293,8 +284,7 @@
         "client.js": "client.js",
         "db.js": "db/db.js",
         "messages.js": "domain/messages.js",
-        "config.js": "infra/config.js",
-        "data.js": "infra/data.js"
+        "config.js": "infra/config.js"
       }
     },
     "message/client": {
@@ -307,7 +297,6 @@
         "client.src.cjs": "client.src.cjs",
         "actions.cjs": "views/actions.cjs",
         "config.cjs": "views/config.cjs",
-        "data.cjs": "views/data.cjs",
         "inbox.cjs": "views/inbox.cjs",
         "stats.cjs": "views/stats.cjs",
         "copy.cjs": "ui/copy.cjs",

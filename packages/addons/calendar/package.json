@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-calendar",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "个人工作台日历：本地日历、事件、参与人与提醒",
   "type": "module",
   "main": "lib/index.js",
@@ -14,7 +14,7 @@
     "addon": {
       "id": "wb-addon-calendar",
       "title": "日历",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "minShell": "0.8.0",
       "tables": [
         "calendar",
@@ -26,7 +26,6 @@
         "events",
         "calendars",
         "config",
-        "data",
         "actions"
       ],
       "toolActions": [
@@ -42,8 +41,6 @@
         "calendar.eventUpdate",
         "calendar.eventDelete",
         "calendar.eventRemind",
-        "calendar.dataTables",
-        "calendar.dataQuery",
         "calendar.actionSchema"
       ],
       "client": "lib/client.js"

@@ -29,6 +29,8 @@ export function apply(ctx) {
     title: "日历",
     description: "本地日历、事件、参与人、提醒；RRULE 只存原文，提醒复用消息插件",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-calendar" },
     category: "work",
     tables: ["calendar", "calendar_event", "calendar_attendee", "calendar_reminder"],
     sync: { tables: [] },
@@ -36,7 +38,6 @@ export function apply(ctx) {
       { id: "events", title: { zh: "日程", en: "Agenda" } },
       { id: "calendars", title: { zh: "日历", en: "Calendars" } },
       { id: "config", title: { zh: "设置", en: "Settings" } },
-      { id: "data", title: { zh: "数据", en: "Data" } },
       { id: "actions", title: { zh: "Action", en: "Actions" } },
     ],
     capability: {

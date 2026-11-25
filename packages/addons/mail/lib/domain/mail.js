@@ -201,14 +201,5 @@ export function createMail({ db, host, log }) {
     return all(`SELECT id,subject,from_addr,date_at FROM mail_message m WHERE ${activeAccount('m.account_id')} AND (subject LIKE ? ESCAPE '\\' OR from_addr LIKE ? ESCAPE '\\') ORDER BY date_at DESC LIMIT ?`, like, like, limit).map((r) => ({ id: r.id, title: r.subject, snippet: r.from_addr, at: r.date_at, view: "messages" }));
   }
   function stats() { return status(); }
-  function dataQuery(input = {}) {
-    const allow = ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"];
-    if (!allow.includes(input.table)) throw new Error("不允许查询该表");
-    const limit = Math.min(Math.max(Number(input.limit) || 20, 1), 100);
-    const where = input.table === 'mail_account' ? 'r.deleted_at IS NULL' : input.table === 'mail_attachment'
-      ? `EXISTS (SELECT 1 FROM mail_message m WHERE m.id=r.message_id AND ${activeAccount('m.account_id')})`
-      : activeAccount('r.account_id');
-    return { table: input.table, rows: all(`SELECT r.* FROM ${input.table} r WHERE ${where} LIMIT ?`, limit) };
-  }
-  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, ...delivery, sessionFor, probeRecent, search, dataQuery };
+  return { status, stats, backfillHeaders: backfillHeaderRows, listAccounts, createAccount, updateAccount, deleteAccount, testAccount, probeAccount, syncMailboxes, mailboxes, ...syncOps, messages, message, ...parts, ...composer, ...delivery, sessionFor, probeRecent, search };
 }

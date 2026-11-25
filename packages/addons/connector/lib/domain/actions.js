@@ -210,42 +210,5 @@ export function registerConnectorActions(api, connector) {
     },
   });
 
-  api.action("connector.dataTables", {
-    description: "只读：数据页表清单；state/item/run 仅本机。",
-    input: { type: "object", properties: {}, additionalProperties: false },
-    execute: (_args, ctx) => {
-      gate(ctx, ["ui"], "connector.dataTables");
-      return {
-        tables: [
-          { name: "connector_source", columns: ["id", "name", "driver", "config", "enabled", "schedule_sec", "sink", "sink_config", "updated_at"] },
-          { name: "connector_source_state", columns: ["source_id", "secret_id", "cursor", "next_run_at", "last_run_at", "last_status", "last_error", "fail_count", "delivery_enabled"] },
-          { name: "connector_item", columns: ["id", "source_id", "external_id", "title", "url", "published_at", "fetched_at", "hash"] },
-          { name: "connector_run", columns: ["id", "source_id", "trigger", "started_at", "finished_at", "status", "fetched", "inserted", "updated", "skipped", "error"] },
-        ],
-      };
-    },
-  });
 
-  api.action("connector.dataQuery", {
-    description: "只读：白名单表查询；cursor/secret_id 等本机列正常显示，不含明文凭据。",
-    input: {
-      type: "object",
-      properties: {
-        table: { type: "string", enum: ["connector_source", "connector_source_state", "connector_item", "connector_run"] },
-        limit: { type: "number", description: "默认 50，上限 200" },
-        offset: { type: "number" },
-      },
-      required: ["table"],
-      additionalProperties: false,
-    },
-    execute: (args, ctx) => {
-      gate(ctx, ["ui"], "connector.dataQuery");
-      const table = String(args.table);
-      const limit = Math.max(1, Math.min(200, Number(args.limit) || 50));
-      const offset = Math.max(0, Number(args.offset) || 0);
-      const order = table === "connector_item" ? "published_at DESC, fetched_at DESC" : table === "connector_run" ? "started_at DESC" : "updated_at DESC";
-      const rows = api.db.prepare("SELECT * FROM " + table + " ORDER BY " + order + " LIMIT ? OFFSET ?").all(limit, offset);
-      return { table, rows, limit, offset };
-    },
-  });
 }

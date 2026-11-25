@@ -59,7 +59,8 @@ try {
   assert(domain.tables.length === 1 && domain.tables[0] === "message", "只声明 message 一张表");
   assert(Array.isArray(domain.sync?.tables) && domain.sync.tables.length === 0, "sync.tables 必须显式为空的");
   assert(domain.backup?.export === false && domain.backup?.import === false, "消息不进备份");
-  assert(domain.views.map((v) => v.id).join(",") === "stats,inbox,config,data,actions", "视图顺序固定");
+  // 数据浏览已收敛到宿主统一「数据」页，插件不再自带 data 视图。
+  assert(domain.views.map((v) => v.id).join(",") === "stats,inbox,config,actions", "视图顺序固定");
 
   // 2. 发送：默认值、返回体与清单字段。
   const sent = (await call("message.send", { title: "备份完成", body: "导出 18 个域", level: "success", source: "host" })).result;
@@ -152,19 +153,14 @@ try {
   assert(ids.indexOf(old.id) < 0, "过期已读消息应被物理删除");
   assert(ids.indexOf(firstId) >= 0, "未过期已读消息保留");
 
-  // 10. 数据页：表清单与只读查询（表名白名单）。
-  const tables = (await call("message.dataTables", {})).result;
-  assert(tables.tables.length === 1 && tables.tables[0].count >= 4, "数据页有一张表且有行数");
-  assert(tables.tables[0].columns.some((c) => c.name === "dedupe_key"), "列元信息含 dedupe_key");
-  const query = (await call("message.dataQuery", { table: "message", page: 1, pageSize: 2, search: "清理" })).result;
-  assert(query.total === 1 && query.rows.length === 1, "只读查询能命中");
-  assert(query.columns.length > 0, "查询返回列定义");
-  await expectFail("message.dataQuery", { table: "task" }, "未知数据表");
+  // 10. 插件自带数据页已下线：数据浏览走宿主统一「数据」页（白名单来自 message 的表声明）。
+  await expectFail("message.dataTables", {}, "没有该 action");
+  await expectFail("message.dataQuery", { table: "message" }, "没有该 action");
 
-  // 11. Action 清单自证：注册了 10 个 action，且能被 schema 快照读到。
+  // 11. Action 清单自证：注册了 8 个 action，且能被 schema 快照读到。
   const schema = (await call("message.actionSchema", {})).result;
   const names = (schema.actions || []).map((a) => a.name);
-  for (const name of ["message.send", "message.list", "message.unreadCount", "message.markRead", "message.stats", "message.configGet", "message.configSet", "message.configReset", "message.dataTables", "message.dataQuery", "message.actionSchema"]) {
+  for (const name of ["message.send", "message.list", "message.unreadCount", "message.markRead", "message.stats", "message.configGet", "message.configSet", "message.configReset", "message.actionSchema"]) {
     assert(names.indexOf(name) >= 0 || name === "message.actionSchema", "actionSchema 应包含 " + name);
   }
 

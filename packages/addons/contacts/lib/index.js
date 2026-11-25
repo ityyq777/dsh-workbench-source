@@ -29,6 +29,8 @@ export function apply(ctx) {
     title: "联系人",
     description: "本地联系人、分组、多值字段与 vCard 导入导出；支持跨域搜索",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-contacts" },
     category: "comm",
     tables: ["contact", "contact_group", "contact_field", "contact_group_member"],
     sync: { tables: [] },
@@ -37,7 +39,6 @@ export function apply(ctx) {
       { id: "groups", title: { zh: "分组", en: "Groups" } },
       { id: "importExport", title: { zh: "导入导出", en: "Import / Export" } },
       { id: "config", title: { zh: "设置", en: "Settings" } },
-      { id: "data", title: { zh: "数据", en: "Data" } },
       { id: "actions", title: { zh: "Action", en: "Actions" } },
     ],
     capability: {

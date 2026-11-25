@@ -18,7 +18,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     folder: GLYPHS["folder"],
     upload: GLYPHS["upload"],
     sliders: GLYPHS["sliders-horizontal"],
-    database: GLYPHS["database"],
     list: GLYPHS["list"],
   };
   function Icon(props) { var C = ICONS[props.name] || ICONS.users; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbg-svg" }); }
@@ -39,7 +38,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       { id: "groups", icon: tabIcon("folder"), title: { zh: "分组", en: "Groups" }, component: withProps(require("./views/groups.cjs"), "分组") },
       { id: "importExport", icon: tabIcon("upload"), title: { zh: "导入导出", en: "Import / Export" }, component: withProps(require("./views/importExport.cjs"), "导入导出") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
   });

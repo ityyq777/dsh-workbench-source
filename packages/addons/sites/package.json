@@ -1,6 +1,6 @@
 {
   "name": "dsh-workbench-sites",
-  "version": "1.14.3",
+  "version": "1.14.4",
   "private": true,
   "type": "module",
   "description": "个人工作台站点插件：目录树、链接与标签",
@@ -9,8 +9,8 @@
     "addon": {
       "id": "wb-addon-sites",
       "title": "站点",
-      "description": "站点 + 统计/记录/配置/数据四个视图：目录树、链接与标签，附表数据浏览",
-      "version": "1.14.3",
+      "description": "站点 + 统计/记录/配置三个视图：目录树、链接与标签",
+      "version": "1.14.4",
       "minShell": "0.8.0",
       "tables": [
         "site",
@@ -20,8 +20,7 @@
       "views": [
         "stats",
         "sites",
-        "config",
-        "data"
+        "config"
       ],
       "toolActions": [
         "sites.capabilities",
@@ -47,9 +46,7 @@
         "sites.configGet",
         "sites.configSet",
         "sites.configReset",
-        "sites.configOptions",
-        "sites.dataTables",
-        "sites.dataQuery"
+        "sites.configOptions"
       ],
       "client": "lib/client.js"
     }

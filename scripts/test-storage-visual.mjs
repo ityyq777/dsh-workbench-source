@@ -53,11 +53,10 @@ const item={id:'one',name:'Test inventory',remark:'**Stored body**',stock:'0',br
 const api={async call(name,args){calls.push({name,args});const values={};
   const result=name.endsWith('configGet')?{values,items:[{id:'list.pageSize',group:'list',type:'number',zh:'分页',en:'Page size',default:12}],groups:[{id:'list',zh:'列表',en:'List'}],overrides:{}}:
     name.endsWith('capabilities')?{tags:true}:name.endsWith('stats')?{total:1,tagged:1,withImages:1,recent:[item]}:
-    name.endsWith('dataTables')?{tables:[{name:'storage',count:1,columns:[{name:'name',type:'TEXT'}]}]}:
     name.endsWith('dataList')?{rows:[item],total:1,columns:[{name:'name',type:'TEXT'}]}:
     name.endsWith('list')?{records:[item],total:24,pages:2}:{};
   return {ok:true,result};}};
-assert.deepEqual(Array.from(addon.views,v=>v.id),['stats','storage','config','data','actions']);
+assert.deepEqual(Array.from(addon.views,v=>v.id),['stats','storage','config','actions']);
 for(const v of addon.views){
   // 只读 Action 页是共享视图（见 test-addon-action-schema-view），没有卡片骨架与 Markdown 描述，跳过视觉断言。
   if(v.id==='actions')continue;
@@ -120,7 +119,7 @@ for(const v of addon.views){
   }
   root=v.icon;resetFrames();render();assert.equal(all().filter(n=>n.type==='svg').length,1,'tab icon renders');
 }
-assert.ok(calls.some(c=>c.name==='storage.dataTables'),'data adapter calls shared data API');
+assert.ok(!calls.some(c=>c.name==='storage.dataTables'),'插件不再调用自带的存储数据页 action（数据浏览走宿主统一数据页）');
 resetFrames(); root=addon.views.find(v=>v.id==='storage').component;
 props={lang:'en',api:{async call(name,args){const response=await api.call(name,args);if(name==='storage.configGet')response.result.values['ui.bodyMode']='text';return response;}}};
 render(); await settle();

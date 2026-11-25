@@ -15,7 +15,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   var ICONS = {
     records: GLYPHS["wallet"],
     stats: GLYPHS["chart-column"],
-    data: GLYPHS["database"],
     actions: GLYPHS["list"],
   };
   function Icon(props) { var C = ICONS[props.name] || ICONS.records; return h(C, { size: props.size || 14, strokeWidth: 2, "aria-hidden": "true", className: "wbsal-svg" }); }
@@ -34,7 +33,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     views: [
       { id: "stats", icon: tabIcon("stats"), title: { zh: "统计", en: "Stats" }, component: withProps(require("./views/stats.cjs"), "统计") },
       { id: "records", icon: tabIcon("records"), title: { zh: "记录", en: "Records" }, component: withProps(require("./views/records.cjs"), "记录") },
-      { id: "data", icon: tabIcon("data"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("actions"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
   });

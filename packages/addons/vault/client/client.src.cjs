@@ -22,7 +22,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     key: GLYPHS["key-round"],
     folder: GLYPHS["folder"],
     sliders: GLYPHS["sliders-horizontal"],
-    database: GLYPHS["database"],
     list: GLYPHS["list"],
     layers: GLYPHS["layers"],
   };
@@ -75,7 +74,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
       { id: "sets", icon: tabIcon("layers"), title: { zh: "集合", en: "Sets" }, component: withProps(require("./views/sets.cjs"), "集合") },
       { id: "groups", icon: tabIcon("folder"), title: { zh: "分组与关联", en: "Groups" }, component: withProps(require("./views/groups.cjs"), "分组与关联") },
       { id: "config", icon: tabIcon("sliders"), title: { zh: "设置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "设置") },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: withProps(require("./views/data.cjs"), "数据") },
       { id: "actions", icon: tabIcon("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     ],
   });

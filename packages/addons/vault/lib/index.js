@@ -41,9 +41,11 @@ export function createDomain(host) {
     title: "凭据保险箱",
     description: "集中保存密码、授权码与 token；按分组授权给业务模块，加密落库、密文可同步。",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-vault" },
     category: "assets",
-    // 表声明：名字之外还给出中文名与掩码列。宿主「数据」页按这份声明只读浏览，
-    // 密文列一律在输出层打码（vault.dataQuery 的掩码口径同步收敛到这里）。
+    // 表声明：名字之外还给出中文名与掩码列。宿主统一「数据」页按这份声明只读浏览，
+    // 密文列一律在输出层打码（掩码口径只此一处，不再有插件侧的 dataQuery）。
     tables: [
       {
         name: "vault_header",
@@ -125,7 +127,6 @@ export function createDomain(host) {
       { id: "sets", title: "集合", icon: "layers" },
       { id: "groups", title: "分组与关联", icon: "folder" },
       { id: "config", title: "设置", icon: "sliders" },
-      { id: "data", title: "数据", icon: "database" },
       { id: "actions", title: "Action 清单", icon: "list" },
     ],
     capability: {

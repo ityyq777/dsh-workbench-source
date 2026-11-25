@@ -16,7 +16,6 @@ var staged = require("../../lib/staged-dialog.cjs");
   var h = React.createElement;
   var statsView = require("./views/stats.cjs");
   var configView = require("./views/config.cjs");
-  var dataView = require("./views/data.cjs");
 
   // 图标定义收在 ui/icons.cjs：标签页图标与客户端共用同一份映射。
   var icons = require("./ui/icons.cjs"), Icon = icons.Icon, tabIcon = icons.tabIcon;
@@ -990,7 +989,6 @@ var staged = require("../../lib/staged-dialog.cjs");
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.SitesStatsView },
       { id: "sites", icon: tabIcon("globe"), title: { zh: "记录", en: "Records" }, component: SitesView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
       { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
     ],
   });

@@ -21,7 +21,6 @@ import { registerOverviewAction } from "./stats/overview.js";
 import { registerSiteActions } from "./domain/sites.js";
 import { registerVaultGroupActions } from "./domain/vault-groups.js";
 import { registerConfigActions } from "./infra/config.js";
-import { registerDataActions } from "./infra/data.js";
 import { bindVault, registerSiteSubject } from "./infra/vault-link.js";
 
 export const inject = ["workbench"];
@@ -82,7 +81,6 @@ export function setup(api) {
   registerSiteActions(api);
   registerVaultGroupActions(api);
   registerConfigActions(api);
-  registerDataActions(api);
   registerActionSchemaAction(api, actionDefs, "wb-addon-sites");
   if (typeof api.registerSearchProvider === "function") {
     api.registerSearchProvider({
@@ -107,8 +105,10 @@ export function apply(ctx) {
       host.registerDomain({
         id: "wb-addon-sites",
         title: "站点",
-        description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置/数据四个视图",
+        description: "站点收藏：目录树、链接与标签（标签需安装标签插件）；含统计/记录/配置三个视图",
         version: ADDON_VERSION,
+        // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+        update: { source: "npm", package: "dsh-workbench-sites" },
         category: "assets",
         // 只声明本域自建的表：tag_mapping 归标签域（tags）独占，站点仅读写 item_type='site' 的行。
         tables: ["site", "site_node", "site_node_mapping"],
@@ -119,7 +119,6 @@ export function apply(ctx) {
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "sites", title: { zh: "记录", en: "Records" } },
           { id: "config", title: { zh: "配置", en: "Config" } },
-          { id: "data", title: { zh: "数据", en: "Data" } },
         ],
         capability: {
           taskOwnership: { boundary: "站点收藏记录使用 sites.create；开发、修复站点插件的工作项使用 tasks.create。", query: "sites" },

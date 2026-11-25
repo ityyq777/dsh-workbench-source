@@ -81,23 +81,6 @@ export function registerCalendarActions(api, cal) {
     input: obj({ id: str("事件 id"), minutesBefore: num("提前分钟数，默认 15") }, ["id"]),
     execute: (args, ctx) => { if (ctx && ctx.origin && ctx.origin !== "ui" && ctx.origin !== "agent") throw new Error("该操作只允许在界面中执行"); return cal.remind({ id: args.id, minutesBefore: args.minutesBefore }) },
   });
-  action("calendar.dataTables", {
-    description: "只读：日历域可浏览的表与列",
-    input: obj({}),
-    execute: () => ({ tables: [
-      { name: "calendar", columns: ["id", "name", "color", "tz", "created_at", "updated_at"] },
-      { name: "calendar_event", columns: ["id", "calendar_id", "title", "start_at", "end_at", "tz", "rrule", "status", "updated_at"] },
-      { name: "calendar_attendee", columns: ["id", "event_id", "name", "email", "role", "status"] },
-      { name: "calendar_reminder", columns: ["id", "event_id", "minutes_before", "channel", "enabled"] },
-    ] }),
-  });
-  action("calendar.dataQuery", {
-    origins: ["ui", "agent"],
-    originsDefault: ["ui"],
-    description: "只读：白名单表查询（仅 UI；limit ≤ 100）",
-    input: obj({ table: { type: "string", enum: ["calendar", "calendar_event", "calendar_attendee", "calendar_reminder"] }, limit: num("1–100，默认 20") }, ["table"]),
-    execute: (args, ctx) => { if (ctx && ctx.origin && ctx.origin !== "ui" && ctx.origin !== "agent") throw new Error("该操作只允许在界面中执行"); return cal.dataQuery({ table: args.table, limit: args.limit }) },
-  });
   action("calendar.actionSchema", {
     description: "只读：本插件注册的 action 清单",
     input: obj({}),

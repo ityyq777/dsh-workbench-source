@@ -6,7 +6,7 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
   var host = root && root.__WB_HOST__;
   if (!host || !host.react) { module.exports = { name: "dsh-workbench-mail", inject: [], apply: function () {} }; return; }
   var React = host.react; var h = host.h; var CSS = require("./ui/styles.cjs");
-  var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], db: GLYPHS["database"], list: GLYPHS["list"], sliders: GLYPHS["sliders"] };
+  var I = { mail: GLYPHS["mail"], send: GLYPHS["send"], users: GLYPHS["users"], list: GLYPHS["list"], sliders: GLYPHS["sliders"] };
   function Icon(p) { var C = I[p.name] || I.mail; return h(C, { size: 14, strokeWidth: 2, className: "wbg-svg" }); }
   function tab(n) { return function () { return h(Icon, { name: n }); }; }
   // Slot：宿主插槽落点（别的插件往邮件界面挂的按钮）；viewParams：跨插件跳转带来的视图参数（如回链的原信 id）。
@@ -26,7 +26,6 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
     { id: "messages", icon: tab("mail"), title: { zh: "邮件", en: "Messages" }, component: gated(require("./views/messages.cjs"), "邮件") },
     { id: "compose", icon: tab("send"), title: { zh: "写信", en: "Compose" }, component: gated(require("./views/compose.cjs"), "写信") },
     { id: "accounts", icon: tab("users"), title: { zh: "账户", en: "Accounts" }, component: gated(require("./views/accounts.cjs"), "账户") },
-    { id: "data", icon: tab("db"), title: { zh: "数据", en: "Data" }, component: gated(require("./views/data.cjs"), "数据") },
     { id: "actions", icon: tab("list"), title: { zh: "Action", en: "Actions" }, component: withProps(require("./views/actions.cjs"), "Action") },
     // 配置页排在最后：它是策略入口，不该挡在每天要用的邮件前面。锁定时仍可进入（不涉及邮件内容）。
     { id: "config", icon: tab("sliders"), title: { zh: "配置", en: "Settings" }, component: withProps(require("./views/config.cjs"), "配置") },

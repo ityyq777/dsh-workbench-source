@@ -18,7 +18,6 @@ if (host) {
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Statistics" }, component: require("./views/stats.cjs").Stats },
       { id: "storage", icon: tabIcon("list"), title: { zh: "记录", en: "Records" }, component: require("./views/records.cjs").Records },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: require("./views/config.cjs").ConfigView },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: require("./views/data.cjs").DataView },
       { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
     ],
   });

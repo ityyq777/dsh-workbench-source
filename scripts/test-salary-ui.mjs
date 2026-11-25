@@ -84,8 +84,6 @@ const RESPONSES = {
   "salary.stats": salaryStats,
   "salary.recordList": { items: records, total: records.length, year: 2026, from: "", to: "" },
   "salary.recordGet": records[0],
-  "salary.dataTables": { tables: [] },
-  "salary.dataQuery": { rows: [], columns: [], total: 0 },
   "salary.actionSchema": { actions: [] },
 };
 
@@ -163,6 +161,8 @@ global.document = { head: { appendChild: (el) => styles.push(el) }, getElementBy
 HOST.react = makeReact(new Hooks());
 HOST.h = (type, props, ...children) => ({ type, props: props || {}, children });
 
+// 客户端入口在构建时注入版本（version: __ADDON_VERSION__），这里补一个占位值再加载源码。
+globalThis.__ADDON_VERSION__ = "0.0.0";
 const clientPath = ROOT + "packages/addons/salary/client/client.src.cjs";
 require(clientPath);
 
@@ -176,7 +176,8 @@ const problems = [];
   }
 }
 if (!HOST.addon || HOST.addon.id !== "wb-addon-salary") problems.push("client.src.cjs 没有注册 wb-addon-salary");
-if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 4) problems.push("views 数量不是 4");
+// 视图：统计 / 记录 / Action（数据页已下线，数据浏览走宿主统一「数据」页）。
+if (!HOST.addon || !Array.isArray(HOST.addon.views) || HOST.addon.views.length !== 3) problems.push("views 数量不是 3");
 const css = styles.map((el) => el.textContent).join("\n");
 for (const klass of ["wbsal-page", "wbsal-kpi", "wbsal-record-row", "wbsal-chart", "wbsal-comp", "wbsal-input", "--wb-card", "wbsal-card", "wbsal-metric", "wbsal-mask", "wbsal-form-modal", "wbsal-linechart", "wbsal-series", "wbsal-social-foot"]) {
   if (!css.includes(klass)) problems.push("样式表缺少 " + klass);
@@ -400,5 +401,5 @@ assert.equal(F.incomePeriod("2026-11-17"), "2026-10", "所属月份应为上一�
 assert.equal(F.incomePeriod("2026-01-15"), "2025-12", "1 月发薪应归属上一年 12 月");
 assert.equal(F.defaultNote("2026-11-17", "monthly"), "2026年10月工资", "月结默认备注应写所属月份");
 assert.equal(F.defaultNote("2026-11-17", "daily"), "", "日结不套用上月工资备注");
-console.log("工资客户端冒烟通过：4 个视图注册钩子正常，records/stats 在有数据时渲染成功，样式已注入。");
+console.log("工资客户端冒烟通过：3 个视图注册钩子正常，records/stats 在有数据时渲染成功，样式已注入。");
 }

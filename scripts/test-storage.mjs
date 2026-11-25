@@ -22,7 +22,7 @@ const api = {
 setup(api);
 const call = (name, args = {}) => defs[name].execute(args, { origin: "ui" });
 const count = (table) => Number(db.prepare("SELECT COUNT(*) n FROM " + table).get().n);
-assert.equal(Object.keys(defs).length, 17);
+assert.equal(Object.keys(defs).length, 19);
 assert.equal(call("storage.capabilities").tags, false);
 assert.throws(() => call("storage.create", { name: " " }), /名称/);
 assert.throws(() => call("storage.create", { name: "x", stock: 1 }), /字符串/);
@@ -114,11 +114,9 @@ assert.equal(call("storage.configGet").values["list.pageSize"], 24);
 call("storage.configReset");
 assert.equal(call("storage.configGet").values["ui.bodyMode"], "markdown");
 assert.equal(call("storage.configOptions").domain, "storage");
-assert.equal(call("storage.dataTables", { stats: true }).tables[0].stats.rows, 21);
-assert.equal(call("storage.dataQuery", { table: "storage", filters: { stock: "1~2" } }).total, 1);
-assert.equal(call("storage.dataQuery", { table: "storage", filters: { location: "储物柜 A 层" } }).total, 1);
-assert.throws(() => call("storage.dataQuery", { table: "tag" }), /未知数据表/);
-assert.throws(() => call("storage.dataQuery", { table: "storage", sort: "invalid" }), /未知排序列/);
+// 数据页 action 已下线：数据浏览走宿主统一「数据」页，逐列筛选由 storage.list 承担。
+assert.equal(defs["storage.dataTables"], undefined, "storage.dataTables 已下线");
+assert.equal(defs["storage.dataQuery"], undefined, "storage.dataQuery 已下线");
 assert.equal(call("storage.stats").withImages, 1);
 assert.equal(call("storage.stats").tagged, 1);
 // Export must not capture other domains; import must not overwrite their ids.
@@ -161,9 +159,9 @@ db2.exec(
 );
 result = importStorageData(api2, JSON.stringify(backup));
 assert.equal(result.ok, true);
-assert.equal(result.imported, 23);
-assert.equal(importStorageData(api2, JSON.stringify(backup), { policy: "skip" }).skipped, 23);
-assert.equal(importStorageData(api2, JSON.stringify(backup)).skipped, 23);
+assert.equal(result.imported, 24);
+assert.equal(importStorageData(api2, JSON.stringify(backup), { policy: "skip" }).skipped, 24);
+assert.equal(importStorageData(api2, JSON.stringify(backup)).skipped, 24);
 const incoming = {
   ...backup,
   storage: backup.storage.map((r) => ({ ...r, remark: "新备份", updated_at: r.updated_at + 10000 })),
@@ -257,8 +255,8 @@ assert.equal(call("storage.get", { id: first.id }), null);
 assert.equal(call("storage.delete", { id: first.id }).deleted, false);
 assert.equal(call("storage.list").total, 20);
 assert.equal(call("storage.stats").tagged, 0);
-assert.equal(call("storage.dataQuery", { table: "storage", includeDeleted: true }).total, 21);
-assert.equal(call("storage.dataQuery", { table: "storage" }).total, 20);
+// 含已删行的统计改由宿主统一「数据」页负责，这里只守住本域列表口径。
+assert.equal(call("storage.list").total, 20);
 assert.equal(storageSync.tables.length, 1);
 assert.equal(storageSync.tables[0].name, "storage");
 let domain;

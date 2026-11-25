@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 const { ensureSchema } = await import("../lib/db/db.js");
 const { createCalendar } = await import("../lib/domain/calendar.js");
@@ -46,11 +47,15 @@ test("提醒走 message.send 并带 dedupeKey", async () => {
   assert.equal(calls[0][1].dedupeKey, "cal:" + ev.id + ":30");
 });
 
-test("数据查询白名单与 limit", () => {
+// 数据浏览已收敛到宿主统一「数据」页（按 calendars 域的表声明聚合），插件不再自带数据页，
+// 也不再注册 calendar.dataTables/calendar.dataQuery。
+test("不再提供数据页 action", () => {
   const { cal } = make();
-  cal.createCalendar({ name: "A" });
-  assert.equal(cal.dataQuery({ table: "calendar" }).rows.length, 1);
-  assert.throws(() => cal.dataQuery({ table: "sqlite_master" }), /不允许/);
+  assert.equal(typeof cal.dataQuery, "undefined", "引擎不再实现 dataQuery");
+  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.ok(!pkg.wb.addon.toolActions.includes("calendar.dataTables"), "action 清单不再有 dataTables");
+  assert.ok(!pkg.wb.addon.toolActions.includes("calendar.dataQuery"), "action 清单不再有 dataQuery");
+  assert.ok(!pkg.wb.addon.views.includes("data"), "视图清单不再有数据页");
 });
 
 test("搜索标题/描述/地点", () => {

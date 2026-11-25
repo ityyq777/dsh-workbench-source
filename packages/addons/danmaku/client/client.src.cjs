@@ -45,7 +45,6 @@ var icons = {
   megaphone: GLYPHS["megaphone"],
   list: GLYPHS["list"],
   settings: GLYPHS["settings"],
-  database: GLYPHS["database"],
   play: GLYPHS["play"],
 };
 
@@ -78,12 +77,6 @@ function definition(host) {
         icon: tab("settings"),
         title: { zh: "配置", en: "Settings" },
         component: require("./views/config.cjs"),
-      },
-      {
-        id: "data",
-        icon: tab("database"),
-        title: { zh: "数据", en: "Data" },
-        component: require("./views/data.cjs"),
       },
       {
         id: "actions",

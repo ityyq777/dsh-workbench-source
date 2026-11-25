@@ -64,6 +64,8 @@ export function apply(ctx) {
     title: "邮件",
     description: "安全 IMAP 收信与文件夹同步，按需读正文、下载附件，保存本地草稿并通过 SMTP 回复或转发。",
     version: ADDON_VERSION,
+    // 更新来源：宿主「插件」页按它查新版本并安装（只认官方 npm registry）。
+    update: { source: "npm", package: "dsh-workbench-mail" },
     category: "comm",
     // mail_draft 含私有未发正文，不加入宿主通用表清单或同步回退。
     tables: ["mail_account", "mail_mailbox", "mail_message", "mail_attachment"],
@@ -103,7 +105,6 @@ export function apply(ctx) {
       { id: "messages", title: { zh: "邮件", en: "Messages" } },
       { id: "compose", title: { zh: "写信", en: "Compose" } },
       { id: "accounts", title: { zh: "账户", en: "Accounts" } },
-      { id: "data", title: { zh: "数据", en: "Data" } },
       { id: "actions", title: { zh: "Action", en: "Actions" } },
     ],
     capability: {

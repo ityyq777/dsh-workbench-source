@@ -15,7 +15,6 @@ var h = React.createElement;
   var h = React.createElement;
   var statsView = require("./views/stats.cjs");
   var configView = require("./views/config.cjs");
-  var dataView = require("./views/data.cjs");
 
   // 图标与视图标签图标统一收在 ui/icons.cjs，与其它插件共用 lib/icons.cjs 的映射。
   var icons = require("./ui/icons.cjs"), ICONS = icons.ICONS, Icon = icons.Icon, tabIcon = icons.tabIcon;
@@ -522,7 +521,6 @@ var h = React.createElement;
       { id: "stats", icon: tabIcon("chart"), title: { zh: "统计", en: "Stats" }, component: statsView.TagsStatsView },
       { id: "tags", icon: tabIcon("tags"), title: { zh: "记录", en: "Records" }, component: TagsView },
       { id: "config", icon: tabIcon("settings"), title: { zh: "配置", en: "Config" }, component: configView.ConfigView },
-      { id: "data", icon: tabIcon("database"), title: { zh: "数据", en: "Data" }, component: dataView.DataView },
       { id: "actions", icon: tabIcon("code-2"), title: { zh: "Action", en: "Actions" }, component: require("./views/actions.cjs").ActionSchemaView },
     ],
   });
