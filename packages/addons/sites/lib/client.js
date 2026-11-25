@@ -5337,10 +5337,7 @@ var require_data_view = __commonJS({
           );
         }
         function renderFields() {
-          var all = tableColumns();
-          var cols = all.filter(function(c) {
-            return showSystem || !c.system;
-          });
+          var cols = tableColumns();
           var hasNullable = cols.some(function(c) {
             return c.notnull === 0 || c.notnull === 1;
           });
@@ -5412,12 +5409,15 @@ var require_data_view = __commonJS({
           return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
         }
         function colLabel(col) {
-          if (!col.label) return col.name;
-          return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
+          var label = col.label;
+          if (!label) return col.name;
+          if (typeof label === "string") return label;
+          return lang === "en" ? label.en || label.zh : label.zh || label.en;
         }
         function normalizeColumn(col) {
           if (typeof col === "string") return { name: col, type: "TEXT", system: false };
           if (!col || typeof col !== "object") return null;
+          if (typeof col.label === "string") return Object.assign({}, col, { label: { zh: col.label } });
           return col;
         }
         function tableColumns() {

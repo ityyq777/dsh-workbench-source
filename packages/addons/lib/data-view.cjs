@@ -307,8 +307,9 @@ function DataView(props) {
    * 服务端没给就不出那两列，旧插件不会多出一排「—」。
    */
   function renderFields() {
-    var all = tableColumns();
-    var cols = all.filter(function (c) { return showSystem || !c.system; });
+    // 字段页签是表结构说明，不看行的可见性：系统列（id/时间戳等）也要列出来，
+    // 否则主键永远显示「—」、「系统列」一栏也失去意义。系统列开关只管行数据页签。
+    var cols = tableColumns();
     var hasNullable = cols.some(function (c) { return c.notnull === 0 || c.notnull === 1; });
     var hasDefault = cols.some(function (c) { return Object.prototype.hasOwnProperty.call(c, "defaultValue") && c.defaultValue !== null; });
     var headers = [t.fieldName, t.fieldLabel, t.fieldType];
@@ -355,15 +356,19 @@ function DataView(props) {
     return lang === "en" ? (tb.label.en || tb.label.zh) : (tb.label.zh || tb.label.en);
   }
 
+  /** 列中文名既可能是 { zh, en }，也可能是裸字符串（第三方插件常见），两种都认。 */
   function colLabel(col) {
-    if (!col.label) return col.name;
-    return lang === "en" ? (col.label.en || col.label.zh) : (col.label.zh || col.label.en);
+    var label = col.label;
+    if (!label) return col.name;
+    if (typeof label === "string") return label;
+    return lang === "en" ? (label.en || label.zh) : (label.zh || label.en);
   }
 
   /** 列对象都归一成 { name, type, kind?, label?, system?, pk?, notnull?, defaultValue? }。 */
   function normalizeColumn(col) {
     if (typeof col === "string") return { name: col, type: "TEXT", system: false };
     if (!col || typeof col !== "object") return null;
+    if (typeof col.label === "string") return Object.assign({}, col, { label: { zh: col.label } });
     return col;
   }
 

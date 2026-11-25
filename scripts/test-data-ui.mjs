@@ -242,17 +242,18 @@ async function exercise(domain, prefix, table) {
   for (const head of ["字段名", "中文名", "类型", "主键", "系统列"]) assert(fieldHead.includes(head), "字段页签缺表头 " + head);
   assert(!fieldHead.includes("可空"), "没有 notnull 元信息时不渲染可空列");
   const fieldsOn = cls("tr").length;
-  assert(fieldsOn === 5 || fieldsOn === 6, "字段页签只列出当前可见的列");
-  assert(text(cls("idxsub")).includes("共 " + fieldsOn + " 个字段"));
+  // 字段页签是表结构说明：系统列也要列出来（系统列开关只管行数据页签）。
+  assert(fieldsOn === 5 || fieldsOn === 6, "字段页签列出声明列");
   assert(text(cls("tr")[0]).includes("id")); assert(text(cls("tr")[0]).includes("是"), "主键列显示是");
-  // 系统列开关在行数据页签的工具条上；切换后回字段页签复核同一口径。
+  assert(text(cls("tr")).includes("deleted_at"), "字段页签也要列出系统列");
+  assert(text(cls("idxsub")).includes("共 " + fieldsOn + " 个字段"));
   const rowsTab = () => nodes(n => n.props.role === "tab" && text(n) === "行数据")[0];
   const fieldsTab = () => nodes(n => n.props.role === "tab" && text(n) === "字段")[0];
+  // 系统列开关只影响行数据：切到行数据打开系统列再回字段页签，字段数不变。
   rowsTab().props.onClick(); await settle();
   nodes(n => n.props && n.props.role === "switch")[1].props.onClick({ preventDefault: function () {} }); await settle();
   fieldsTab().props.onClick(); await settle();
-  assert.equal(cls("tr").length, fieldsOn === 5 ? 6 : 5, "系统列开关与字段页签同步");
-  assert.equal(text(cls("tr")).includes("deleted_at"), fieldsOn === 5);
+  assert.equal(cls("tr").length, fieldsOn, "系统列开关不影响字段页签");
   rowsTab().props.onClick(); await settle();
   nodes(n => n.props && n.props.role === "switch")[1].props.onClick({ preventDefault: function () {} }); await settle();
   fieldsTab().props.onClick(); await settle();
