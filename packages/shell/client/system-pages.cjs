@@ -150,21 +150,24 @@ function agentListPage(deps) {
 
 /**
  * 首页「工作台管理」的入口卡片。deps: { t, systemCard }，顺序即展示顺序。
+ *
+ * 第二参是图标取不到时的兜底字符（正常情况由 packages/shell/client/host-icons.cjs
+ * 按路由 id 给出 lucide 语义图标），所以这里写成单字，用来避免整块空白。
  */
 function manageCards(deps) {
   var t = deps.t;
   var card = deps.systemCard;
   return [
-    card("roles", "agent", t("tab_roles"), t("roles_desc")),
-    card("agent", "agent", t("tab_agent"), t("agent_desc")),
-    card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
+    card("roles", "角", t("tab_roles"), t("roles_desc")),
+    card("agent", "权", t("tab_agent"), t("agent_desc")),
+    card("agentList", "列", t("tab_agent_list"), t("agent_list_desc")),
     card("queue", "队", t("tab_queue"), t("queue_desc")),
-    card("automation", "自动", t("tab_automation"), t("automation_desc")),
+    card("automation", "自", t("tab_automation"), t("automation_desc")),
     card("data", "数", t("tab_data"), t("data_desc")),
     card("config", "配", t("tab_config"), t("config_desc")),
-    card("backup", "backup", t("tab_backup"), t("backup_desc")),
-    card("audit", "audit", t("tab_audit"), t("audit_desc")),
-    card("account", "account", t("tab_account"), t("account_desc")),
+    card("backup", "备", t("tab_backup"), t("backup_desc")),
+    card("audit", "审", t("tab_audit"), t("audit_desc")),
+    card("account", "账", t("tab_account"), t("account_desc")),
   ];
 }
 

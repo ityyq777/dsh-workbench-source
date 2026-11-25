@@ -7,6 +7,8 @@ var NS = "workbench";
 var LOCALE = require("./locale.cjs");
 
 var CSS = require("./styles.cjs");
+// 宿主内建页面的语义图标表（首页管理卡片与页头共用），见 host-icons.cjs。
+var HOST_ICONS = require("./host-icons.cjs");
 var createPanellistIcon = require("./panellist-icon.cjs");
 var addonNav = require("./addon-nav.cjs")();
 // 共享 Action 页：宿主自己的「Agent 权限」页复用它，数据源是 actions.list（宿主 action 不属于任何业务域）。
@@ -418,7 +420,10 @@ function WorkbenchPage(props) {
       go("addon:" + currentAddon.id + ":" + viewId, params);
     }
   }
+  /** 图标兜底顺序：宿主内建表 → 插件注册表 → 标题首字符（最后一级只是防空白）。 */
   function cardIcon(id, title) {
+    var HostIcon = HOST_ICONS.hostIcon(id);
+    if (HostIcon) return h(HostIcon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     var m = registry.get(id) || registry.get("wb-addon-" + id);
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
