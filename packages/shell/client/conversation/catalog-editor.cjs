@@ -1,10 +1,10 @@
 "use strict";
 /**
- * 角色编辑器：三步向导（基本信息 → 角色指令 → 确认与保存）。
+ * 角色编辑器：两步向导（基本信息 → 角色指令），第二步底部直接保存。
  *
- * 为什么三步而不是四步：角色的 actions 已经不参与任何权限判定，界面再让用户勾一份
- * 「参考动作」只会误导——看起来像在配权限，其实勾不勾都能调。角色该做什么统一写在
- * 角色指令里，编辑流程也就只剩「叫什么、怎么干、对不对」三件事。
+ * 角色只有两件必填的事：叫什么、怎么干（指令）。中间不再插「参考动作」步（actions 已
+ * 不参与权限判定），也不再加「确认与保存」步——摘要读回去的还是刚填的两行字，多一步
+ * 只是多一次点击，所以保存直接挂在最后一步上。
  *
  * 每次切换步骤都把焦点交给这一步的第一个可操作元素，键盘用户不用再 Tab 一轮；
  * 保存前做一次全量复核，哪一步被改空了就退回那一步，而不是静默失败。
@@ -12,7 +12,10 @@
 var React = require("react");
 var h = React.createElement;
 var common = require("../../../addons/lib/client-common.cjs")("wbr");
-var Btn = common.Btn, Field = common.Field;
+var Field = common.Field;
+// 按钮统一走共享按钮控件：图标 + 文字（窄屏由基础样式收成纯图标）。
+var Icon = require("./icons.cjs").Icon;
+var Button = require("../../../addons/lib/button.cjs")({ prefix: "wbr", Icon: Icon });
 var Body = require("../../../addons/lib/markdown.cjs").createBody(React);
 var Steps = require("../../../addons/lib/stepper.cjs").Steps;
 var LOCALE = require("../locale.cjs");
@@ -53,8 +56,8 @@ function Editor(props) {
 
   // 切步后把焦点交给这一步的第一个可操作元素。
   React.useEffect(function () {
-    var refs = [nameRef, instructionsRef, saveRef];
-    var node = refs[step] && refs[step].current;
+    // 回到第一步聚焦名称；第二步聚焦指令输入框（预览态没有输入框就交给保存按钮）。
+    var node = step === 0 ? nameRef.current : instructionsRef.current || saveRef.current;
     if (node && node.focus) node.focus();
   }, [step]);
 
@@ -85,7 +88,7 @@ function Editor(props) {
     }
     mark(step, false);
     setStatus("");
-    var to = Math.min(2, step + 1);
+    var to = Math.min(1, step + 1);
     setStep(to);
     setMaxVisited(Math.max(maxVisited, to));
   }
@@ -133,35 +136,28 @@ function Editor(props) {
           h("strong", null, t("role_instructions")),
           h("span", { className: "wbr-count" }, t("role_chars", { n: text.trim().length })),
           h("div", { className: "wbr-tabs", role: "tablist" },
-            h("button", { type: "button", role: "tab", "aria-selected": view === "edit", className: "wbr-tab", onClick: function () { setView("edit"); } }, t("role_edit")),
-            h("button", { type: "button", role: "tab", "aria-selected": view === "preview", className: "wbr-tab", onClick: function () { setView("preview"); } }, t("role_preview")))),
+            h("button", {
+              type: "button", role: "tab", className: "wbr-tab", "aria-selected": view === "edit",
+              onClick: function () { setView("edit"); },
+            }, h(Icon, { name: "pencil", size: 13 }), h("span", null, t("role_edit"))),
+            h("button", {
+              type: "button", role: "tab", className: "wbr-tab", "aria-selected": view === "preview",
+              onClick: function () { setView("preview"); },
+            }, h(Icon, { name: "eye", size: 13 }), h("span", null, t("role_preview"))))),
         view === "edit"
           ? h("textarea", {
-            ref: instructionsRef, name: "instructions", className: "wbr-input", rows: 14, value: draft.instructions || "",
+            ref: instructionsRef, name: "instructions", className: "wbr-input", rows: 14,
+            value: draft.instructions || "",
             onChange: function (e) { mark(1, false); set({ instructions: e.target.value }); },
           })
-          : h("div", { className: "wbr-preview" }, text.trim() ? h(Body, { text: text, mode: "markdown" }) : h("em", null, t("role_preview_empty")))),
+          : h("div", { className: "wbr-preview" },
+            text.trim() ? h(Body, { text: text, mode: "markdown" }) : h("em", null, t("role_preview_empty")))),
       h("p", { className: "wbr-instructions-hint" }, t("role_instructions_hint")),
       invalid[1] ? h("p", { className: "wbr-field-error", role: "alert" }, t("role_instructions_required")) : null);
   }
 
-  function summaryRow(label, value) {
-    return h("div", { className: "wbr-summary-row" },
-      h("dt", null, label), h("dd", null, value || t("role_summary_empty")));
-  }
-
-  // 确认步只回读「用户真正决定的事」，不列动作：动作已经不是配置项。
-  function confirmPane() {
-    return h("div", { className: "wbr-step-pane" },
-      h("dl", { className: "wbr-summary" },
-        summaryRow(t("role_summary_name"), draft.name),
-        summaryRow(t("role_summary_description"), draft.description),
-        summaryRow(t("role_summary_instructions"), t("role_summary_chars", { n: String(draft.instructions || "").trim().length })),
-        summaryRow(t("role_summary_effect"), t("role_summary_effect_value"))));
-  }
-
-  var panes = [basicPane, instructionsPane, confirmPane];
-  var labels = ["role_step_basic", "role_step_instructions", "role_step_confirm"];
+  var panes = [basicPane, instructionsPane];
+  var labels = ["role_step_basic", "role_step_instructions"];
   var steps = labels.map(function (key) { return { key: key, label: t(key) }; });
 
   return h("section", { className: "wb-card wbr-editor" },
@@ -175,12 +171,12 @@ function Editor(props) {
     panes[step](),
     status ? h("p", { className: "wbr-step-status", role: "alert" }, status) : null,
     h("div", { className: "wbr-wizard-foot" },
-      h(Btn, { h: h, onClick: props.onCancel, disabled: busy }, t("role_cancel")),
+      h(Button, { icon: "x", onClick: props.onCancel, disabled: busy }, t("role_cancel")),
       h("div", { className: "wbr-wizard-nav" },
-        step > 0 ? h(Btn, { h: h, onClick: goBack, disabled: busy }, t("role_back")) : null,
-        step < 2
-          ? h(Btn, { h: h, onClick: next, disabled: busy }, t("role_next_step"))
-          : h(Btn, { h: h, ref: saveRef, onClick: submit, disabled: busy }, t("role_save")))));
+        step > 0 ? h(Button, { icon: "arrow-left", onClick: goBack, disabled: busy }, t("role_back")) : null,
+        step < 1
+          ? h(Button, { icon: "arrow-right", onClick: next, disabled: busy }, t("role_next_step"))
+          : h(Button, { icon: "check", ref: saveRef, onClick: submit, disabled: busy }, t("role_save")))));
 }
 
 module.exports = Editor;

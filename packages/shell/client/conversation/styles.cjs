@@ -62,30 +62,62 @@ module.exports = `
 var ROLES_BASE = require("../../../addons/lib/client-base-styles.cjs")("wbr").join("\n");
 // 步骤条是共享控件（lib/stepper.cjs），样式跟控件一起引入，避免页面再手写一套步进样式。
 var STEPS_BASE = require("../../../addons/lib/stepper.cjs").styles.join("\n");
-module.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + `
-.wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:transparent;color:inherit;min-width:0;outline:none}
+// 指令正文复用共享 markdown 正文与「渲染/纯文本」开关（lib/markdown.cjs + body-toggle.cjs），
+// 样式跟共享件一起引入，页面不再自己实现正文排版。
+var DESC_BASE = require("../../../addons/lib/body-styles.cjs") + require("../../../addons/lib/visual-tokens.cjs");
+module.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + "\n" + DESC_BASE + `
+.wbr-page{--wb-description-bg:color-mix(in oklab,var(--wb-accent) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--wb-accent) 34%,transparent)}
+/* 分栏工作区：列表与详情各自滚动，整块高度交给页面（宿主为带 wb-fill 的页面保留可用高度）。 */
+/* 界面红线：业务视图撑满可用宽度，不靠 max-width + margin auto 居中收窄。 */
+.wbr-page>.wb-inner{max-width:none}
+/* 分栏工作区才需要纵向占满；编辑器展开时高度交回整页滚动。 */
+.wbr-page>.wb-inner:has(.wbr-split){flex:1 1 auto;min-height:0}
+.wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card)}
+.wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:var(--wb-surface);color:inherit;min-width:0;outline:none}
 .wbr-input:focus,.wbr-select:focus{border-color:var(--wb-accent)}
-.wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.wbr-search{flex:1 1 260px;min-width:0}
-.wbr-select{flex:0 0 auto}
-.wbr-split{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:14px;align-items:start}
-.wbr-list{min-width:0;display:flex;flex-direction:column;gap:8px}
-.wbr-rows{display:flex;flex-direction:column;gap:6px;max-height:min(70dvh,720px);overflow:auto;padding-right:2px}
-.wbr-row{display:flex;flex-direction:column;gap:4px;text-align:start;background:transparent;color:inherit;font:inherit;border:1px solid var(--wb-line);border-radius:10px;padding:9px 10px;cursor:pointer}
-.wbr-row:hover{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 7%,transparent)}
-.wbr-row[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 12%,transparent)}
-.wbr-row:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-.wbr-row-name{font-weight:600;font-size:13px;overflow-wrap:anywhere}
-.wbr-row-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--wb-muted)}
-.wbr-row-meta code{font-size:11px;overflow-wrap:anywhere}
-.wbr-detail{border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.wbr-detail-empty{padding:0;border:0;background:transparent}
-.wbr-detail-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wbr-detail-head strong{font-size:15px}
-.wbr-detail-head code{font-size:11.5px;color:var(--wb-muted);overflow-wrap:anywhere}
-.wbr-detail-head small{font-size:11.5px;color:var(--wb-muted)}
-.wbr-detail-desc{margin:0;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.wbr-editor{display:flex;flex-direction:column;gap:12px}
+.wbr-input::placeholder{color:var(--wb-muted)}
+.wbr-search{flex:1 1 220px}
+.wbr-filter{flex:0 0 auto}
+.wbr-split{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:14px;flex:1 1 auto;min-height:0;align-items:stretch}
+.wbr-panel{display:flex;flex-direction:column;min-height:0;min-width:0;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);overflow:hidden}
+.wbr-items{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow:auto;padding:8px;overscroll-behavior:contain}
+.wbr-list-note{padding:14px 12px}
+/* 列表行：整行是按钮，网格排布让文字严格左对齐（共享基础样式里 .wbr-row 会把子项居中，这里不用那个类名）。 */
+.wbr-item{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:9px;text-align:start;border:1px solid transparent;border-radius:10px;background:transparent;color:inherit;font:inherit;padding:8px 9px;cursor:pointer;transition:background .12s ease,border-color .12s ease}
+.wbr-item:hover{border-color:var(--wb-line);background:var(--wb-surface)}
+.wbr-item[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wbr-item:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
+.wbr-item-glyph{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:color-mix(in oklab,var(--wb-muted) 14%,transparent);color:var(--wb-muted)}
+.wbr-item[aria-pressed=true] .wbr-item-glyph{background:color-mix(in oklab,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}
+.wbr-item-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wbr-item-name{font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.wbr-item-meta{display:flex;align-items:center;gap:6px;min-width:0;font-size:11px;color:var(--wb-muted)}
+.wbr-item-id{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.wbr-item-ver{flex:none;font-variant-numeric:tabular-nums}
+.wbr-detail{gap:12px;padding:16px;overflow:auto;overscroll-behavior:contain}
+.wbr-detail.is-empty{align-items:center;justify-content:center;color:var(--wb-muted)}
+.wbr-detail-head{display:flex;flex-direction:column;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--wb-line)}
+.wbr-detail-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.wbr-detail-name{margin:0;font-size:16px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+.wbr-detail-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;font-size:11.5px;color:var(--wb-muted)}
+.wbr-detail-id{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px}
+.wbr-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:11px;line-height:1.6;font-variant-numeric:tabular-nums}
+.wbr-detail-desc{margin:0;padding-left:10px;border-left:2px solid color-mix(in oklab,var(--wb-accent) 40%,transparent);font-size:12.5px;line-height:1.65;color:var(--wb-muted);overflow-wrap:anywhere}
+/* 正文小节：标题行自带「渲染/纯文本」开关，避免图标孤零零挂在内容右侧。 */
+.wbr-section{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 auto}
+.wbr-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}
+.wbr-section-head .wb-body-toggle{opacity:1;width:24px;height:24px;border:1px solid var(--wb-line);background:var(--wb-surface);color:var(--wb-muted)}
+.wbr-section-head .wb-body-toggle:hover{color:inherit;border-color:var(--wb-accent)}
+.wbr-section-label{font-size:11.5px;font-weight:600;letter-spacing:.06em;color:var(--wb-muted)}
+.wbr-section-body{font-size:13px;line-height:1.7;min-width:0;overflow-wrap:anywhere}
+.wbr-detail-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--wb-line)}
+.wbr-detail-foot .wbr-btn.danger{margin-inline-start:auto}
+/* 按钮一律「图标 + 文字」：桌面端两者都在，窄屏由基础样式把文字收进读屏（图标仍表意）。 */
+.wbr-page .wbr-btn,.wbr-editor .wbr-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1.5}
+.wbr-page .wbr-btn>svg,.wbr-editor .wbr-btn>svg{flex:none}
+.wbr-danger-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid color-mix(in oklab,var(--wb-danger) 40%,transparent);border-radius:10px;background:color-mix(in oklab,var(--wb-danger) 8%,transparent);font-size:12.5px;line-height:1.5}
+.wbr-danger-box>span{flex:1 1 200px}
+.wbr-editor{display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
 .wbr-steps .wbctl-step-list{margin:0}
 .wbr-step-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wbr-field-error{margin:0;font-size:12px;color:var(--wb-danger)}
@@ -97,28 +129,32 @@ module.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + `
 .wbr-instructions-head{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
 .wbr-instructions-head .wbr-tabs{margin-inline-start:auto}
 .wbr-tabs{display:inline-flex;gap:2px;border:1px solid var(--wb-line);border-radius:8px;padding:2px}
-.wbr-tab{font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
+.wbr-tab{display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
+.wbr-tab>svg{flex:none}
 .wbr-tab[aria-selected=true]{background:color-mix(in oklab,var(--wb-accent) 14%,transparent);color:var(--wb-accent)}
 .wbr-tab:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-preview{border:1px dashed var(--wb-line);border-radius:8px;padding:8px 10px;min-height:3em;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .wbr-count{font-size:11.5px;color:var(--wb-muted);font-weight:400}
-.wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
-.wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}
-.wbr-summary-row dt{color:var(--wb-muted);font-size:12px}
-.wbr-summary-row dd{margin:0;overflow-wrap:anywhere}
 .wbr-wizard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wb-line);padding-top:10px}
 .wbr-wizard-nav{display:flex;gap:8px;margin-inline-start:auto}
-@media(max-width:760px){
-  .wbr-split{grid-template-columns:minmax(0,1fr)}
-  .wbr-rows{max-height:none}
+@media(max-width:900px){
+  /* 窄屏退回单列：高度交给整页滚动，两栏不再各自滚动。 */
+  .wbr-page>.wb-inner:has(.wbr-split){flex:0 0 auto;min-height:0}
+  .wbr-split{grid-template-columns:minmax(0,1fr);flex:0 0 auto;gap:12px}
+  .wbr-items{overflow:visible;max-height:52vh}
+  .wbr-detail{overflow:visible}
 }
 @media(max-width:520px){
-  .wbr-summary-row{grid-template-columns:minmax(0,1fr);gap:2px}
+  .wbr-toolbar{padding:8px}
+  .wbr-search{flex:1 1 100%}
+  .wbr-filter{flex:1 1 auto}
   .wbr-wizard-foot{gap:6px}
   /* 窄屏不挤压步骤名：每步给最小宽度，整条步骤栏横向滚动。 */
-  .wbr-steps .wbctl-step-list{overflow-x:auto;padding-bottom:2px}
-  .wbr-steps .wbctl-step-item{flex:0 0 auto}
-  .wbr-steps .wbctl-step{min-width:112px}
-  .wbr-steps .wbctl-step-label{white-space:nowrap}
+  /* 窄屏：步骤条允许换行折行，优先保证三步都完整可见；真放不下才横向滚动。 */
+  .wbr-steps .wbctl-step-list{overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}
+  .wbr-steps .wbctl-step-item{flex:1 1 30%;min-width:0}
+  .wbr-steps .wbctl-step{min-width:0;width:100%}
+  .wbr-steps .wbctl-step-label{white-space:normal;overflow-wrap:anywhere}
+  .wbr-detail-head{gap:4px}
 }
 `;

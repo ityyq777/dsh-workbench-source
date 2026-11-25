@@ -624,7 +624,6 @@ var require_locale2 = __commonJS({
         role_hint: "\u2191\u2193 \u9009\u62E9 \xB7 Enter \u786E\u8BA4 \xB7 Esc \u5173\u95ED",
         role_step_basic: "\u57FA\u672C\u4FE1\u606F",
         role_step_instructions: "\u89D2\u8272\u6307\u4EE4",
-        role_step_confirm: "\u786E\u8BA4\u4E0E\u4FDD\u5B58",
         role_step_label: "\u521B\u5EFA\u6B65\u9AA4",
         role_wizard_new: "\u65B0\u5EFA\u89D2\u8272",
         role_wizard_edit: "\u7F16\u8F91\u89D2\u8272",
@@ -642,13 +641,6 @@ var require_locale2 = __commonJS({
         role_next_step: "\u4E0B\u4E00\u6B65",
         role_save: "\u4FDD\u5B58",
         role_cancel: "\u53D6\u6D88",
-        role_summary_name: "\u540D\u79F0",
-        role_summary_description: "\u804C\u8D23\u7B80\u4ECB",
-        role_summary_instructions: "\u6307\u4EE4\u957F\u5EA6",
-        role_summary_chars: "{n} \u5B57",
-        role_summary_effect: "\u751F\u6548\u65F6\u673A",
-        role_summary_effect_value: "\u4FDD\u5B58\u540E\u4ECE\u4E0B\u4E00\u8F6E\u5BF9\u8BDD\u751F\u6548\u3002",
-        role_summary_empty: "\u672A\u586B\u5199",
         nav: "\u5DE5\u4F5C\u53F0",
         title: "\u5DE5\u4F5C\u53F0",
         tagline: "\u79BB\u7EBF\u4F18\u5148 \xB7 \u4E1A\u52A1\u63D2\u4EF6\u7531 DSH \u5B89\u88C5",
@@ -1012,7 +1004,6 @@ var require_locale2 = __commonJS({
         role_hint: "\u2191\u2193 select \xB7 Enter confirm \xB7 Esc close",
         role_step_basic: "Basics",
         role_step_instructions: "Instructions",
-        role_step_confirm: "Review",
         role_step_label: "Setup steps",
         role_wizard_new: "New role",
         role_wizard_edit: "Edit role",
@@ -1030,13 +1021,6 @@ var require_locale2 = __commonJS({
         role_next_step: "Next",
         role_save: "Save",
         role_cancel: "Cancel",
-        role_summary_name: "Name",
-        role_summary_description: "Description",
-        role_summary_instructions: "Instruction length",
-        role_summary_chars: "{n} chars",
-        role_summary_effect: "Takes effect",
-        role_summary_effect_value: "From the next turn after saving.",
-        role_summary_empty: "Not set",
         nav: "Workbench",
         title: "Workbench",
         tagline: "Offline-first \xB7 addons installed by DSH",
@@ -1932,6 +1916,46 @@ var require_stepper = __commonJS({
   }
 });
 
+// packages/addons/lib/body-styles.cjs
+var require_body_styles = __commonJS({
+  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
+    module2.exports = `
+.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
+.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
+.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
+.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
+.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
+.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
+.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
+.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
+.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
+.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
+.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
+.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
+.wb-body-section{min-width:0;overflow-anchor:none}
+.wb-body-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;padding-left:12px;min-height:24px}
+.wb-body-heading .wb-body-label{float:none;margin:0;padding:0;border-radius:0;background:none;color:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;opacity:.72}
+.wb-body-toggle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border:0;background:transparent;color:inherit;padding:0;border-radius:4px;cursor:pointer;opacity:.7}
+.wb-body-toggle:hover{opacity:1;background:color-mix(in srgb,currentColor 5%,transparent)}
+.wb-body-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
+.wb-body-toggle-icon{display:flex;animation:wb-body-icon-in 140ms ease-out}
+@keyframes wb-body-icon-in{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
+.wbt-item.closed:has(.wb-body-label){opacity:1}
+`;
+  }
+});
+
+// packages/addons/lib/visual-tokens.cjs
+var require_visual_tokens = __commonJS({
+  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
+    module2.exports = `
+:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
+.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
+`;
+  }
+});
+
 // packages/shell/client/conversation/styles.cjs
 var require_styles = __commonJS({
   "packages/shell/client/conversation/styles.cjs"(exports2, module2) {
@@ -1996,30 +2020,60 @@ var require_styles = __commonJS({
 `;
     var ROLES_BASE = require_client_base_styles()("wbr").join("\n");
     var STEPS_BASE = require_stepper().styles.join("\n");
-    module2.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + `
-.wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:transparent;color:inherit;min-width:0;outline:none}
+    var DESC_BASE = require_body_styles() + require_visual_tokens();
+    module2.exports += "\n" + ROLES_BASE + "\n" + STEPS_BASE + "\n" + DESC_BASE + `
+.wbr-page{--wb-description-bg:color-mix(in oklab,var(--wb-accent) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--wb-accent) 34%,transparent)}
+/* \u5206\u680F\u5DE5\u4F5C\u533A\uFF1A\u5217\u8868\u4E0E\u8BE6\u60C5\u5404\u81EA\u6EDA\u52A8\uFF0C\u6574\u5757\u9AD8\u5EA6\u4EA4\u7ED9\u9875\u9762\uFF08\u5BBF\u4E3B\u4E3A\u5E26 wb-fill \u7684\u9875\u9762\u4FDD\u7559\u53EF\u7528\u9AD8\u5EA6\uFF09\u3002 */
+/* \u754C\u9762\u7EA2\u7EBF\uFF1A\u4E1A\u52A1\u89C6\u56FE\u6491\u6EE1\u53EF\u7528\u5BBD\u5EA6\uFF0C\u4E0D\u9760 max-width + margin auto \u5C45\u4E2D\u6536\u7A84\u3002 */
+.wbr-page>.wb-inner{max-width:none}
+/* \u5206\u680F\u5DE5\u4F5C\u533A\u624D\u9700\u8981\u7EB5\u5411\u5360\u6EE1\uFF1B\u7F16\u8F91\u5668\u5C55\u5F00\u65F6\u9AD8\u5EA6\u4EA4\u56DE\u6574\u9875\u6EDA\u52A8\u3002 */
+.wbr-page>.wb-inner:has(.wbr-split){flex:1 1 auto;min-height:0}
+.wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card)}
+.wbr-input,.wbr-select{border:1px solid var(--wb-line);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;background:var(--wb-surface);color:inherit;min-width:0;outline:none}
 .wbr-input:focus,.wbr-select:focus{border-color:var(--wb-accent)}
-.wbr-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.wbr-search{flex:1 1 260px;min-width:0}
-.wbr-select{flex:0 0 auto}
-.wbr-split{display:grid;grid-template-columns:minmax(240px,340px) minmax(0,1fr);gap:14px;align-items:start}
-.wbr-list{min-width:0;display:flex;flex-direction:column;gap:8px}
-.wbr-rows{display:flex;flex-direction:column;gap:6px;max-height:min(70dvh,720px);overflow:auto;padding-right:2px}
-.wbr-row{display:flex;flex-direction:column;gap:4px;text-align:start;background:transparent;color:inherit;font:inherit;border:1px solid var(--wb-line);border-radius:10px;padding:9px 10px;cursor:pointer}
-.wbr-row:hover{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 7%,transparent)}
-.wbr-row[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 12%,transparent)}
-.wbr-row:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}
-.wbr-row-name{font-weight:600;font-size:13px;overflow-wrap:anywhere}
-.wbr-row-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--wb-muted)}
-.wbr-row-meta code{font-size:11px;overflow-wrap:anywhere}
-.wbr-detail{border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-surface);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.wbr-detail-empty{padding:0;border:0;background:transparent}
-.wbr-detail-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wbr-detail-head strong{font-size:15px}
-.wbr-detail-head code{font-size:11.5px;color:var(--wb-muted);overflow-wrap:anywhere}
-.wbr-detail-head small{font-size:11.5px;color:var(--wb-muted)}
-.wbr-detail-desc{margin:0;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
-.wbr-editor{display:flex;flex-direction:column;gap:12px}
+.wbr-input::placeholder{color:var(--wb-muted)}
+.wbr-search{flex:1 1 220px}
+.wbr-filter{flex:0 0 auto}
+.wbr-split{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:14px;flex:1 1 auto;min-height:0;align-items:stretch}
+.wbr-panel{display:flex;flex-direction:column;min-height:0;min-width:0;border:1px solid var(--wb-border);border-radius:12px;background:var(--wb-card);overflow:hidden}
+.wbr-items{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow:auto;padding:8px;overscroll-behavior:contain}
+.wbr-list-note{padding:14px 12px}
+/* \u5217\u8868\u884C\uFF1A\u6574\u884C\u662F\u6309\u94AE\uFF0C\u7F51\u683C\u6392\u5E03\u8BA9\u6587\u5B57\u4E25\u683C\u5DE6\u5BF9\u9F50\uFF08\u5171\u4EAB\u57FA\u7840\u6837\u5F0F\u91CC .wbr-row \u4F1A\u628A\u5B50\u9879\u5C45\u4E2D\uFF0C\u8FD9\u91CC\u4E0D\u7528\u90A3\u4E2A\u7C7B\u540D\uFF09\u3002 */
+.wbr-item{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:9px;text-align:start;border:1px solid transparent;border-radius:10px;background:transparent;color:inherit;font:inherit;padding:8px 9px;cursor:pointer;transition:background .12s ease,border-color .12s ease}
+.wbr-item:hover{border-color:var(--wb-line);background:var(--wb-surface)}
+.wbr-item[aria-pressed=true]{border-color:var(--wb-accent);background:color-mix(in oklab,var(--wb-accent) 10%,var(--wb-card))}
+.wbr-item:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
+.wbr-item-glyph{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:7px;background:color-mix(in oklab,var(--wb-muted) 14%,transparent);color:var(--wb-muted)}
+.wbr-item[aria-pressed=true] .wbr-item-glyph{background:color-mix(in oklab,var(--wb-accent) 16%,transparent);color:var(--wb-accent)}
+.wbr-item-body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wbr-item-name{font-size:13px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.wbr-item-meta{display:flex;align-items:center;gap:6px;min-width:0;font-size:11px;color:var(--wb-muted)}
+.wbr-item-id{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.wbr-item-ver{flex:none;font-variant-numeric:tabular-nums}
+.wbr-detail{gap:12px;padding:16px;overflow:auto;overscroll-behavior:contain}
+.wbr-detail.is-empty{align-items:center;justify-content:center;color:var(--wb-muted)}
+.wbr-detail-head{display:flex;flex-direction:column;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--wb-line)}
+.wbr-detail-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.wbr-detail-name{margin:0;font-size:16px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+.wbr-detail-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;font-size:11.5px;color:var(--wb-muted)}
+.wbr-detail-id{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px}
+.wbr-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:999px;border:1px solid var(--wb-line);background:var(--wb-surface);font-size:11px;line-height:1.6;font-variant-numeric:tabular-nums}
+.wbr-detail-desc{margin:0;padding-left:10px;border-left:2px solid color-mix(in oklab,var(--wb-accent) 40%,transparent);font-size:12.5px;line-height:1.65;color:var(--wb-muted);overflow-wrap:anywhere}
+/* \u6B63\u6587\u5C0F\u8282\uFF1A\u6807\u9898\u884C\u81EA\u5E26\u300C\u6E32\u67D3/\u7EAF\u6587\u672C\u300D\u5F00\u5173\uFF0C\u907F\u514D\u56FE\u6807\u5B64\u96F6\u96F6\u6302\u5728\u5185\u5BB9\u53F3\u4FA7\u3002 */
+.wbr-section{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1 1 auto}
+.wbr-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px}
+.wbr-section-head .wb-body-toggle{opacity:1;width:24px;height:24px;border:1px solid var(--wb-line);background:var(--wb-surface);color:var(--wb-muted)}
+.wbr-section-head .wb-body-toggle:hover{color:inherit;border-color:var(--wb-accent)}
+.wbr-section-label{font-size:11.5px;font-weight:600;letter-spacing:.06em;color:var(--wb-muted)}
+.wbr-section-body{font-size:13px;line-height:1.7;min-width:0;overflow-wrap:anywhere}
+.wbr-detail-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--wb-line)}
+.wbr-detail-foot .wbr-btn.danger{margin-inline-start:auto}
+/* \u6309\u94AE\u4E00\u5F8B\u300C\u56FE\u6807 + \u6587\u5B57\u300D\uFF1A\u684C\u9762\u7AEF\u4E24\u8005\u90FD\u5728\uFF0C\u7A84\u5C4F\u7531\u57FA\u7840\u6837\u5F0F\u628A\u6587\u5B57\u6536\u8FDB\u8BFB\u5C4F\uFF08\u56FE\u6807\u4ECD\u8868\u610F\uFF09\u3002 */
+.wbr-page .wbr-btn,.wbr-editor .wbr-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1.5}
+.wbr-page .wbr-btn>svg,.wbr-editor .wbr-btn>svg{flex:none}
+.wbr-danger-box{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border:1px solid color-mix(in oklab,var(--wb-danger) 40%,transparent);border-radius:10px;background:color-mix(in oklab,var(--wb-danger) 8%,transparent);font-size:12.5px;line-height:1.5}
+.wbr-danger-box>span{flex:1 1 200px}
+.wbr-editor{display:flex;flex-direction:column;gap:12px;flex:0 0 auto}
 .wbr-steps .wbctl-step-list{margin:0}
 .wbr-step-pane{display:flex;flex-direction:column;gap:10px;min-width:0}
 .wbr-field-error{margin:0;font-size:12px;color:var(--wb-danger)}
@@ -2031,29 +2085,33 @@ var require_styles = __commonJS({
 .wbr-instructions-head{display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap}
 .wbr-instructions-head .wbr-tabs{margin-inline-start:auto}
 .wbr-tabs{display:inline-flex;gap:2px;border:1px solid var(--wb-line);border-radius:8px;padding:2px}
-.wbr-tab{font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
+.wbr-tab{display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px;border:0;background:transparent;color:inherit;padding:3px 9px;border-radius:6px;cursor:pointer}
+.wbr-tab>svg{flex:none}
 .wbr-tab[aria-selected=true]{background:color-mix(in oklab,var(--wb-accent) 14%,transparent);color:var(--wb-accent)}
 .wbr-tab:focus-visible{outline:2px solid var(--wb-accent);outline-offset:1px}
 .wbr-preview{border:1px dashed var(--wb-line);border-radius:8px;padding:8px 10px;min-height:3em;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .wbr-count{font-size:11.5px;color:var(--wb-muted);font-weight:400}
-.wbr-summary{display:grid;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--wb-line);border-radius:10px}
-.wbr-summary-row{display:grid;grid-template-columns:minmax(84px,auto) minmax(0,1fr);gap:10px;font-size:13px;line-height:1.6}
-.wbr-summary-row dt{color:var(--wb-muted);font-size:12px}
-.wbr-summary-row dd{margin:0;overflow-wrap:anywhere}
 .wbr-wizard-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--wb-line);padding-top:10px}
 .wbr-wizard-nav{display:flex;gap:8px;margin-inline-start:auto}
-@media(max-width:760px){
-  .wbr-split{grid-template-columns:minmax(0,1fr)}
-  .wbr-rows{max-height:none}
+@media(max-width:900px){
+  /* \u7A84\u5C4F\u9000\u56DE\u5355\u5217\uFF1A\u9AD8\u5EA6\u4EA4\u7ED9\u6574\u9875\u6EDA\u52A8\uFF0C\u4E24\u680F\u4E0D\u518D\u5404\u81EA\u6EDA\u52A8\u3002 */
+  .wbr-page>.wb-inner:has(.wbr-split){flex:0 0 auto;min-height:0}
+  .wbr-split{grid-template-columns:minmax(0,1fr);flex:0 0 auto;gap:12px}
+  .wbr-items{overflow:visible;max-height:52vh}
+  .wbr-detail{overflow:visible}
 }
 @media(max-width:520px){
-  .wbr-summary-row{grid-template-columns:minmax(0,1fr);gap:2px}
+  .wbr-toolbar{padding:8px}
+  .wbr-search{flex:1 1 100%}
+  .wbr-filter{flex:1 1 auto}
   .wbr-wizard-foot{gap:6px}
   /* \u7A84\u5C4F\u4E0D\u6324\u538B\u6B65\u9AA4\u540D\uFF1A\u6BCF\u6B65\u7ED9\u6700\u5C0F\u5BBD\u5EA6\uFF0C\u6574\u6761\u6B65\u9AA4\u680F\u6A2A\u5411\u6EDA\u52A8\u3002 */
-  .wbr-steps .wbctl-step-list{overflow-x:auto;padding-bottom:2px}
-  .wbr-steps .wbctl-step-item{flex:0 0 auto}
-  .wbr-steps .wbctl-step{min-width:112px}
-  .wbr-steps .wbctl-step-label{white-space:nowrap}
+  /* \u7A84\u5C4F\uFF1A\u6B65\u9AA4\u6761\u5141\u8BB8\u6362\u884C\u6298\u884C\uFF0C\u4F18\u5148\u4FDD\u8BC1\u4E09\u6B65\u90FD\u5B8C\u6574\u53EF\u89C1\uFF1B\u771F\u653E\u4E0D\u4E0B\u624D\u6A2A\u5411\u6EDA\u52A8\u3002 */
+  .wbr-steps .wbctl-step-list{overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}
+  .wbr-steps .wbctl-step-item{flex:1 1 30%;min-width:0}
+  .wbr-steps .wbctl-step{min-width:0;width:100%}
+  .wbr-steps .wbctl-step-label{white-space:normal;overflow-wrap:anywhere}
+  .wbr-detail-head{gap:4px}
 }
 `;
   }
@@ -4632,16 +4690,6 @@ var require_data_copy = __commonJS({
       }
     };
     module2.exports = COPY;
-  }
-});
-
-// packages/addons/lib/visual-tokens.cjs
-var require_visual_tokens = __commonJS({
-  "packages/addons/lib/visual-tokens.cjs"(exports2, module2) {
-    module2.exports = `
-:where(.wbt-root,.wbi-root,.wbi-cfg,.wbt-data,.wbs-data,.wbg-data,.wbi-data,.wb-desc){--wb-radius-sm:8px;--wb-radius-card:12px;--wb-space-sm:8px;--wb-space-md:14px;--wb-border:var(--dsw-alias-border-l2,color-mix(in oklab,currentColor 16%,transparent));--wb-description-bg:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 7%,transparent);--wb-description-line:color-mix(in oklab,var(--dsw-alias-brand-primary,#5b7fd6) 34%,transparent);--wb-motion:140ms;--wb-btn-bg:transparent;--wb-btn-hover-bg:color-mix(in oklab,currentColor 6%,transparent);--wb-btn-active-bg:color-mix(in oklab,currentColor 11%,transparent);--wb-btn-primary-bg:var(--dsw-alias-brand-primary,#2563eb);--wb-btn-primary-fg:var(--dsw-alias-label-primary-inverted,#fff);--wb-btn-danger-fg:var(--dsw-alias-state-error-primary,#b91c1c);--wb-btn-size-sm:32px;--wb-btn-focus:2px solid var(--dsw-alias-brand-primary,#2563eb);--wb-btn-focus-offset:2px}
-.wb-desc{background:var(--wb-description-bg);border-left-color:var(--wb-description-line);border-radius:0 var(--wb-radius-sm) var(--wb-radius-sm) 0}
-`;
   }
 });
 
@@ -10509,13 +10557,18 @@ var require_button = __commonJS({
       var prefix = opts.prefix;
       var Icon2 = opts.Icon;
       function Button(props) {
-        var attrs = Object.assign({ type: "button", className: prefix + "-btn" }, props);
+        var attrs = Object.assign({}, props, { type: props.type || "button" });
+        var classes = [prefix + "-btn"];
+        if (props.kind) classes.push(props.kind);
+        if (props.className) classes.push(props.className);
+        if (props.icon) classes.push(props.iconOnly ? prefix + "-icon-only" : prefix + "-icon-text");
+        attrs.className = classes.filter(Boolean).join(" ");
         delete attrs.icon;
         delete attrs.iconOnly;
+        delete attrs.kind;
         if (props.icon) {
-          attrs["aria-label"] = props["aria-label"] || props.children;
+          attrs["aria-label"] = props["aria-label"] || (typeof props.children === "string" ? props.children : void 0);
           attrs.title = props.title || attrs["aria-label"];
-          attrs.className += props.iconOnly ? " " + prefix + "-icon-only" : " " + prefix + "-icon-text";
         }
         return h2(
           "button",
@@ -10603,6 +10656,184 @@ var init_x_circle = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/copy.mjs
+var copy_exports = {};
+__export(copy_exports, {
+  __iconData: () => __iconData34,
+  default: () => Copy
+});
+var __iconData34, Copy;
+var init_copy = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/copy.mjs"() {
+    init_createLucideIcon();
+    __iconData34 = {
+      name: "copy",
+      size: 24,
+      node: [
+        ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+        ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+      ]
+    };
+    __iconData34.node;
+    Copy = createLucideIcon(__iconData34);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
+var eye_exports = {};
+__export(eye_exports, {
+  __iconData: () => __iconData35,
+  default: () => Eye
+});
+var __iconData35, Eye;
+var init_eye = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
+    init_createLucideIcon();
+    __iconData35 = {
+      name: "eye",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+            key: "1nclc0"
+          }
+        ],
+        ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+      ]
+    };
+    __iconData35.node;
+    Eye = createLucideIcon(__iconData35);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData36,
+  default: () => RefreshCw
+});
+var __iconData36, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData36 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData36.node;
+    RefreshCw = createLucideIcon(__iconData36);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs
+var arrow_left_exports = {};
+__export(arrow_left_exports, {
+  __iconData: () => __iconData37,
+  default: () => ArrowLeft
+});
+var __iconData37, ArrowLeft;
+var init_arrow_left = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs"() {
+    init_createLucideIcon();
+    __iconData37 = {
+      name: "arrow-left",
+      size: 24,
+      node: [
+        ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+        ["path", { d: "M19 12H5", key: "x3x0zl" }]
+      ]
+    };
+    __iconData37.node;
+    ArrowLeft = createLucideIcon(__iconData37);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-right.mjs
+var arrow_right_exports = {};
+__export(arrow_right_exports, {
+  __iconData: () => __iconData38,
+  default: () => ArrowRight
+});
+var __iconData38, ArrowRight;
+var init_arrow_right = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-right.mjs"() {
+    init_createLucideIcon();
+    __iconData38 = {
+      name: "arrow-right",
+      size: 24,
+      node: [
+        ["path", { d: "M5 12h14", key: "1ays0h" }],
+        ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
+      ]
+    };
+    __iconData38.node;
+    ArrowRight = createLucideIcon(__iconData38);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
+var __iconData39, CodeXml;
+var init_code_xml = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
+    init_createLucideIcon();
+    __iconData39 = {
+      name: "code-xml",
+      size: 24,
+      node: [
+        ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
+        ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
+        ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
+      ],
+      aliases: ["code-2"]
+    };
+    __iconData39.node;
+    CodeXml = createLucideIcon(__iconData39);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
+var code_2_exports = {};
+__export(code_2_exports, {
+  default: () => CodeXml
+});
+var init_code_2 = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
+    init_code_xml();
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
+var pilcrow_exports = {};
+__export(pilcrow_exports, {
+  __iconData: () => __iconData40,
+  default: () => Pilcrow
+});
+var __iconData40, Pilcrow;
+var init_pilcrow = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
+    init_createLucideIcon();
+    __iconData40 = {
+      name: "pilcrow",
+      size: 24,
+      node: [
+        ["path", { d: "M13 4v16", key: "8vvj80" }],
+        ["path", { d: "M17 4v16", key: "7dpous" }],
+        ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
+      ]
+    };
+    __iconData40.node;
+    Pilcrow = createLucideIcon(__iconData40);
+  }
+});
+
 // packages/shell/client/conversation/icons.cjs
 var require_icons2 = __commonJS({
   "packages/shell/client/conversation/icons.cjs"(exports2, module2) {
@@ -10612,7 +10843,18 @@ var require_icons2 = __commonJS({
       "check": (init_check(), __toCommonJS(check_exports)).default,
       "bot": (init_bot(), __toCommonJS(bot_exports)).default,
       "user": (init_user(), __toCommonJS(user_exports)).default,
-      "x-circle": (init_x_circle(), __toCommonJS(x_circle_exports)).default
+      "x-circle": (init_x_circle(), __toCommonJS(x_circle_exports)).default,
+      "plus": (init_plus(), __toCommonJS(plus_exports)).default,
+      "copy": (init_copy(), __toCommonJS(copy_exports)).default,
+      "pencil": (init_pencil(), __toCommonJS(pencil_exports)).default,
+      "trash-2": (init_trash_2(), __toCommonJS(trash_2_exports)).default,
+      "eye": (init_eye(), __toCommonJS(eye_exports)).default,
+      "refresh-cw": (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default,
+      "arrow-left": (init_arrow_left(), __toCommonJS(arrow_left_exports)).default,
+      "arrow-right": (init_arrow_right(), __toCommonJS(arrow_right_exports)).default,
+      "x": (init_x(), __toCommonJS(x_exports)).default,
+      "code-2": (init_code_2(), __toCommonJS(code_2_exports)).default,
+      "pilcrow": (init_pilcrow(), __toCommonJS(pilcrow_exports)).default
     }, { fallback: "bot", classNameAppend: true });
   }
 });
@@ -12151,6 +12393,40 @@ var require_view_outlet = __commonJS({
   }
 });
 
+// packages/addons/lib/body-copy.cjs
+var require_body_copy = __commonJS({
+  "packages/addons/lib/body-copy.cjs"(exports2, module2) {
+    module2.exports = {
+      zh: { desc: "\u63CF\u8FF0", markdown: "Markdown \u6E32\u67D3", plainText: "\u7EAF\u6587\u672C", bodyModeToggle: "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}" },
+      en: { desc: "Description", markdown: "Rendered Markdown", plainText: "Plain text", bodyModeToggle: "{field} \xB7 Current: {current}; switch to {target}" }
+    };
+  }
+});
+
+// packages/addons/lib/body-toggle.cjs
+var require_body_toggle = __commonJS({
+  "packages/addons/lib/body-toggle.cjs"(exports2, module2) {
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      return function BodyMode(props) {
+        var plain = props.mode === "text", t = props.t;
+        var label = t.bodyModeToggle.replace("{field}", props.label).replace("{current}", t[plain ? "plainText" : "markdown"]).replace("{target}", t[plain ? "markdown" : "plainText"]);
+        return h2("button", {
+          type: "button",
+          className: "wb-body-toggle" + (props.className ? " " + props.className : ""),
+          title: label,
+          "aria-label": label,
+          "aria-pressed": !plain,
+          onClick: function(e) {
+            e.stopPropagation();
+            props.onChange(plain ? "markdown" : "text");
+          }
+        }, h2("span", { key: props.mode, className: "wb-body-toggle-icon", "aria-hidden": true }, h2(props.Icon, { name: plain ? "pilcrow" : "code-2", size: 14 })));
+      };
+    };
+  }
+});
+
 // packages/addons/lib/markdown.cjs
 var require_markdown = __commonJS({
   "packages/addons/lib/markdown.cjs"(exports2, module2) {
@@ -12282,217 +12558,6 @@ var require_markdown = __commonJS({
   }
 });
 
-// packages/addons/lib/body-toggle.cjs
-var require_body_toggle = __commonJS({
-  "packages/addons/lib/body-toggle.cjs"(exports2, module2) {
-    module2.exports = function(React) {
-      var h2 = React.createElement;
-      return function BodyMode(props) {
-        var plain = props.mode === "text", t = props.t;
-        var label = t.bodyModeToggle.replace("{field}", props.label).replace("{current}", t[plain ? "plainText" : "markdown"]).replace("{target}", t[plain ? "markdown" : "plainText"]);
-        return h2("button", {
-          type: "button",
-          className: "wb-body-toggle" + (props.className ? " " + props.className : ""),
-          title: label,
-          "aria-label": label,
-          "aria-pressed": !plain,
-          onClick: function(e) {
-            e.stopPropagation();
-            props.onChange(plain ? "markdown" : "text");
-          }
-        }, h2("span", { key: props.mode, className: "wb-body-toggle-icon", "aria-hidden": true }, h2(props.Icon, { name: plain ? "pilcrow" : "code-2", size: 14 })));
-      };
-    };
-  }
-});
-
-// packages/addons/lib/body-copy.cjs
-var require_body_copy = __commonJS({
-  "packages/addons/lib/body-copy.cjs"(exports2, module2) {
-    module2.exports = {
-      zh: { desc: "\u63CF\u8FF0", markdown: "Markdown \u6E32\u67D3", plainText: "\u7EAF\u6587\u672C", bodyModeToggle: "{field} \xB7 \u5F53\u524D\uFF1A{current}\uFF1B\u5207\u6362\u4E3A{target}" },
-      en: { desc: "Description", markdown: "Rendered Markdown", plainText: "Plain text", bodyModeToggle: "{field} \xB7 Current: {current}; switch to {target}" }
-    };
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
-var __iconData34, CodeXml;
-var init_code_xml = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
-    init_createLucideIcon();
-    __iconData34 = {
-      name: "code-xml",
-      size: 24,
-      node: [
-        ["path", { d: "m18 16 4-4-4-4", key: "1inbqp" }],
-        ["path", { d: "m6 8-4 4 4 4", key: "15zrgr" }],
-        ["path", { d: "m14.5 4-5 16", key: "e7oirm" }]
-      ],
-      aliases: ["code-2"]
-    };
-    __iconData34.node;
-    CodeXml = createLucideIcon(__iconData34);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs
-var code_2_exports = {};
-__export(code_2_exports, {
-  default: () => CodeXml
-});
-var init_code_2 = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-2.mjs"() {
-    init_code_xml();
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
-var pilcrow_exports = {};
-__export(pilcrow_exports, {
-  __iconData: () => __iconData35,
-  default: () => Pilcrow
-});
-var __iconData35, Pilcrow;
-var init_pilcrow = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
-    init_createLucideIcon();
-    __iconData35 = {
-      name: "pilcrow",
-      size: 24,
-      node: [
-        ["path", { d: "M13 4v16", key: "8vvj80" }],
-        ["path", { d: "M17 4v16", key: "7dpous" }],
-        ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
-      ]
-    };
-    __iconData35.node;
-    Pilcrow = createLucideIcon(__iconData35);
-  }
-});
-
-// packages/addons/lib/body-styles.cjs
-var require_body_styles = __commonJS({
-  "packages/addons/lib/body-styles.cjs"(exports2, module2) {
-    module2.exports = `
-.wb-body-label{float:left;position:relative;z-index:1;margin:1px 6px 0 0;padding:1px 4px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.06em;line-height:1.6;color:#234783;background:color-mix(in srgb,#5b7fd6 8%,#fff);white-space:nowrap}
-.wb-body-label.wb-review-label{color:#154d43;background:color-mix(in srgb,var(--wbt-accent,#11a89b) 8%,#fff)}
-.wb-markdown{white-space:normal;min-width:0;overflow-wrap:anywhere}.wb-markdown:after{content:'';display:table;clear:both}
-.wb-markdown p{margin:0 0 6px;white-space:pre-wrap}.wb-markdown>:last-child{margin-bottom:0}
-.wb-markdown h1,.wb-markdown h2,.wb-markdown h3,.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{margin:6px 0;font-weight:650;line-height:1.6}
-.wb-markdown>:first-child{margin-top:0}.wb-markdown h1{font-size:16px}.wb-markdown h2{font-size:15px}.wb-markdown h3{font-size:14px}.wb-markdown h4,.wb-markdown h5,.wb-markdown h6{font-size:13px}
-.wb-markdown ul,.wb-markdown ol{margin:4px 0;padding-left:24px;display:flow-root}.wb-markdown li{margin:1px 0}
-.wb-markdown blockquote{border-left:2px solid currentColor;padding-left:9px;margin:4px 0;display:flow-root}
-.wb-markdown pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:8px;border-radius:6px;background:color-mix(in srgb,currentColor 7%,transparent);display:flow-root;margin:5px 0}
-.wb-markdown code,.wb-body-text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.wb-markdown code{background:color-mix(in srgb,currentColor 7%,transparent);border-radius:3px;padding:1px 3px}.wb-markdown pre code{padding:0;background:none}
-.wb-markdown a{color:inherit;text-decoration:underline}.wb-markdown hr{border:0;border-top:1px solid currentColor;opacity:.3;clear:both}
-.wb-body-text{white-space:pre-wrap;overflow-wrap:anywhere}.wb-body-text:after{content:'';display:table;clear:both}
-.wb-body-section{min-width:0;overflow-anchor:none}
-.wb-body-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;padding-left:12px;min-height:24px}
-.wb-body-heading .wb-body-label{float:none;margin:0;padding:0;border-radius:0;background:none;color:inherit;font-size:11.5px;font-weight:600;letter-spacing:.06em;opacity:.72}
-.wb-body-toggle{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;border:0;background:transparent;color:inherit;padding:0;border-radius:4px;cursor:pointer;opacity:.7}
-.wb-body-toggle:hover{opacity:1;background:color-mix(in srgb,currentColor 5%,transparent)}
-.wb-body-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
-.wb-body-toggle-icon{display:flex;animation:wb-body-icon-in 140ms ease-out}
-@keyframes wb-body-icon-in{from{opacity:0}to{opacity:1}}
-@media(prefers-reduced-motion:reduce){.wb-body-toggle-icon{animation:none}}
-.wbt-item.closed:has(.wb-body-label){opacity:1}
-`;
-  }
-});
-
-// packages/addons/lib/body-id.cjs
-var require_body_id = __commonJS({
-  "packages/addons/lib/body-id.cjs"(exports2, module2) {
-    var nextId = 0;
-    module2.exports = function useBodyId(React) {
-      return typeof React.useId === "function" ? React.useId() : React.useState("wb-body-" + ++nextId)[0];
-    };
-  }
-});
-
-// packages/addons/lib/description.cjs
-var require_description = __commonJS({
-  "packages/addons/lib/description.cjs"(exports2, module2) {
-    var React = require("react");
-    var h2 = React.createElement;
-    var Body = require_markdown().createBody(React);
-    var bodies = typeof WeakMap === "function" ? /* @__PURE__ */ new WeakMap() : null;
-    function bodyFor(Highlight) {
-      if (!Highlight) return Body;
-      if (!bodies) return require_markdown().createBody(React, Highlight);
-      if (!bodies.has(Highlight)) bodies.set(Highlight, require_markdown().createBody(React, Highlight));
-      return bodies.get(Highlight);
-    }
-    var BodyMode = require_body_toggle()(React);
-    var copy = require_body_copy();
-    var Code = (init_code_2(), __toCommonJS(code_2_exports)).default;
-    var Pilcrow2 = (init_pilcrow(), __toCommonJS(pilcrow_exports)).default;
-    function BodyIcon(props) {
-      return h2(props.name === "pilcrow" ? Pilcrow2 : Code, { size: props.size, "aria-hidden": true, focusable: false });
-    }
-    var css = require_body_styles() + `
-.wb-desc{margin-top:4px;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;max-width:100%;min-width:0;box-sizing:border-box;padding:6px 10px;border-radius:0 8px 8px 0;border-left:2px solid color-mix(in oklab,#5b7fd6 34%,transparent);background:color-mix(in oklab,#5b7fd6 7%,transparent);color:inherit}
-.wb-description{margin-top:10px}.wb-description>.wb-desc{margin-top:0}
-.wb-desc-text{display:block}.wb-desc-clamped{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.wb-desc-toggle{display:block;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-size:12px;min-width:32px;min-height:32px;padding:3px 6px;border-radius:6px;cursor:pointer;white-space:normal}
-.wb-desc-toggle:hover{background:color-mix(in oklab,currentColor 8%,transparent)}.wb-desc-toggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#2563eb);outline-offset:2px}
-`;
-    function Description(props) {
-      var mode = React.useState(props.bodyMode === "text" ? "text" : "markdown");
-      var labelId = require_body_id()(React) + "-desc", t = copy[props.lang === "en" ? "en" : "zh"];
-      var text = props.text == null ? "" : String(props.text);
-      var DescBody = bodyFor(props.Highlight);
-      var expanded = React.useState(false), overflow = React.useState(false), ref = React.useRef(null);
-      React.useEffect(function() {
-        expanded[1](false);
-      }, [text]);
-      React.useEffect(function() {
-        var node = ref.current;
-        if (!node) return;
-        function measure() {
-          if (!expanded[0]) overflow[1](node.scrollHeight > node.clientHeight + 1);
-        }
-        measure();
-        var observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measure) : null;
-        if (observer) observer.observe(node);
-        return function() {
-          if (observer) observer.disconnect();
-        };
-      }, [text, expanded[0], mode[0]]);
-      if (!text.trim()) return null;
-      return h2(
-        "section",
-        { className: "wb-body-section wb-description", "aria-labelledby": labelId },
-        h2(
-          "div",
-          { className: "wb-body-heading" },
-          h2("span", { id: labelId, className: "wb-body-label" }, t.desc),
-          h2(BodyMode, { label: t.desc, mode: mode[0], onChange: mode[1], t, Icon: props.Icon || BodyIcon })
-        ),
-        h2(
-          "div",
-          { className: "wb-desc" },
-          h2(
-            "div",
-            { ref, className: "wb-desc-text" + (expanded[0] ? "" : " wb-desc-clamped") },
-            h2(DescBody, { text, mode: mode[0], keyword: props.keyword })
-          ),
-          overflow[0] || expanded[0] ? h2("button", {
-            type: "button",
-            className: "wb-desc-toggle",
-            "aria-expanded": expanded[0],
-            onClick: function() {
-              expanded[1](!expanded[0]);
-            }
-          }, props.lang === "en" ? expanded[0] ? "Collapse" : "Expand" : expanded[0] ? "\u6536\u8D77" : "\u5C55\u5F00") : null
-        )
-      );
-    }
-    module2.exports = { css, Description };
-  }
-});
-
 // packages/shell/client/conversation/catalog-groups.cjs
 var require_catalog_groups = __commonJS({
   "packages/shell/client/conversation/catalog-groups.cjs"(exports2, module2) {
@@ -12547,8 +12612,9 @@ var require_catalog_editor = __commonJS({
     var React = require("react");
     var h2 = React.createElement;
     var common = require_client_common()("wbr");
-    var Btn = common.Btn;
     var Field = common.Field;
+    var Icon2 = require_icons2().Icon;
+    var Button = require_button()({ prefix: "wbr", Icon: Icon2 });
     var Body = require_markdown().createBody(React);
     var Steps = require_stepper().Steps;
     var LOCALE2 = require_locale2();
@@ -12580,8 +12646,7 @@ var require_catalog_editor = __commonJS({
       var nameRef = React.useRef(null), instructionsRef = React.useRef(null), saveRef = React.useRef(null);
       var busy = !!props.busy;
       React.useEffect(function() {
-        var refs = [nameRef, instructionsRef, saveRef];
-        var node = refs[step] && refs[step].current;
+        var node = step === 0 ? nameRef.current : instructionsRef.current || saveRef.current;
         if (node && node.focus) node.focus();
       }, [step]);
       function mark(index, bad) {
@@ -12607,7 +12672,7 @@ var require_catalog_editor = __commonJS({
         }
         mark(step, false);
         setStatus("");
-        var to = Math.min(2, step + 1);
+        var to = Math.min(1, step + 1);
         setStep(to);
         setMaxVisited(Math.max(maxVisited, to));
       }
@@ -12676,12 +12741,24 @@ var require_catalog_editor = __commonJS({
               h2(
                 "div",
                 { className: "wbr-tabs", role: "tablist" },
-                h2("button", { type: "button", role: "tab", "aria-selected": view === "edit", className: "wbr-tab", onClick: function() {
-                  setView("edit");
-                } }, t("role_edit")),
-                h2("button", { type: "button", role: "tab", "aria-selected": view === "preview", className: "wbr-tab", onClick: function() {
-                  setView("preview");
-                } }, t("role_preview"))
+                h2("button", {
+                  type: "button",
+                  role: "tab",
+                  className: "wbr-tab",
+                  "aria-selected": view === "edit",
+                  onClick: function() {
+                    setView("edit");
+                  }
+                }, h2(Icon2, { name: "pencil", size: 13 }), h2("span", null, t("role_edit"))),
+                h2("button", {
+                  type: "button",
+                  role: "tab",
+                  className: "wbr-tab",
+                  "aria-selected": view === "preview",
+                  onClick: function() {
+                    setView("preview");
+                  }
+                }, h2(Icon2, { name: "eye", size: 13 }), h2("span", null, t("role_preview")))
               )
             ),
             view === "edit" ? h2("textarea", {
@@ -12694,36 +12771,18 @@ var require_catalog_editor = __commonJS({
                 mark(1, false);
                 set({ instructions: e.target.value });
               }
-            }) : h2("div", { className: "wbr-preview" }, text.trim() ? h2(Body, { text, mode: "markdown" }) : h2("em", null, t("role_preview_empty")))
+            }) : h2(
+              "div",
+              { className: "wbr-preview" },
+              text.trim() ? h2(Body, { text, mode: "markdown" }) : h2("em", null, t("role_preview_empty"))
+            )
           ),
           h2("p", { className: "wbr-instructions-hint" }, t("role_instructions_hint")),
           invalid[1] ? h2("p", { className: "wbr-field-error", role: "alert" }, t("role_instructions_required")) : null
         );
       }
-      function summaryRow(label, value) {
-        return h2(
-          "div",
-          { className: "wbr-summary-row" },
-          h2("dt", null, label),
-          h2("dd", null, value || t("role_summary_empty"))
-        );
-      }
-      function confirmPane() {
-        return h2(
-          "div",
-          { className: "wbr-step-pane" },
-          h2(
-            "dl",
-            { className: "wbr-summary" },
-            summaryRow(t("role_summary_name"), draft.name),
-            summaryRow(t("role_summary_description"), draft.description),
-            summaryRow(t("role_summary_instructions"), t("role_summary_chars", { n: String(draft.instructions || "").trim().length })),
-            summaryRow(t("role_summary_effect"), t("role_summary_effect_value"))
-          )
-        );
-      }
-      var panes = [basicPane, instructionsPane, confirmPane];
-      var labels = ["role_step_basic", "role_step_instructions", "role_step_confirm"];
+      var panes = [basicPane, instructionsPane];
+      var labels = ["role_step_basic", "role_step_instructions"];
       var steps = labels.map(function(key) {
         return { key, label: t(key) };
       });
@@ -12752,12 +12811,12 @@ var require_catalog_editor = __commonJS({
         h2(
           "div",
           { className: "wbr-wizard-foot" },
-          h2(Btn, { h: h2, onClick: props.onCancel, disabled: busy }, t("role_cancel")),
+          h2(Button, { icon: "x", onClick: props.onCancel, disabled: busy }, t("role_cancel")),
           h2(
             "div",
             { className: "wbr-wizard-nav" },
-            step > 0 ? h2(Btn, { h: h2, onClick: goBack, disabled: busy }, t("role_back")) : null,
-            step < 2 ? h2(Btn, { h: h2, onClick: next, disabled: busy }, t("role_next_step")) : h2(Btn, { h: h2, ref: saveRef, onClick: submit, disabled: busy }, t("role_save"))
+            step > 0 ? h2(Button, { icon: "arrow-left", onClick: goBack, disabled: busy }, t("role_back")) : null,
+            step < 1 ? h2(Button, { icon: "arrow-right", onClick: next, disabled: busy }, t("role_next_step")) : h2(Button, { icon: "check", ref: saveRef, onClick: submit, disabled: busy }, t("role_save"))
           )
         )
       );
@@ -12774,14 +12833,18 @@ var require_catalog = __commonJS({
     var React = require("react");
     var h2 = React.createElement;
     var common = require_client_common()("wbr");
-    var Btn = common.Btn;
     var Notice = common.Notice;
     var Empty = common.Empty;
     var Pill = common.Pill;
     var unwrap = common.unwrap;
-    var Description = require_description().Description;
+    var bodyCopy = require_body_copy();
+    var BodyMode = require_body_toggle()(React);
+    var createBody = require_markdown().createBody;
+    var Icon2 = require_icons2().Icon;
+    var Button = require_button()({ prefix: "wbr", Icon: Icon2 });
     var groups = require_catalog_groups();
     var Editor = require_catalog_editor();
+    var Body = createBody(React);
     var endpoint = "/role-catalog";
     function catalogRows(response) {
       var value = unwrap(response);
@@ -12823,6 +12886,7 @@ var require_catalog = __commonJS({
       var draftState = React.useState(null), draft = draftState[0], setDraft = draftState[1];
       var deleteState = React.useState(""), pendingDelete = deleteState[0], setDelete = deleteState[1];
       var busyState = React.useState(false), busy = busyState[0], setBusy = busyState[1];
+      var modeState = React.useState("markdown"), mode = modeState[0], setMode = modeState[1];
       var lock = React.useRef(false), sequence = React.useRef(0);
       async function refresh() {
         var req = ++sequence.current;
@@ -12890,7 +12954,7 @@ var require_catalog = __commonJS({
             "select",
             {
               name: "source",
-              className: "wbr-input wbr-select",
+              className: "wbr-input wbr-filter",
               value: filter.source,
               "aria-label": tr("\u6309\u6765\u6E90\u7B5B\u9009", "Filter by source"),
               onChange: function(e) {
@@ -12905,7 +12969,7 @@ var require_catalog = __commonJS({
             "select",
             {
               name: "domain",
-              className: "wbr-input wbr-select",
+              className: "wbr-input wbr-filter",
               value: filter.domain,
               "aria-label": tr("\u6309\u57DF\u7B5B\u9009", "Filter by domain"),
               onChange: function(e) {
@@ -12917,10 +12981,15 @@ var require_catalog = __commonJS({
               return h2("option", { key: domain, value: domain }, domain);
             })
           ),
-          h2(Btn, { h: h2, onClick: function() {
-            setDraft(blankDraft());
-            setDelete("");
-          }, disabled: !!draft }, tr("\u65B0\u5EFA\u89D2\u8272", "New role"))
+          h2(Button, {
+            icon: "plus",
+            kind: "primary",
+            onClick: function() {
+              setDraft(blankDraft());
+              setDelete("");
+            },
+            disabled: !!draft
+          }, tr("\u65B0\u5EFA\u89D2\u8272", "New role"))
         );
       }
       function badge(role) {
@@ -12930,78 +12999,119 @@ var require_catalog = __commonJS({
           role.source === "user" ? tr("\u81EA\u5B9A\u4E49", "Custom") : tr("\u63D2\u4EF6", "Plugin")
         );
       }
+      function row(role) {
+        return h2(
+          "button",
+          {
+            key: role.id,
+            type: "button",
+            role: "listitem",
+            className: "wbr-item",
+            "aria-pressed": role.id === selected,
+            onClick: function() {
+              setSelected(role.id);
+              setDraft(null);
+              setDelete("");
+            }
+          },
+          h2(
+            "span",
+            { className: "wbr-item-glyph" },
+            h2(Icon2, { name: role.source === "user" ? "user" : "bot", size: 14 })
+          ),
+          h2(
+            "span",
+            { className: "wbr-item-body" },
+            h2("span", { className: "wbr-item-name" }, role.name),
+            h2(
+              "span",
+              { className: "wbr-item-meta" },
+              badge(role),
+              h2("code", { className: "wbr-item-id", title: role.id }, role.id),
+              h2("span", { className: "wbr-item-ver" }, "v" + role.version)
+            )
+          )
+        );
+      }
       function list() {
-        if (rows === null) return h2(Notice, { h: h2, text: tr("\u6B63\u5728\u8BFB\u53D6\u89D2\u8272\u2026", "Loading roles\u2026") });
-        if (!rows.length) return h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") });
-        if (!filtered.length) return h2(Empty, { h: h2, text: tr("\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272\uFF0C\u8BD5\u8BD5\u6E05\u7A7A\u7B5B\u9009", "No role matches these filters") });
-        return h2("div", { className: "wbr-rows", role: "list" }, filtered.map(function(role) {
-          return h2(
-            "button",
-            {
-              key: role.id,
-              type: "button",
-              role: "listitem",
-              className: "wbr-row" + (role.id === selected ? " on" : ""),
-              "aria-pressed": role.id === selected,
-              onClick: function() {
-                setSelected(role.id);
-                setDraft(null);
-                setDelete("");
-              }
-            },
-            h2("span", { className: "wbr-row-name" }, role.name),
-            h2("span", { className: "wbr-row-meta" }, badge(role), h2("code", null, role.id), h2("small", null, "v" + role.version))
-          );
-        }));
+        if (rows === null) return h2("div", { className: "wbr-list-note" }, h2(Notice, { h: h2, text: tr("\u6B63\u5728\u8BFB\u53D6\u89D2\u8272\u2026", "Loading roles\u2026") }));
+        if (!rows.length) return h2("div", { className: "wbr-list-note" }, h2(Empty, { h: h2, text: tr("\u6682\u65E0\u89D2\u8272", "No roles") }));
+        if (!filtered.length) return h2("div", { className: "wbr-list-note" }, h2(Empty, { h: h2, text: tr("\u6CA1\u6709\u5339\u914D\u7684\u89D2\u8272\uFF0C\u8BD5\u8BD5\u6E05\u7A7A\u7B5B\u9009", "No role matches these filters") }));
+        return h2("div", { className: "wbr-items", role: "list" }, filtered.map(row));
       }
       function detail() {
-        if (!current) return h2("div", { className: "wbr-detail wbr-detail-empty" }, h2(Empty, { h: h2, text: tr("\u4ECE\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u89D2\u8272\u67E5\u770B\u8BE6\u60C5", "Pick a role on the left") }));
+        if (!current) {
+          return h2(
+            "article",
+            { className: "wbr-panel wbr-detail is-empty" },
+            h2(Empty, { h: h2, text: tr("\u4ECE\u5DE6\u4FA7\u9009\u62E9\u4E00\u4E2A\u89D2\u8272\u67E5\u770B\u8BE6\u60C5", "Pick a role on the left") })
+          );
+        }
         var editable = current.source === "user";
         return h2(
           "article",
-          { className: "wbr-detail" },
+          { className: "wbr-panel wbr-detail" },
           h2(
             "header",
             { className: "wbr-detail-head" },
-            h2("strong", null, current.name),
-            badge(current),
-            h2("code", null, current.id),
-            h2("small", null, "v" + current.version + " \xB7 " + (current.domain || "user"))
+            h2(
+              "div",
+              { className: "wbr-detail-title" },
+              h2("h3", { className: "wbr-detail-name" }, current.name),
+              badge(current)
+            ),
+            h2(
+              "div",
+              { className: "wbr-detail-meta" },
+              h2("code", { className: "wbr-detail-id", title: current.id }, current.id),
+              h2("span", { className: "wbr-chip" }, "v" + current.version),
+              h2("span", { className: "wbr-chip" }, current.domain || "user")
+            )
           ),
           current.description ? h2("p", { className: "wbr-detail-desc" }, current.description) : null,
-          h2(Description, { text: current.instructions, lang: props.lang, bodyMode: "markdown" }),
           h2(
-            "div",
-            { className: "wb-sec" },
-            h2(Btn, { h: h2, onClick: function() {
+            "section",
+            { className: "wbr-section" },
+            h2(
+              "div",
+              { className: "wbr-section-head" },
+              h2("span", { className: "wbr-section-label" }, tr("\u89D2\u8272\u6307\u4EE4", "Role instructions")),
+              h2(BodyMode, { mode, onChange: setMode, label: tr("\u89D2\u8272\u6307\u4EE4", "Role instructions"), t: bodyCopy[lang ? "en" : "zh"], Icon: Icon2 })
+            ),
+            mode === "text" ? h2("div", { className: "wb-body-text wbr-section-body" }, current.instructions) : h2("div", { className: "wbr-section-body" }, h2(Body, { text: current.instructions, mode }))
+          ),
+          h2(
+            "footer",
+            { className: "wbr-detail-foot" },
+            h2(Button, { icon: "copy", onClick: function() {
               mutate({ op: "copy", id: current.id });
             }, disabled: busy || !!draft }, tr("\u590D\u5236\u4E3A\u65B0\u89D2\u8272", "Duplicate as a new role")),
-            editable ? h2(Btn, { h: h2, onClick: function() {
+            editable ? h2(Button, { icon: "pencil", onClick: function() {
               setDraft(draftOf(current));
             }, disabled: busy || !!draft }, tr("\u7F16\u8F91", "Edit")) : null,
-            editable ? h2(Btn, { h: h2, onClick: function() {
+            editable ? h2(Button, { icon: "trash-2", kind: "danger", onClick: function() {
               setDelete(current.id);
             }, disabled: busy || !!draft }, tr("\u5220\u9664", "Delete")) : null
           ),
           pendingDelete === current.id ? h2(
             "div",
-            { className: "wb-sec" },
-            tr("\u786E\u5B9A\u5220\u9664\u6B64\u89D2\u8272\uFF1F", "Delete this role?"),
-            h2(Btn, { h: h2, onClick: function() {
+            { className: "wbr-danger-box", role: "group" },
+            h2("span", null, tr("\u5220\u9664\u540E\u65E0\u6CD5\u6062\u590D\uFF0C\u786E\u5B9A\u5220\u9664\u6B64\u89D2\u8272\uFF1F", "This cannot be undone. Delete this role?")),
+            h2(Button, { icon: "trash-2", kind: "danger", onClick: function() {
               mutate({ op: "delete", id: current.id });
             }, disabled: busy }, tr("\u786E\u8BA4\u5220\u9664", "Confirm deletion")),
-            h2(Btn, { h: h2, onClick: function() {
+            h2(Button, { icon: "x", onClick: function() {
               setDelete("");
             }, disabled: busy }, tr("\u53D6\u6D88", "Cancel"))
           ) : null
         );
       }
-      return h2("div", { className: "wb-root" }, h2(
+      return h2("div", { className: "wb-root wbr-page" }, h2(
         "div",
         { className: "wb-inner wb-wide wb-stack" },
         props.head(tr("\u89D2\u8272\u7BA1\u7406", "Role management"), tr("\u6309\u6765\u6E90\u4E0E\u57DF\u67E5\u770B\u89D2\u8272\uFF1A\u6307\u4EE4\u53EF\u8BFB\u3001\u53EF\u7F16\u8F91\uFF0C\u52A8\u4F5C\u7531\u6307\u4EE4\u7EA6\u5B9A\u800C\u4E0D\u505A\u9650\u5236", "Browse roles by source and domain; instructions are readable and editable, actions are described by the instructions rather than restricted")),
         toolbar(),
-        error ? h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), h2(Btn, { h: h2, onClick: refresh }, tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"))) : null,
+        error ? h2("div", { role: "alert" }, h2(Notice, { h: h2, kind: "error", text: error }), h2(Button, { icon: "refresh-cw", onClick: refresh }, tr("\u91CD\u65B0\u52A0\u8F7D", "Reload"))) : null,
         draft ? h2(Editor, {
           h: h2,
           lang: props.lang,
@@ -13012,7 +13122,7 @@ var require_catalog = __commonJS({
           onCancel: function() {
             setDraft(null);
           }
-        }) : h2("div", { className: "wbr-split" }, h2("div", { className: "wbr-list" }, list()), detail())
+        }) : h2("div", { className: "wbr-split wb-fill" }, h2("section", { className: "wbr-panel wbr-list" }, list()), detail())
       ));
     }
     module2.exports = RoleCatalog;

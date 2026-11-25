@@ -52,7 +52,7 @@ const click = async (label, index = 0) => {
   await settle();
 };
 const hasClass = (node, name) => klass(node).split(/\s+/).includes(name);
-const rows = () => tree().filter((node) => hasClass(node, "wbr-row"));
+const rows = () => tree().filter((node) => hasClass(node, "wbr-item"));
 const stepNodes = () => tree().filter((node) => hasClass(node, "wbctl-step"));
 const jump = async (index) => {
   const target = stepNodes()[index];
@@ -98,13 +98,13 @@ assert.ok(!textOf(tree()[0]).includes("参考动作"), "页面不出现「参考
 await click("复制为新角色");
 assert.deepEqual(ops.at(-1), { op: "copy", id: "tasks/publisher" });
 
-// 编辑自定义角色：三步向导，逐 step 校验、跨 step 保留草稿
+// 编辑自定义角色：两步向导，逐 step 校验、跨 step 保留草稿
 await rows().find((node) => textOf(node).includes("归档员")).props.onClick();
 tree();
 await click("编辑");
 tree();
 const wizardSteps = stepNodes();
-assert.equal(wizardSteps.length, 3, "向导应有 3 步（基本信息 / 角色指令 / 确认与保存）");
+assert.equal(wizardSteps.length, 2, "向导只有两步（基本信息 / 角色指令），不再有确认步");
 assert.equal(wizardSteps[0].props["aria-current"], "step", "首步为当前步");
 assert.equal(wizardSteps[1].props.disabled, true, "未访问的步骤不可跳转");
 assert.equal(byName("name").props.value, "归档员");
@@ -129,11 +129,13 @@ assert.ok(!textOf(preview).includes("- 只做归档"), "预览不应出现字面
 assert.match(textOf(tree().find((node) => hasClass(node, "wbr-instructions-hint"))), /提示不是白名单/);
 await click("编辑");
 
-// 指令清空同样拦住
+// 指令清空同样拦住：最后一步的保存键被换成「下一步」，校验不过就不放行
 setField("instructions", "");
-await click("下一步");
+await click("保存");
 tree();
-assert.equal(buttons("保存").length, 0, "指令为空时不该进入确认步");
+assert.equal(buttons("保存").length, 1, "保存键始终在最后一步");
+assert.ok(textOf(tree().find((node) => hasClass(node, "wbr-field-error"))).includes("指令"));
+assert.equal(ops.length, 1, "校验未过时不该发请求");
 setField("instructions", "- 只做归档");
 
 // 回跳到第一步改简介，再跳到第二步：草稿要跨 step 保留
@@ -143,19 +145,10 @@ setField("description", "整理与归档");
 await jump(1);
 tree();
 assert.equal(byName("description") === undefined, true, "第二步不渲染第一步字段");
-await click("下一步");
-tree();
-
-// 第三步确认：摘要只列用户决定的事（名称 / 简介 / 指令长度 / 生效时机）
-const summary = tree().find((node) => hasClass(node, "wbr-summary"));
-const summaryText = textOf(summary);
-assert.ok(summaryText.includes("归档员"));
-assert.ok(summaryText.includes("整理与归档"));
-assert.ok(summaryText.includes("6 字"), "摘要应给出指令长度");
-assert.ok(!summaryText.includes("参考动作"), "确认步不再出现参考动作");
+assert.ok(!tree().some((node) => hasClass(node, "wbr-summary")), "不再有确认摘要");
 assert.ok(!tree().some((node) => String(node.props?.name || "").startsWith("action:")), "不再渲染动作勾选");
 
-// 确认步保存：只提交名称/简介/指令，原有 actions 原样带回
+// 最后一步直接保存：只提交名称/简介/指令，原有 actions 原样带回
 assert.equal(buttons("保存")[0].props.disabled, false);
 await click("保存");
 const saved = ops.at(-1);
@@ -164,16 +157,14 @@ assert.equal(saved.id, "user:1");
 assert.equal(saved.description, "整理与归档");
 assert.deepEqual(saved.actions, ["tasks.list"], "界面不再编辑 actions，旧值原样保留");
 
-// 新建角色：默认三步、无动作步
+// 新建角色：默认两步、无动作步
 await click("新建角色");
 tree();
-assert.equal(stepNodes().length, 3);
+assert.equal(stepNodes().length, 2);
 setField("name", "巡检员");
 await click("下一步");
 tree();
 setField("instructions", "- 提醒使用 tasks.list 查看任务");
-await click("下一步");
-tree();
 await click("保存");
 const created = ops.at(-1);
 assert.equal(created.op, "create");
@@ -188,4 +179,4 @@ tree();
 await click("确认删除");
 assert.deepEqual(ops.at(-1), { op: "delete", id: "user:1" });
 assert.equal(typeof events["role-catalog"], "function");
-console.log("角色管理页通过：筛选、markdown 详情、三步向导、无参考动作步与保存");
+console.log("角色管理页通过：筛选、markdown 详情、两步向导、无参考动作与确认步、保存");

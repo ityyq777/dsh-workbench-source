@@ -76,6 +76,12 @@ import { createRoot } from "react-dom/client";
 import picker from ${JSON.stringify(join(ROOT, "packages/shell/client/conversation/session-role.cjs"))};
 import catalog from ${JSON.stringify(join(ROOT, "packages/shell/client/conversation/catalog.cjs"))};
 import styles from ${JSON.stringify(join(ROOT, "packages/shell/client/conversation/styles.cjs"))};
+import hostStyles from ${JSON.stringify(join(ROOT, "packages/shell/client/styles.cjs"))};
+
+// 先注入宿主全局样式，再注入页面样式：顺序与桌面端一致，页面规则才能覆盖宿主默认值。
+var hostStyle = document.createElement("style");
+hostStyle.textContent = Array.isArray(hostStyles) ? hostStyles.join("\\n") : String(hostStyles);
+document.head.appendChild(hostStyle);
 
 var style = document.createElement("style");
 style.textContent = Array.isArray(styles) ? styles.join("\\n") : String(styles);
@@ -107,17 +113,19 @@ if (view === "wizard") {
       React.createElement("h2", null, title), React.createElement("p", null, desc));
   };
   root.render(React.createElement(catalog, { api: api, lang: lang, head: head }));
-  // 选中第一个自定义角色并进入编辑，直接落在向导第一步。
-  setTimeout(function () {
-    var row = Array.prototype.slice.call(document.querySelectorAll(".wbr-row"))
-      .filter(function (node) { return node.textContent.indexOf("user:1") >= 0; })[0];
-    if (row) row.click();
+  // 选中第一个自定义角色并进入编辑，直接落在向导第一步；auto=0 时停在列表，便于核对分栏版面。
+  if (params.get("auto") !== "0") {
     setTimeout(function () {
-      var edit = Array.prototype.slice.call(document.querySelectorAll(".wbr-btn"))
-        .filter(function (node) { return node.textContent === (lang === "en" ? "Edit" : "编辑"); })[0];
-      if (edit) edit.click();
+      var row = Array.prototype.slice.call(document.querySelectorAll(".wbr-row"))
+        .filter(function (node) { return node.textContent.indexOf("user:1") >= 0; })[0];
+      if (row) row.click();
+      setTimeout(function () {
+        var edit = Array.prototype.slice.call(document.querySelectorAll(".wbr-btn"))
+          .filter(function (node) { return node.textContent === (lang === "en" ? "Edit" : "编辑"); })[0];
+        if (edit) edit.click();
+      }, 60);
     }, 60);
-  }, 60);
+  }
 } else {
   var roleId = params.get("selected") === "1" ? "tasks/publisher" : null;
   var state = { ok: true, sessionId: "preview", roleId: roleId, roles: window.__WB_ROLES__, unavailable: false };
@@ -146,10 +154,10 @@ await build({
 // 预览页自己的底色调色板：只模拟 DSH 主题变量，业务样式仍全部取自 styles.cjs。
 const PALETTE = `html[data-theme=light]{--wb-card:#fffdf8;--wb-surface:#f5f2ea;--wb-border:#e3e5e9;--wb-line:#e3ddd1;--wb-accent:#0f8f84;--wb-muted:#8a8377;--wb-ok:#2f9e6f;--wb-warn:#b57a15;--wb-danger:#c0453b;--dsw-alias-label-primary:#2a241c;--dsw-alias-label-tertiary:#8a8377;--dsw-alias-border-l2:#e3ddd1;--dsw-alias-bg-layer-1:#fffdf8;--dsw-alias-bg-layer-2:#f5f2ea;--dsw-alias-brand-primary:#0f8f84;--dsw-alias-state-error-primary:#c0453b}
 html[data-theme=dark]{--wb-card:#1d1c19;--wb-surface:#151412;--wb-border:#38352f;--wb-line:#2a2824;--wb-accent:#4fd1c0;--wb-muted:#9a938a;--wb-ok:#5cc08c;--wb-warn:#e0a94a;--wb-danger:#e57b70;--dsw-alias-label-primary:#f1ece2;--dsw-alias-label-tertiary:#9a938a;--dsw-alias-border-l2:#2a2824;--dsw-alias-bg-layer-1:#1d1c19;--dsw-alias-bg-layer-2:#151412;--dsw-alias-brand-primary:#4fd1c0;--dsw-alias-state-error-primary:#e57b70}
-body{margin:0;font:14px/1.6 -apple-system,system-ui,"PingFang SC",sans-serif;background:var(--wb-surface);color:var(--dsw-alias-label-primary)}
+html,body{height:100%;margin:0}body{font:14px/1.6 -apple-system,system-ui,"PingFang SC",sans-serif;background:var(--wb-surface);color:var(--dsw-alias-label-primary)}
 .preview-composer{display:flex;align-items:center;gap:10px;padding:16px}
 .preview-hint{font-size:12px;color:var(--wb-muted)}
-#root{min-height:100vh}
+#root{height:100%}
 .preview-head h2{margin:12px 0 2px;font-size:18px}
 .preview-head p{margin:0 0 12px;font-size:13px;color:var(--wb-muted)}`;
 

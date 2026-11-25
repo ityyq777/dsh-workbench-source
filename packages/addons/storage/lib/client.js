@@ -1931,13 +1931,18 @@ var require_button = __commonJS({
       var prefix = opts.prefix;
       var Icon3 = opts.Icon;
       function Button(props) {
-        var attrs = Object.assign({ type: "button", className: prefix + "-btn" }, props);
+        var attrs = Object.assign({}, props, { type: props.type || "button" });
+        var classes = [prefix + "-btn"];
+        if (props.kind) classes.push(props.kind);
+        if (props.className) classes.push(props.className);
+        if (props.icon) classes.push(props.iconOnly ? prefix + "-icon-only" : prefix + "-icon-text");
+        attrs.className = classes.filter(Boolean).join(" ");
         delete attrs.icon;
         delete attrs.iconOnly;
+        delete attrs.kind;
         if (props.icon) {
-          attrs["aria-label"] = props["aria-label"] || props.children;
+          attrs["aria-label"] = props["aria-label"] || (typeof props.children === "string" ? props.children : void 0);
           attrs.title = props.title || attrs["aria-label"];
-          attrs.className += props.iconOnly ? " " + prefix + "-icon-only" : " " + prefix + "-icon-text";
         }
         return h2(
           "button",
