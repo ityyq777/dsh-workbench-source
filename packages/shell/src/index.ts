@@ -62,7 +62,7 @@ const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
  * 宿主 API 版本：业务插件用它做兼容判断，也是界面与备份 manifest 里显示的版本。
  * 必须与 packages/shell/package.json 的 version 一致（test:ownership-host 会拦）。
  */
-export const SHELL_VERSION = "0.17.5";
+export const SHELL_VERSION = "0.17.6";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -244,6 +244,8 @@ export function apply(ctx: any): void {
     sessionRoles,
     extraMetaActions: [["host.agentRun", agentRun], ...automationDefs.entries()],
     builtinAutomations: (domainId: string) => automation.builtinCount(domainId),
+    // 插件更新要读 DSH 的 pluginManager 服务，只能从插件上下文里取；这里只传取值回调。
+    pluginCtx: () => ctx,
     queueRef,
   });
 

@@ -12,6 +12,7 @@ var ICONS = {
   agentList: require("lucide-react/icons/bot").default,
   queue: require("lucide-react/icons/inbox").default,
   automation: require("lucide-react/icons/zap").default,
+  addons: require("lucide-react/icons/package").default,
   data: require("lucide-react/icons/database").default,
   config: require("lucide-react/icons/sliders-horizontal").default,
   backup: require("lucide-react/icons/hard-drive-download").default,

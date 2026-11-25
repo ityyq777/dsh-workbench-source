@@ -501,6 +501,12 @@ export interface DomainDef {
    */
   tables?: Array<string | DomainTableDecl>;
   /**
+   * npm 更新来源：声明本插件发布在哪个 registry 的哪个包上，宿主「插件」页据此
+   * 检查新版本并给出一键安装入口。不声明就只能在插件市场里手装。
+   * 只接受官方 npm registry（必要时显式写 registry），其它源一律视为不支持。
+   */
+  update?: DomainUpdateSource;
+  /**
    * 事件授权清单：`publishes` 里的类型才允许 api.events.push，
    * `subscriptions` 里的类型才允许 api.events.subscribe（"*" 也要显式声明）。
    * 宿主「事件队列」页按这份清单对账，未声明的推送与订阅直接报错。
@@ -545,6 +551,21 @@ export interface DomainDef {
   backupAfter?: string[];
   /** 导入本插件负责的数据；raw 是压缩包里的原始文本，插件自行 JSON.parse/校验。 */
   importData?(raw: string, ctx: DomainDataContext, options?: DomainImportOptions): DomainImportReport | Promise<DomainImportReport>;
+}
+
+/**
+ * 插件的 npm 更新来源。声明之后宿主可以替你检查版本、给出安装动作；
+ * 宿主只调它自己的插件管理器（profile 的安装记录仍由 DSH 维护，插件不手工改 profile）。
+ */
+export interface DomainUpdateSource {
+  /** 目前只有 npm；留成字段是为了将来支持别的分发方式 */
+  source: "npm";
+  /** npm 包名，必须与本插件安装时的包名一致 */
+  package: string;
+  /** registry 地址，缺省为官方源 https://registry.npmjs.org；其它源会被拒绝 */
+  registry?: string;
+  /** 发布通道，如 latest / beta；缺省 latest */
+  distTag?: string;
 }
 
 /** 宿主服务：ctx.workbench */

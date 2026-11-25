@@ -382,9 +382,12 @@ function DataView(props) {
           h("div", { className: P + "-idxsub" }, t.fieldsHint)));
   }
 
+  /** 表中文名：声明里既可能是 { zh, en }，也可能是裸字符串（宿主目录就是字符串），两种都认。 */
   function tableLabel(tb) {
-    if (!tb || !tb.label) return "";
-    return lang === "en" ? (tb.label.en || tb.label.zh) : (tb.label.zh || tb.label.en);
+    var label = tb && tb.label;
+    if (!label) return "";
+    if (typeof label === "string") return label;
+    return (lang === "en" ? (label.en || label.zh) : (label.zh || label.en)) || "";
   }
 
   /** 列中文名既可能是 { zh, en }，也可能是裸字符串（第三方插件常见），两种都认。 */
@@ -621,15 +624,23 @@ function DataView(props) {
     return out;
   }
 
+  /**
+   * 左列表的一项：有中文名时主行给中文、副行给真实表名；没有中文名时主行直接用表名，
+   * 不渲染空的副行（否则会出现「2meta」这种把计数和表名糊在一起的观感）。
+   */
   function renderTableButton(tb) {
+    var label = tableLabel(tb);
+    var sub = label && label !== tb.name ? tb.name : "";
+    var count = tb.count === undefined || tb.count === null || tb.count === "" ? "" : String(tb.count);
     return h("button", {
       key: (tb.group || "") + "/" + tb.name, type: "button", className: P + "-stab" + (tb.name === active ? " on" : ""),
-      "aria-pressed": tb.name === active, onClick: function () { selectTable(tb.name); },
+      "aria-pressed": tb.name === active, title: sub ? label + " · " + tb.name : tb.name,
+      onClick: function () { selectTable(tb.name); },
     },
       h("span", { className: P + "-stabname" },
-        h("span", null, tableLabel(tb)),
-        h("span", { className: P + "-sidecount" }, tb.count === undefined || tb.count === null ? "" : String(tb.count))),
-      h("span", { className: P + "-sidetable" }, tb.name));
+        h("span", { className: P + "-stablabel" }, label || tb.name),
+        count ? h("span", { className: P + "-sidecount" }, count) : null),
+      sub ? h("span", { className: P + "-sidetable" }, sub) : null);
   }
 
   /** 左侧列表：分组时每组一个可折叠标题（域标题 + 表数），单表或不分组的场景原样平铺。 */

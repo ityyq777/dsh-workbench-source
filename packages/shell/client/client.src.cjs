@@ -501,6 +501,11 @@ function WorkbenchPage(props) {
   if (route === "automation") {
     return jsx.jsx(AutomationPage, { h: h, jsx: jsx, React: react, api: api, lang: lang, t: t, head: pageHead });
   }
+  if (route === "addons") {
+    // 宿主页面只持有 POST 通道（api.post），复用 host-pages.cjs 的 hostApi 适配成 api.call。
+    var addonsPageMod = require("./addons-page.cjs");
+    return addonsPageMod({ jsx: jsx, React: react, api: HostPages.hostApi(api), t: t, lang: lang, head: pageHead });
+  }
   if (route === "data") {
     return HostPages.dataPage({ jsx: jsx, api: api, lang: lang, t: t, head: pageHead });
   }

@@ -7,6 +7,7 @@ import { createCapabilities } from "./capabilities.js";
 import { createOriginAccess } from "./origin-access.js";
 import { BUILTIN_ACTIONS } from "./builtin-actions.js";
 import { createHostDataActions } from "./host-data.js";
+import { createHostAddonActions } from "./host-addons.js";
 import { createHostEventActions } from "./host-events.js";
 export function createActions({
   domains,
@@ -20,6 +21,7 @@ export function createActions({
   extraMetaActions,
   builtinAutomations,
   queueRef, sessionRoles,
+  pluginCtx,
 }: any) {
   /** 宿主内置的元 action 归属域（不参与备份，也不是业务插件）。 */
   const META_DOMAIN = "wb-shell";
@@ -559,6 +561,8 @@ function schemaSnapshot(domain?: string) {
   });
   // 宿主自己的「数据」「配置」两个视图：与业务域同构，但挂在 wb-shell 元 action 下。
   for (const [name, def] of createHostDataActions(db, { domains })) META_ACTIONS.set(name, def);
+  // 宿主「插件」页：按插件自己声明的 npm 更新来源查版本、装版本（服务缺失时降级为命令）。
+  for (const [name, def] of Object.entries(createHostAddonActions({ domains, ctx: pluginCtx })) as Array<[string, DomainActionDef]>) META_ACTIONS.set(name, def);
   // 宿主「事件队列」页：读队列三张表 + 插件事件授权清单 + 重投/清理，重投后踢一次 drain。
   for (const [name, def] of createHostEventActions(db, queueRef || { value: null }, domains)) {
     META_ACTIONS.set(name, def);

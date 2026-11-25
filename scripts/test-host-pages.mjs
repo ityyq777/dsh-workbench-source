@@ -213,4 +213,36 @@ for (const [mode, logged] of [['none', false], ['private', true], ['shared', fal
     assert.equal(elements(page, n => n.type === 'button' && n.props.children === name).length, Number(visible));
 }
 assert.ok(configHtml.includes("wbh-cfg-schemes"), "配置页应复用共享方案条");
-console.log("HOST PAGES TEST PASS：页面渲染、方案条、备份勾选与实际导出参数、云端冲突查询和手工边界");
+// C. 插件页：路由传进来的是宿主页面的 POST 通道（只有 api.post），必须先经 hostApi 适配。
+const addonsPage = require("../packages/shell/client/addons-page.cjs");
+assert.equal(typeof HostPages.hostApi, "function", "host-pages 应导出 hostApi 适配器");
+
+const postOnlyApi = { post: async () => ({ ok: true, result: { rows: [{ id: "wb-addon-tasks", title: "任务", version: "5.5.3", installed: "5.5.3", update: { source: "npm", package: "dsh-workbench-tasks" }, managed: true }] } }) };
+const adapted = HostPages.hostApi(postOnlyApi);
+assert.equal(typeof adapted.call, "function", "hostApi 应把 POST 通道适配出 api.call");
+assert.ok(!adapted.post, "hostApi 只暴露 call，避免页面混用两条通道");
+
+// 用真 React 渲染加载态：页面必须在只有 POST 通道的 api 下也能渲染，不能抛 api.call is not a function。
+function AddonsPageWrapper() {
+  return addonsPage({ jsx: jsxRuntime, React, api: HostPages.hostApi(postOnlyApi), t: (key) => key, lang: "zh", head: (title, desc) => React.createElement("div", { className: "wb-page-head" }, title + "|" + (desc || "")) });
+}
+const addonsHtml = renderToString(React.createElement(AddonsPageWrapper));
+assert.ok(addonsHtml.includes("wb-page-head"), "插件页应带页头");
+assert.ok(addonsHtml.includes("wb-addons-bar"), "插件页应渲染统计条（加载态也在）：" + addonsHtml.slice(0, 160));
+assert.ok(addonsHtml.includes("wb-addons-stats"), "统计条里要显示已注册插件数");
+assert.ok(!addonsHtml.includes("wb-backup-toolbar"), "插件页不应复用备份页的工具栏类名");
+// 共享 Btn 只读 props.children（第三个 jsx 参数是 key），漏传会渲染成空按钮——实机踩过一次。
+const listHtml = renderToString(React.createElement(AddonsPageWrapper));
+assert.ok(!/class="wb-btn[^"]*"><\/button>/.test(listHtml), "插件页不能渲染空按钮：" + listHtml.slice(0, 200));
+
+// 共享 Btn/Notice 必须把子节点放进 props.children：调用方传的 h 可能是 react/jsx-runtime 的 jsx，
+// 它的第三个参数是 key，用位置参数传文字会被当成 key 丢掉（宿主插件页的空按钮就是这么来的）。
+const wbCommon = require("../packages/addons/lib/client-common.cjs")("wb");
+const btnHtml2 = renderToString(jsxRuntime.jsx(wbCommon.Btn, { h: jsxRuntime.jsx, children: "复制命令" }));
+assert.ok(btnHtml2.includes("复制命令"), "共享 Btn 在 jsx 运行时下也要渲染文字：" + btnHtml2);
+const noticeHtml2 = renderToString(jsxRuntime.jsx(wbCommon.Notice, { h: jsxRuntime.jsx, text: "提示" }));
+assert.ok(noticeHtml2.includes("提示"), "共享 Notice 在 jsx 运行时下也要渲染文字：" + noticeHtml2);
+const fieldHtml2 = renderToString(jsxRuntime.jsx(wbCommon.Field, { h: jsxRuntime.jsx, label: "名称", children: "内容" }));
+assert.ok(fieldHtml2.includes("名称") && fieldHtml2.includes("内容"), "共享 Field 在 jsx 运行时下也要渲染标签与内容：" + fieldHtml2);
+
+console.log("HOST PAGES TEST PASS：页面渲染、插件页、方案条、备份勾选与实际导出参数、云端冲突查询和手工边界");

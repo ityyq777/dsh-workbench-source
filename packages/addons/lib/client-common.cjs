@@ -46,46 +46,50 @@ module.exports = function createCommon(prefix) {
     }
   }
 
+  /*
+   * ⚠️ 这里的组件必须把子节点放进 props.children，不能用 h(type, props, child, ...) 的位置参数：
+   * 调用方传进来的 h 可能是 react/jsx-runtime 的 jsx（自动 JSX 运行时），它的第三个参数是 key，
+   * 位置参数会被当成 key 丢掉，按钮就渲染成空壳（宿主插件页踩过一次，按钮看得见但没文字没反应）。
+   * 放进 props.children 后，createElement 与 jsx 运行时的行为一致。
+   */
   function Btn(props) {
     var h = props.h;
-    return h(
-      "button",
-      {
-        type: props.type || "button",
-        className: p + "-btn" + (props.kind ? " " + props.kind : ""),
-        disabled: props.disabled,
-        onClick: props.onClick,
-        title: props.title,
-      },
-      props.children,
-    );
+    return h("button", {
+      type: props.type || "button",
+      className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+      disabled: props.disabled,
+      onClick: props.onClick,
+      title: props.title,
+      children: props.children,
+    });
   }
 
   function Field(props) {
     var h = props.h;
-    return h(
-      "label",
-      { className: p + "-field" },
-      h("span", { className: p + "-label" }, props.label),
-      props.children,
-      props.hint ? h("span", { className: p + "-hint" }, props.hint) : null,
-    );
+    return h("label", {
+      className: p + "-field",
+      children: [
+        h("span", { key: "label", className: p + "-label", children: props.label }),
+        props.children,
+        props.hint ? h("span", { key: "hint", className: p + "-hint", children: props.hint }) : null,
+      ],
+    });
   }
 
   function Notice(props) {
     var h = props.h;
     if (!props.text) return null;
-    return h("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+    return h("div", { className: p + "-notice " + (props.kind || "info"), children: props.text });
   }
 
   function Empty(props) {
     var h = props.h;
-    return h("div", { className: p + "-empty" }, props.text || "暂无数据");
+    return h("div", { className: p + "-empty", children: props.text || "暂无数据" });
   }
 
   function Pill(props) {
     var h = props.h;
-    return h("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+    return h("span", { className: p + "-pill " + (props.kind || ""), children: props.children });
   }
 
   function Json(props) {
@@ -96,7 +100,7 @@ module.exports = function createCommon(prefix) {
     } catch (e) {
       text = String(props.value);
     }
-    return h("pre", { className: p + "-json" }, text);
+    return h("pre", { className: p + "-json", children: text });
   }
 
   function useLoad(React, api, action, args, deps) {

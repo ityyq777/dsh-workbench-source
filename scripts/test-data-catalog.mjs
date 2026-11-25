@@ -47,7 +47,9 @@ const probeDef = {
 };
 
 // 只提供旧接口的域：目录靠发现，行数据只经它自己的 dataQuery。
+// legacyMode 用来模拟属主失败与属主读空（两种情况都不得回落到宿主直读）。
 let legacyQueries = 0;
+let legacyMode = "ok";
 const legacyDef = { id: "wb-addon-legacy", title: "旧接口域", version: "0.0.1" };
 const legacyActions = new Map([
   [
@@ -61,6 +63,8 @@ const legacyActions = new Map([
     {
       execute: async () => {
         legacyQueries += 1;
+        if (legacyMode === "throw") throw new Error("属主读取失败（模拟）");
+        if (legacyMode === "empty") return {}; // 属主没给出 rows：宿主必须拒绝，不许直读
         return { rows: [{ id: 9, secret: "属主返回的密文" }], columns: [{ name: "id" }, { name: "secret", mask: true }], page: 1, pageSize: 50, pages: 1, total: 1 };
       },
     },
@@ -141,6 +145,27 @@ const legacyRows = await call("wb.dataQuery", { table: "legacy_thing", domain: l
 ok(legacyQueries === 1, "发现来的表必须经属主 dataQuery 读取");
 ok(legacyRows.owner === legacyDef.id, "结果应标出属主域");
 ok(legacyRows.rows[0].secret === "***", "属主返回的 mask 列也要掩码");
+
+// 5b. 发现来的表没有直读资格：属主抛错如实抛出，属主读空也不许回落宿主直读。
+legacyMode = "throw";
+let legacyOwnerFailed = "";
+try {
+  await call("wb.dataQuery", { table: "legacy_thing", domain: legacyDef.id });
+} catch (e) {
+  legacyOwnerFailed = String(e && e.message);
+}
+ok(/属主读取失败/.test(legacyOwnerFailed), "发现来的表属主失败时应如实抛出属主错误，不许直读，实际：" + legacyOwnerFailed);
+ok(legacyQueries === 2, "失败那次也应先问过属主 dataQuery");
+legacyMode = "empty";
+let legacyOwnerEmpty = "";
+try {
+  await call("wb.dataQuery", { table: "legacy_thing", domain: legacyDef.id });
+} catch (e) {
+  legacyOwnerEmpty = String(e && e.message);
+}
+ok(/只由属主域提供读取/.test(legacyOwnerEmpty), "属主读空时也必须拒绝，不许回落直读，实际：" + legacyOwnerEmpty);
+ok(legacyQueries === 3, "读空那次同样经属主 dataQuery");
+legacyMode = "ok";
 
 // 6. 属主优先，失败回落直读
 const ownerRows = await call("wb.dataQuery", { table: "owner_row", domain: ownerDef.id });

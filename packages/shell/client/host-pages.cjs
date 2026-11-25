@@ -237,4 +237,4 @@ function ConfigView(props) {
   return configPage(props);
 }
 
-module.exports = { PreferenceView: PreferenceView, dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView };
+module.exports = { PreferenceView: PreferenceView, dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView, hostApi: hostApi };

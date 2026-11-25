@@ -163,6 +163,7 @@ function manageCards(deps) {
     card("agentList", "列", t("tab_agent_list"), t("agent_list_desc")),
     card("queue", "队", t("tab_queue"), t("queue_desc")),
     card("automation", "自", t("tab_automation"), t("automation_desc")),
+    card("addons", "件", t("tab_addons"), t("addons_desc")),
     card("data", "数", t("tab_data"), t("data_desc")),
     card("config", "配", t("tab_config"), t("config_desc")),
     card("backup", "备", t("tab_backup"), t("backup_desc")),
