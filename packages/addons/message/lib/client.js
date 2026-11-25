@@ -2737,6 +2737,9 @@ var require_data_copy = __commonJS({
         title: "\u6570\u636E",
         subtitle: "\u53EA\u8BFB\u6D4F\u89C8\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1B\u7CFB\u7EDF\u5217\u4E0E\u5DF2\u5220\u9664\u884C\u9ED8\u8BA4\u9690\u85CF",
         tables: "\u8868",
+        tableSearch: "\u641C\u7D22\u8868\u540D\u6216\u5206\u7EC4",
+        tableSearchEmpty: "\u6CA1\u6709\u5339\u914D\u7684\u8868",
+        groupToggle: "\u6298\u53E0\u6216\u5C55\u5F00\u5206\u7EC4",
         rows: "\u884C",
         deleted: "\u5DF2\u5220\u9664",
         rowCount: "\u5171 {n} \u884C",
@@ -2813,6 +2816,9 @@ var require_data_copy = __commonJS({
         title: "Data",
         subtitle: "Read-only view of this plugin's tables; system and deleted rows are hidden by default",
         tables: "Tables",
+        tableSearch: "Search table or group",
+        tableSearchEmpty: "No matching table",
+        groupToggle: "Collapse or expand group",
         rows: "rows",
         deleted: "deleted",
         rowCount: "{n} rows",
@@ -2922,6 +2928,15 @@ var require_data_style = __commonJS({
         "." + P + "-stabname{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;line-height:1.4;min-width:0}",
         "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidefind{position:relative;display:flex;align-items:center;padding:0 6px 6px}",
+        "." + P + "-sidefind .wbi-svg{position:absolute;left:14px;color:var(--cfg-faint);pointer-events:none}",
+        "." + P + "-sidefind input{width:100%;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:8px;padding:6px 9px 6px 28px;font:inherit;font-size:12px;outline:none}",
+        "." + P + "-sidefind input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-sidetoggle{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--cfg-muted);font:inherit;font-size:11px;font-weight:660;letter-spacing:.4px;padding:8px 10px 4px;cursor:pointer;text-align:left}",
+        "." + P + "-sidetoggle:hover{color:var(--dsw-alias-label-primary,inherit)}",
+        "." + P + "-sidetoggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px;border-radius:6px}",
+        "." + P + "-sidegroup{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sideempty{padding:10px;font-size:11.5px;color:var(--cfg-faint)}",
         "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
         "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
@@ -3083,7 +3098,7 @@ var require_data_view = __commonJS({
       function DataView(props) {
         var api = props.api;
         var lang = props.lang === "en" ? "en" : "zh";
-        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: (options.tables || []).join(" / ") || DOMAIN, domain: DOMAIN }) });
         var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
         var cfg = cfgWrap.values;
         var tablesS = React.useState(null);
@@ -3132,6 +3147,10 @@ var require_data_view = __commonJS({
             return n + 1;
           });
         }
+        var groupOpenS = React.useState({});
+        var groupOpen = groupOpenS[0], setGroupOpen = groupOpenS[1];
+        var tableQueryS = React.useState("");
+        var tableQuery = tableQueryS[0], setTableQuery = tableQueryS[1];
         var indexReqRef = React.useRef(0);
         var indexS = React.useState(null);
         var index = indexS[0], setIndex = indexS[1];
@@ -3150,6 +3169,23 @@ var require_data_view = __commonJS({
             setToast("");
           }, 1600);
         }
+        function normalizeTableList(body) {
+          if (Array.isArray(body.groups) && body.groups.length) {
+            var flat = [];
+            for (var i2 = 0; i2 < body.groups.length; i2++) {
+              var g = body.groups[i2];
+              if (!g || !Array.isArray(g.tables)) continue;
+              for (var j = 0; j < g.tables.length; j++) {
+                var tb = g.tables[j];
+                if (!tb || !tb.name) continue;
+                flat.push(Object.assign({}, tb, { group: g.id || g.title || "default", groupTitle: g.title || g.id || "" }));
+              }
+            }
+            return flat;
+          }
+          if (!Array.isArray(body.tables)) return null;
+          return body.tables;
+        }
         function loadTables() {
           setLoadingTables(true);
           Promise.resolve((options.tablesLoader || function(a) {
@@ -3157,10 +3193,12 @@ var require_data_view = __commonJS({
           })(api)).then(function(r) {
             if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
             var body = unwrap(r);
-            if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
-            setTables(body.tables);
+            if (!body) throw new Error(t.loadFail);
+            var list = normalizeTableList(body);
+            if (!list) throw new Error(t.loadFail);
+            setTables(list);
             setError("");
-            if (!active && body.tables.length) setActive(body.tables[0].name);
+            if (!active && list.length) setActive(list[0].name);
           }).catch(function(e) {
             setError(String(e && e.message || e) || t.loadFail);
           }).then(function() {
@@ -3703,6 +3741,84 @@ var require_data_view = __commonJS({
             data && data.queryMs !== void 0 ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
           );
         }
+        function isGrouped() {
+          return (tables || []).some(function(tb) {
+            return !!tb.group;
+          });
+        }
+        function sideGroups() {
+          var kw = tableQuery.trim().toLowerCase();
+          var out = [];
+          var index2 = {};
+          for (var i2 = 0; i2 < tables.length; i2++) {
+            var tb = tables[i2];
+            if (kw) {
+              var hay = (String(tb.name) + " " + tableLabel(tb) + " " + (tb.groupTitle || "")).toLowerCase();
+              if (hay.indexOf(kw) < 0) continue;
+            }
+            var key = tb.group || "";
+            if (!index2[key]) {
+              index2[key] = { id: key, title: tb.groupTitle || key, tables: [] };
+              out.push(index2[key]);
+            }
+            index2[key].tables.push(tb);
+          }
+          return out;
+        }
+        function renderTableButton(tb) {
+          return h(
+            "button",
+            {
+              key: (tb.group || "") + "/" + tb.name,
+              type: "button",
+              className: P + "-stab" + (tb.name === active ? " on" : ""),
+              "aria-pressed": tb.name === active,
+              onClick: function() {
+                selectTable(tb.name);
+              }
+            },
+            h(
+              "span",
+              { className: P + "-stabname" },
+              h("span", null, tableLabel(tb)),
+              h("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
+            ),
+            h("span", { className: P + "-sidetable" }, tb.name)
+          );
+        }
+        function renderSideList() {
+          if (!isGrouped()) return tables.map(renderTableButton);
+          var groups = sideGroups();
+          if (!groups.length) return h("div", { className: P + "-sideempty" }, t.tableSearchEmpty);
+          var nodes = [];
+          for (var i2 = 0; i2 < groups.length; i2++) {
+            var g = groups[i2];
+            var open = groupOpen[g.id] !== false;
+            nodes.push(h(
+              "button",
+              {
+                key: "g:" + g.id,
+                type: "button",
+                className: P + "-sidetoggle",
+                "aria-expanded": open,
+                "aria-label": (g.title || t.groupToggle) + " \xB7 " + t.groupToggle,
+                onClick: /* @__PURE__ */ (function(id) {
+                  return function() {
+                    setGroupOpen(function(prev) {
+                      var next = Object.assign({}, prev);
+                      next[id] = prev[id] === false;
+                      return next;
+                    });
+                  };
+                })(g.id)
+              },
+              h("span", { className: P + "-sidegroup" }, open ? "\u25BE " : "\u25B8 ", g.title || g.id),
+              h("span", { className: P + "-sidecount" }, String(g.tables.length))
+            ));
+            if (open) for (var j = 0; j < g.tables.length; j++) nodes.push(renderTableButton(g.tables[j]));
+          }
+          return nodes;
+        }
         if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang, label: t.loading });
         if (!tables && loadingTables) {
           return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
@@ -3720,27 +3836,21 @@ var require_data_view = __commonJS({
             "div",
             { className: P + "-side" },
             h("div", { className: P + "-sidetitle" }, h("span", null, icon("table"), t.tables), h("span", null, String(tables.length))),
-            tables.map(function(tb) {
-              return h(
-                "button",
-                {
-                  key: tb.name,
-                  type: "button",
-                  className: P + "-stab" + (tb.name === active ? " on" : ""),
-                  "aria-pressed": tb.name === active,
-                  onClick: function() {
-                    selectTable(tb.name);
-                  }
-                },
-                h(
-                  "span",
-                  { className: P + "-stabname" },
-                  h("span", null, tableLabel(tb)),
-                  h("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
-                ),
-                h("span", { className: P + "-sidetable" }, tb.name)
-              );
-            })
+            isGrouped() ? h(
+              "div",
+              { className: P + "-sidefind" },
+              icon("search"),
+              h("input", {
+                type: "search",
+                value: tableQuery,
+                placeholder: t.tableSearch,
+                "aria-label": t.tableSearch,
+                onChange: function(e) {
+                  setTableQuery(e.target.value);
+                }
+              })
+            ) : null,
+            renderSideList()
           ),
           h(
             "div",

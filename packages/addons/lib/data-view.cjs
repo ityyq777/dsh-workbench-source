@@ -53,7 +53,7 @@ function rawText(value, col) {
 function DataView(props) {
   var api = props.api;
   var lang = props.lang === "en" ? "en" : "zh";
-  var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+  var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: (options.tables || []).join(" / ") || DOMAIN, domain: DOMAIN }) });
   var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
   var cfg = cfgWrap.values;
 
@@ -99,6 +99,12 @@ function DataView(props) {
   var refreshS = React.useState(0);
   function refresh() { loadTables(); refreshS[1](function (n) { return n + 1; }); }
 
+  // 左侧目录：宿主数据页会把表按域分组下发，这里记折叠状态与表名搜索词。
+  // 不分组时（业务插件自己的表很少）自动退回原来的平铺列表，行为不变。
+  var groupOpenS = React.useState({});
+  var groupOpen = groupOpenS[0], setGroupOpen = groupOpenS[1];
+  var tableQueryS = React.useState("");
+  var tableQuery = tableQueryS[0], setTableQuery = tableQueryS[1];
   var indexReqRef = React.useRef(0);
   var indexS = React.useState(null);
   var index = indexS[0], setIndex = indexS[1];
@@ -119,16 +125,41 @@ function DataView(props) {
     toastTimer.current = setTimeout(function () { setToast(""); }, 1600);
   }
 
+  /**
+   * 表清单归一：老接口是 { tables: [...] } 平铺数组；分组接口是
+   * { groups: [{ id, title, tables: [...] }] }，这里摊平成同一个数组并带上
+   * group/groupTitle，渲染层再按出现顺序收回去——两种形状只维护一条数据通路。
+   */
+  function normalizeTableList(body) {
+    if (Array.isArray(body.groups) && body.groups.length) {
+      var flat = [];
+      for (var i = 0; i < body.groups.length; i++) {
+        var g = body.groups[i];
+        if (!g || !Array.isArray(g.tables)) continue;
+        for (var j = 0; j < g.tables.length; j++) {
+          var tb = g.tables[j];
+          if (!tb || !tb.name) continue;
+          flat.push(Object.assign({}, tb, { group: g.id || g.title || "default", groupTitle: g.title || g.id || "" }));
+        }
+      }
+      return flat;
+    }
+    if (!Array.isArray(body.tables)) return null;
+    return body.tables;
+  }
+
   function loadTables() {
     setLoadingTables(true);
     Promise.resolve((options.tablesLoader || function (a) { return a.call(DOMAIN + ".dataTables"); })(api))
       .then(function (r) {
         if (r && r.ok === false) throw new Error((r && r.error) || t.loadFail);
         var body = unwrap(r);
-        if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
-        setTables(body.tables);
+        if (!body) throw new Error(t.loadFail);
+        var list = normalizeTableList(body);
+        if (!list) throw new Error(t.loadFail);
+        setTables(list);
         setError("");
-        if (!active && body.tables.length) setActive(body.tables[0].name);
+        if (!active && list.length) setActive(list[0].name);
       })
       .catch(function (e) { setError(String((e && e.message) || e) || t.loadFail); })
       .then(function () { setLoadingTables(false); });
@@ -566,6 +597,70 @@ function DataView(props) {
       data && data.queryMs !== undefined ? h("span", null, fmt(t.queryTime, { n: data.queryMs })) : null);
   }
 
+  /** 是否按分组展示：任一表带 group 即视为分组目录（宿主数据页），否则保持平铺。 */
+  function isGrouped() { return (tables || []).some(function (tb) { return !!tb.group; }); }
+
+  /** 分组顺序按后端下发的顺序；搜索时保留命中项所在的组，整组一起过滤。 */
+  function sideGroups() {
+    var kw = tableQuery.trim().toLowerCase();
+    var out = [];
+    var index = {};
+    for (var i = 0; i < tables.length; i++) {
+      var tb = tables[i];
+      if (kw) {
+        var hay = (String(tb.name) + " " + tableLabel(tb) + " " + (tb.groupTitle || "")).toLowerCase();
+        if (hay.indexOf(kw) < 0) continue;
+      }
+      var key = tb.group || "";
+      if (!index[key]) {
+        index[key] = { id: key, title: tb.groupTitle || key, tables: [] };
+        out.push(index[key]);
+      }
+      index[key].tables.push(tb);
+    }
+    return out;
+  }
+
+  function renderTableButton(tb) {
+    return h("button", {
+      key: (tb.group || "") + "/" + tb.name, type: "button", className: P + "-stab" + (tb.name === active ? " on" : ""),
+      "aria-pressed": tb.name === active, onClick: function () { selectTable(tb.name); },
+    },
+      h("span", { className: P + "-stabname" },
+        h("span", null, tableLabel(tb)),
+        h("span", { className: P + "-sidecount" }, tb.count === undefined || tb.count === null ? "" : String(tb.count))),
+      h("span", { className: P + "-sidetable" }, tb.name));
+  }
+
+  /** 左侧列表：分组时每组一个可折叠标题（域标题 + 表数），单表或不分组的场景原样平铺。 */
+  function renderSideList() {
+    if (!isGrouped()) return tables.map(renderTableButton);
+    var groups = sideGroups();
+    if (!groups.length) return h("div", { className: P + "-sideempty" }, t.tableSearchEmpty);
+    var nodes = [];
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      var open = groupOpen[g.id] !== false;
+      nodes.push(h("button", {
+        key: "g:" + g.id, type: "button", className: P + "-sidetoggle", "aria-expanded": open,
+        "aria-label": (g.title || t.groupToggle) + " · " + t.groupToggle,
+        onClick: function (id) {
+          return function () {
+            setGroupOpen(function (prev) {
+              var next = Object.assign({}, prev);
+              next[id] = prev[id] === false;
+              return next;
+            });
+          };
+        }(g.id),
+      },
+        h("span", { className: P + "-sidegroup" }, open ? "▾ " : "▸ ", g.title || g.id),
+        h("span", { className: P + "-sidecount" }, String(g.tables.length))));
+      if (open) for (var j = 0; j < g.tables.length; j++) nodes.push(renderTableButton(g.tables[j]));
+    }
+    return nodes;
+  }
+
   if (!tables && loadingTables && options.Skeleton) return h(options.Skeleton, { lang: lang, label: t.loading });
   if (!tables && loadingTables) {
     return h("div", { className: P + "-skwrap", "aria-busy": "true" }, h("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function (i) { return h("div", { key: i, className: P + "-sk" }); }));
@@ -578,16 +673,13 @@ function DataView(props) {
   return h("div", { className: P },
     h("div", { className: P + "-side" },
       h("div", { className: P + "-sidetitle" }, h("span", null, icon("table"), t.tables), h("span", null, String(tables.length))),
-      tables.map(function (tb) {
-        return h("button", {
-          key: tb.name, type: "button", className: P + "-stab" + (tb.name === active ? " on" : ""),
-          "aria-pressed": tb.name === active, onClick: function () { selectTable(tb.name); },
-        },
-          h("span", { className: P + "-stabname" },
-            h("span", null, tableLabel(tb)),
-            h("span", { className: P + "-sidecount" }, tb.count === undefined || tb.count === null ? "" : String(tb.count))),
-          h("span", { className: P + "-sidetable" }, tb.name));
-      })),
+      isGrouped() ? h("div", { className: P + "-sidefind" }, icon("search"),
+        h("input", {
+          type: "search", value: tableQuery, placeholder: t.tableSearch, "aria-label": t.tableSearch,
+          onChange: function (e) { setTableQuery(e.target.value); },
+        })
+      ) : null,
+      renderSideList()),
     h("div", { className: P + "-main" },
       h("div", { className: P + "-tabs", role: "tablist", "aria-label": t.title },
         h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "rows", onClick: showRows }, icon("list"), lang === "en" ? "Row data" : "行数据"),

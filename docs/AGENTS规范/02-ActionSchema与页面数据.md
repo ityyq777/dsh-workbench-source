@@ -109,6 +109,22 @@ pnpm test:native && pnpm test:tags && pnpm test:sites
 `docs/插件功能清单.md` 是给人看的 action 清单，含版本表与 action 表；改 schema 时
 把对应行的字段串、枚举描述、必填列一起改，并更新版本表与 action 数。
 
+## 表声明是宿主数据页的契约（0.17.5 起）
+
+`DomainDef.tables` 不再只是「给备份和文档看的表名」，而是宿主统一数据页的读取白名单：
+
+- 写字符串等于是只给表名；要给中文名、说明、默认排序列、列掩码就写对象
+  （`{ name, label?, desc?, sort?, readonly?, columns?: Array<string | { name, label?, hidden?, mask? }> }`）。
+- **声明了就必须真读，读到了就必须声明**：宿主只直读声明过的表，没声明的表连 `wb.dataQuery`
+  都调不到；密文、盐值、包裹密钥这类列必须声明 `mask: true`，宿主在输出层统一替换成 `***`。
+  「自己 dataQuery 里已经掩过码」不算——宿主直读那条路径不经过插件代码。
+- 域自己仍提供 `dataTables`/`dataQuery` 时（第三方插件保留这种自由），宿主的查询优先交给它执行、
+  失败才回落直读；只靠 `dataTables` 暴露而未声明的表，作为「可选发现」进目录，但只能经属主读取。
+- 改表声明或列语义时同步：`docs/插件功能清单.md` 的对应章节、`docs/架构文档/08-数据配置与同步.md`、
+  以及 `pnpm test:data-catalog`（声明两种写法/分组/白名单/掩码/属主优先）与 `pnpm test:host-data`。
+- 表的真实结构仍以 `PRAGMA table_info` 为准，声明只补展示与安全语义；两者不一致时界面会显示
+  `exists: false` 的条目（声明了但库里没有），这是故意的漂移信号，不要把它静默过滤掉。
+
 ## 插件页面必须自证数据源，不许走宿主统一接口
 
 宿主提供 `GET /workbench/api/schema`、`api.schema(domain)`、`capabilities.*`、

@@ -14,18 +14,14 @@ var schemes = require("../../addons/lib/config-scheme-bar.cjs");
 var SW = require("../../addons/lib/switch.cjs");
 var NF = require("../../addons/lib/number-field.cjs");
 
-var HOST_TABLES = [
-  "meta",
-  "sync_change_log",
-  "conflict_shadow",
-  "sync_dead_letter",
-  "sync_state",
-  "session_role",
-  "audit_log",
-  "host_event",
-  "host_event_delivery",
-  "host_event_subscription",
-];
+/**
+ * 数据页的目录由宿主 action 下发（wb.dataTables）：宿主内置平台表 + 各业务域声明
+ * 或暴露的表，按域分组。页面不再维护一份表名清单——之前这里少了自动化三张表，
+ * 与宿主白名单对不上，正是这次收敛掉的问题。
+ */
+function catalogLoader(api) {
+  return api.call("wb.dataTables", {});
+}
 
 /** 数据页只读本地配置档位；宿主的「数据」视图不需要落一份展示配置。 */
 function useHostDisplayConfig() {
@@ -37,7 +33,8 @@ function useHostDisplayConfig() {
 var HostDataView = createDataView({
   domain: "wb",
   prefix: "wbh",
-  tables: HOST_TABLES,
+  tables: [],
+  tablesLoader: catalogLoader,
   useConfig: useHostDisplayConfig,
 }).DataView;
 
@@ -240,4 +237,4 @@ function ConfigView(props) {
   return configPage(props);
 }
 
-module.exports = { PreferenceView: PreferenceView, dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView, HOST_TABLES: HOST_TABLES };
+module.exports = { PreferenceView: PreferenceView, dataPage: dataPage, configPage: configPage, configBody: configBody, ConfigView: ConfigView, DataView: HostDataView };

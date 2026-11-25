@@ -58,8 +58,11 @@ export const inject = ["webServer", "tools", "connection"];
 const WB_HOME = process.env.WB_HOME ?? join(homedir(), ".dsh", "workbench");
 const CLOUD_DEFAULT = process.env.WB_CLOUD_URL ?? "http://127.0.0.1:8791";
 
-/** 宿主 API 版本：业务插件用它做兼容判断。 */
-export const SHELL_VERSION = "0.17.3";
+/**
+ * 宿主 API 版本：业务插件用它做兼容判断，也是界面与备份 manifest 里显示的版本。
+ * 必须与 packages/shell/package.json 的 version 一致（test:ownership-host 会拦）。
+ */
+export const SHELL_VERSION = "0.17.5";
 
 const DOMAIN_ID_RE = /^[a-z][a-z0-9_-]{2,63}$/;
 const ACTION_RE = /^[a-z][a-z0-9_-]*(?:\.[a-z][a-z0-9_-]*)+$/i;
@@ -159,14 +162,18 @@ export function apply(ctx: any): void {
       version: rec.def.version,
       enabled: rec.error === null,
       error: rec.error,
-      tables: rec.def.tables ?? [],
+      // tables 保持「表名数组」这个老口径；声明对象形式统一在 tableDefs 里给出。
+      tables: (rec.def.tables ?? []).map((t: any) => (typeof t === "string" ? t : t?.name)).filter(Boolean),
+      tableDefs: (rec.def.tables ?? [])
+        .map((t: any) => (typeof t === "string" ? { name: t } : t))
+        .filter((t: any) => t && t.name),
       views: rec.def.views ?? [],
       slots: rec.def.slots ?? [],
       slotHosts: rec.def.slotHosts ?? [],
       sync: {
         tables:
           rec.def.sync?.tables?.map((t) => ({ name: t.name, mode: t.mode })) ??
-          (rec.def.tables ?? []).map((name) => ({ name, mode: "row" as const })),
+          (rec.def.tables ?? []).map((t: any) => ({ name: typeof t === "string" ? t : String(t?.name ?? ""), mode: "row" as const })).filter((t: any) => t.name),
       },
       backup: {
         export: typeof rec.def.exportData === "function",

@@ -1,11 +1,15 @@
 /**
  * 宿主自己的「数据」与「配置」两个视图的 action。
  *
- * 子插件各自注册 <domain>.dataTables / dataQuery / configGet / configSet，
- * 宿主不是业务插件、也不进备份，所以这几项统一挂在 wb-shell 元 action 名下的
- * wb.* 前缀，供宿主页面与 agent 用同一套 schema 发现链路读取。
+ * 数据页的目录来自声明：宿主内置平台表（见 data-catalog.ts 的 PLATFORM_TABLES）
+ * 加上各业务域 DomainDef.tables 里声明的表。声明过的表名就是宿主直读的白名单；
+ * 某个域仍然提供自己的 dataTables/dataQuery 时，宿主的查询优先交给它执行，
+ * 它失败再回落到直读（这样「可选发现」的第三方表也能浏览，但宿主绝不直读未声明的表）。
+ *
+ * 配置页仍然只读写宿主本机 meta，与业务插件无关。
  */
 import { setAuditMeta } from "../infra/audit.js";
+import { declaredCatalog, mergeDiscovered, findCatalogTable, columnDecls, kindOf, safeIdent, PLATFORM_TABLES } from "./data-catalog.js";
 
 import { activeScheme, atomic, loadStore, preferenceItems, preferenceValue, saveStore, schemeActions, writableScheme } from "./backup-schemes.js";
 
@@ -14,26 +18,10 @@ const PAGE_SIZES = [10, 25, 50, 100, 200];
 const MAX_SEARCH = 100;
 
 /**
- * 宿主自有平台表白名单。列 packages/core/lib/schema.js 里的平台表、审计表，
- * 以及内化进宿主的自动化三张表；其余业务表归各自插件，宿主页面不越权浏览。
+ * 宿主直读白名单 = 声明过的表名（宿主内置平台表 + 业务域声明的表）。
+ * 表名只用来和 sqlite_master 对账，SQL 里的标识符另有 safeIdent 校验。
  */
-const TABLES = [
-  { name: "meta", label: "键值（meta）", sort: "k", desc: "本机配置与元数据" },
-  { name: "sync_change_log", label: "变更日志", sort: "seq", desc: "未推送尾部即待同步队列" },
-  { name: "conflict_shadow", label: "冲突留档", sort: "id", desc: "LWW 输方版本留档" },
-  { name: "sync_dead_letter", label: "同步死信", sort: "id", desc: "单行/单表连续失败" },
-  { name: "sync_state", label: "同步水位", sort: "k", desc: "水位、时钟、最后状态" },
-  { name: "session_role", label: "会话角色", sort: "session_id", desc: "只影响本机当前会话" },
-  { name: "audit_log", label: "审计日志", sort: "id", desc: "action 调用账本" },
-  { name: "host_event", label: "事件队列", sort: "created_at", desc: "push 进来的事件（queued/done/dead）" },
-  { name: "host_event_delivery", label: "事件投递", sort: "updated_at", desc: "按订阅拆出的投递：pending/running/done/dead" },
-  { name: "host_event_subscription", label: "事件订阅", sort: "domain", desc: "哪个域用哪个 plugin-only action 消费哪类事件" },
-  { name: "host_automation_rule", label: "自动化规则", sort: "created_at", desc: "触发条件 + 已启用 action（或交给 AI 的提示词）" },
-  { name: "host_automation_run", label: "自动化运行记录", sort: "started_at", desc: "每次触发的成败与错误，仅本机" },
-  { name: "host_automation_meta", label: "自动化设置", sort: "key", desc: "可调用 action 白名单等本机配置" },
-];
-
-const TABLE_BY_NAME = new Map(TABLES.map((t) => [t.name, t]));
+const PLATFORM_NAMES = PLATFORM_TABLES.map((t) => t.name);
 
 /** 配置项白名单：只暴露宿主自己维护、且允许从界面改的 meta 键。 */
 const CONFIG_ITEMS = [
@@ -91,8 +79,10 @@ function hasTable(db: any, name: string): boolean {
 }
 
 function columnsOf(db: any, name: string): any[] {
+  const ident = safeIdent(name);
+  if (!ident) return [];
   try {
-    return db.prepare("PRAGMA table_info(" + name + ")").all();
+    return db.prepare("PRAGMA table_info(" + ident + ")").all();
   } catch {
     return [];
   }
@@ -106,31 +96,110 @@ function countOf(db: any, name: string): number {
   }
 }
 
-function tablesPayload(db: any): any {
-  const tables = TABLES.filter((t) => hasTable(db, t.name)).map((t) => ({
-    name: t.name,
-    label: t.label,
-    desc: t.desc,
-    count: countOf(db, t.name),
-    columns: columnsOf(db, t.name).map((c: any) => ({
+/** 列元信息：真实结构 + 声明里的中文名/隐藏/掩码，字段页签与行数据共用一份。 */
+function columnMeta(table: any, columns: any[]): any[] {
+  const decls = columnDecls(table);
+  return columns.map((c: any) => {
+    const decl = decls.get(c.name);
+    return {
       name: c.name,
       type: c.type || "",
+      label: decl?.label || c.name,
+      kind: kindOf(c.name, c.type || ""),
       pk: !!c.pk,
       notNull: !!c.notnull,
-    })),
-  }));
-  return { domain: DOMAIN, tables };
+      defaultValue: c.dflt_value === undefined || c.dflt_value === null ? null : String(c.dflt_value),
+      system: !!c.pk,
+      hidden: !!decl?.hidden,
+      mask: !!decl?.mask,
+    };
+  });
 }
 
-function queryPayload(db: any, args: any): any {
-  const name = String(args.table || "");
-  const spec = TABLE_BY_NAME.get(name);
-  if (!spec || !hasTable(db, name)) throw new Error("未知宿主表：" + name);
-  const columns = columnsOf(db, name);
+/**
+ * 带行数与列元信息的表项。声明过的表即使库里还没有也照样列出（exists=false），
+ * 这样「声明与库结构不一致」在界面上就是可见的，而不是悄悄少一行。
+ */
+function tableView(db: any, table: any): any {
+  const exists = hasTable(db, table.name);
+  const columns = exists ? columnsOf(db, table.name) : [];
+  return {
+    name: table.name,
+    label: table.label || table.name,
+    desc: table.desc || "",
+    sort: table.sort || "rowid",
+    domain: table.domainId,
+    source: table.source,
+    readonly: table.readonly !== false,
+    exists,
+    count: exists ? countOf(db, table.name) : null,
+    columns: columnMeta(table, columns),
+  };
+}
+
+/** 目录：声明优先，域还提供 dataTables 时并进来（标 discovered），宿主命中不到就只信声明。 */
+async function tablesPayload(db: any, ctx: HostDataContext): Promise<any> {
+  const groups = declaredCatalog(ctx.domains);
+  for (const rec of ctx.domains.values()) {
+    if (rec.def.id === "wb-shell") continue;
+    const discover = rec.actions.get("dataTables");
+    if (!discover) continue;
+    try {
+      const out: any = await discover.execute({}, { origin: "ui", domainId: rec.def.id } as any);
+      const list = Array.isArray(out?.tables) ? out.tables : [];
+      mergeDiscovered(groups, rec.def.id, rec.def.title || rec.def.id, list);
+    } catch {
+      // 发现失败不影响别的分组：它只是「可选发现」，不是目录来源。
+    }
+  }
+  const flat: any[] = [];
+  const shaped: any[] = [];
+  for (const group of groups) {
+    const tables = group.tables.map((t: any) => tableView(db, t)).filter(Boolean);
+    if (!tables.length) continue;
+    shaped.push({ id: group.id, title: group.title, tables });
+    for (const t of tables) flat.push(Object.assign({}, t, { group: group.id, groupTitle: group.title }));
+  }
+  return { domain: DOMAIN, groups: shaped, tables: flat, count: flat.length, whitelist: PLATFORM_NAMES.length };
+}
+
+/** 声明了 mask 的列在输出层统一打码；插件自己返回的行也会再走一遍这里。 */
+function maskRows(rows: any[], columns: any[]): any[] {
+  const masked = columns.filter((c) => c.mask).map((c) => c.name);
+  if (!masked.length || !Array.isArray(rows)) return rows;
+  return rows.map((row) => {
+    if (!row || typeof row !== "object") return row;
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(row)) out[key] = masked.indexOf(key) >= 0 && row[key] !== null ? "***" : row[key];
+    return out;
+  });
+}
+
+/** 属主域自己的 dataQuery：声明过也优先用它，保持插件对「自己数据怎么读」的解释权。 */
+async function queryViaOwner(rec: any, args: any): Promise<any> {
+  const action = rec.actions.get("dataQuery");
+  if (!action) return null;
+  const out: any = await action.execute(args, { origin: "ui", domainId: rec.def.id } as any);
+  const payload: any = out && typeof out === "object" ? out : {};
+  if (!Array.isArray(payload.rows)) return null;
+  const columns = Array.isArray(payload.columns) ? payload.columns : [];
+  return Object.assign({}, payload, {
+    domain: DOMAIN,
+    table: String(args.table),
+    owner: rec.def.id,
+    rows: maskRows(payload.rows, columns),
+  });
+}
+
+function directQueryPayload(db: any, table: any, args: any): any {
+  const name = safeIdent(table.name);
+  if (!name) throw new Error("表名不合法：" + table.name);
+  if (!hasTable(db, name)) throw new Error("表 " + table.name + " 已声明但库里不存在（声明与库结构不一致）");
+  const columns = columnsMetaOf(db, table);
   const names = columns.map((c: any) => c.name);
   const pageSize = pickPageSize(args.pageSize);
   const search = typeof args.search === "string" ? args.search.trim().slice(0, MAX_SEARCH) : "";
-  const sort = names.indexOf(String(args.sort || "")) >= 0 ? String(args.sort) : spec.sort;
+  const sort = names.indexOf(String(args.sort || "")) >= 0 ? String(args.sort) : (table.sort && names.indexOf(table.sort) >= 0 ? table.sort : names[0]);
   const order = String(args.order || "desc").toLowerCase() === "asc" ? "asc" : "desc";
 
   const where: string[] = [];
@@ -144,7 +213,7 @@ function queryPayload(db: any, args: any): any {
     }
   }
   const filters = args.filters && typeof args.filters === "object" ? args.filters : {};
-  for (const [column, value] of Object.entries(filters).slice(0, 20)) {
+  for (const [column, value] of Object.entries(filters as Record<string, unknown>).slice(0, 20)) {
     if (names.indexOf(column) < 0) continue;
     if (value === undefined || value === null || value === "") continue;
     where.push("CAST(" + column + " AS TEXT) LIKE ? ESCAPE '\\'");
@@ -166,8 +235,9 @@ function queryPayload(db: any, args: any): any {
   return {
     domain: DOMAIN,
     table: name,
-    columns: columns.map((c: any) => ({ name: c.name, type: c.type || "", label: c.name, system: !!c.pk })),
-    rows,
+    owner: table.domainId,
+    columns,
+    rows: maskRows(rows, columns),
     page,
     pageSize,
     pages,
@@ -176,6 +246,63 @@ function queryPayload(db: any, args: any): any {
     order,
     search,
   };
+}
+
+/** 目录项 + 真实列 = 输出列（掩码、中文名、主键、默认值都在这里对齐）。 */
+function columnsMetaOf(db: any, table: any): any[] {
+  return columnMeta(table, columnsOf(db, table.name));
+}
+
+/**
+ * 查询入口：先查目录（命中白名单或发现项），属主域有 dataQuery 就交给它，
+ * 失败或没实现才由宿主直读——但直读只对**声明过**的表开放。
+ */
+/** 域 id 容错：允许写短名（vault）也允许写全名（wb-addon-vault）。 */
+function resolveDomain(ctx: HostDataContext, raw: string): any {
+  const key = String(raw || "").trim();
+  if (!key) return null;
+  const direct = ctx.domains.get(key);
+  if (direct) return direct;
+  const full = "wb-addon-" + key;
+  if (ctx.domains.get(full)) return ctx.domains.get(full);
+  for (const rec of ctx.domains.values()) {
+    if (rec.def.id.replace(/^wb-addon-/, "") === key) return rec;
+  }
+  return null;
+}
+
+async function queryPayload(db: any, args: any, ctx: HostDataContext): Promise<any> {
+  const name = String(args.table || "").trim();
+  const domainId = args.domain ? String(args.domain).trim() : "";
+  const groups = declaredCatalog(ctx.domains);
+  let table = findCatalogTable(groups, name, domainId || undefined);
+  if (!table) {
+    // 未声明：只可能是「域自己暴露的表」——向该域问一次 dataTables，问不到就拒绝。
+    const owner = domainId ? resolveDomain(ctx, domainId) : null;
+    const discover = owner ? owner.actions.get("dataTables") : null;
+    if (discover) {
+      try {
+        const out: any = await discover.execute({}, { origin: "ui", domainId: owner.def.id } as any);
+        mergeDiscovered(groups, owner.def.id, owner.def.title || owner.def.id, out?.tables);
+        table = findCatalogTable(groups, name, owner.def.id);
+      } catch {
+        table = null;
+      }
+    }
+  }
+  if (!table) throw new Error("未知表：" + (name || "(空)") + (domainId ? "（域 " + domainId + "）" : "") + "；宿主只浏览声明过或属主显式暴露的表");
+  const rec = ctx.domains.get(table.domainId) ?? null;
+  if (rec) {
+    try {
+      const viaOwner = await queryViaOwner(rec, args);
+      if (viaOwner) return viaOwner;
+    } catch (e) {
+      // 属主自己失败时回落到直读；未声明的表没有回落资格，错误如实抛出。
+      if (table.source !== "declared") throw e;
+    }
+  }
+  if (table.source !== "declared") throw new Error("表 " + table.name + " 只由属主域提供读取，属主未返回数据");
+  return directQueryPayload(db, table, args);
 }
 
 function readMetaValue(db: any, item: any): { value: unknown; overridden: boolean } {
@@ -291,29 +418,35 @@ function resetValues(db: any, ids: unknown): any {
   });
 }
 
+/** 数据页要用到的宿主上下文：已注册域表（声明 + 可选发现 + 属主 dataQuery 都从它取）。 */
+export interface HostDataContext {
+  domains: Map<string, any>;
+}
+
 /** 把宿主的数据/配置 action 并进元 action 表（wb-shell 域，不进备份）。 */
-export function createHostDataActions(db: any): Map<string, any> {
+export function createHostDataActions(db: any, ctx: HostDataContext = { domains: new Map() }): Map<string, any> {
   return new Map<string, any>([
     ...schemeActions(db, () => configState(db)),
     [
       "wb.dataTables",
       {
-        description: "列出宿主自己维护的平台表（meta、同步日志/死信/水位、会话记录模式、审计日志）的行数与列元信息；只读，供宿主「数据」视图使用。",
+        description: "列出宿主数据页的目录：宿主内置平台表 + 各业务域声明或暴露的表，按域分组，带行数与列元信息（中文名、主键、默认值、掩码）。只读，供宿主「数据」视图使用。",
         input: { type: "object", properties: {} },
         examples: [{}],
-        execute: () => tablesPayload(db),
-        render: (r: any) => r.tables.map((t: any) => t.name + " " + t.count + " 行").join("、"),
+        execute: () => tablesPayload(db, ctx),
+        render: (r: any) => r.groups.map((g: any) => g.title + "：" + g.tables.map((t: any) => t.name + "(" + (t.count === null ? "?" : t.count) + " 行)").join("、")).join("；"),
       },
     ],
     [
       "wb.dataQuery",
       {
-        description: "只读分页查询宿主平台表：表名白名单、可排序、可关键字过滤与逐列筛选。业务表请用各自插件域的 dataQuery。",
+        description: "只读分页查询数据页目录里的任意表（宿主平台表或业务域声明的表）：表名必须命中声明目录，可排序、可关键字过滤与逐列筛选。属主域自己提供 dataQuery 时优先交给它执行。",
         input: {
           type: "object",
           required: ["table"],
           properties: {
-            table: { type: "string", enum: TABLES.map((t) => t.name), description: "宿主平台表名" },
+            table: { type: "string", description: "表名，必须在 wb.dataTables 的目录里" },
+            domain: { type: "string", description: "属主域 id（表名在全目录重名时必须给），如 wb-addon-vault" },
             page: { type: "number", description: "页码，从 1 开始，越界自动夹取" },
             pageSize: { type: "number", enum: PAGE_SIZES, description: "每页条数，默认 50" },
             sort: { type: "string", description: "排序列名，必须是该表真实列；默认主键列" },
@@ -326,8 +459,8 @@ export function createHostDataActions(db: any): Map<string, any> {
             },
           },
         },
-        examples: [{ table: "audit_log", pageSize: 20 }, { table: "sync_dead_letter", search: "mail" }],
-        execute: (args: any) => queryPayload(db, args || {}),
+        examples: [{ table: "audit_log", pageSize: 20 }, { table: "vault_group", domain: "wb-addon-vault" }, { table: "sync_dead_letter", search: "mail" }],
+        execute: (args: any) => queryPayload(db, args || {}, ctx),
         render: (r: any) => r.table + " 第 " + r.page + "/" + r.pages + " 页，共 " + r.total + " 行",
       },
     ],

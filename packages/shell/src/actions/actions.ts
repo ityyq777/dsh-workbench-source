@@ -558,7 +558,7 @@ function schemaSnapshot(domain?: string) {
     },
   });
   // 宿主自己的「数据」「配置」两个视图：与业务域同构，但挂在 wb-shell 元 action 下。
-  for (const [name, def] of createHostDataActions(db)) META_ACTIONS.set(name, def);
+  for (const [name, def] of createHostDataActions(db, { domains })) META_ACTIONS.set(name, def);
   // 宿主「事件队列」页：读队列三张表 + 插件事件授权清单 + 重投/清理，重投后踢一次 drain。
   for (const [name, def] of createHostEventActions(db, queueRef || { value: null }, domains)) {
     META_ACTIONS.set(name, def);

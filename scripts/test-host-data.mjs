@@ -81,10 +81,20 @@ try {
   assert(!names.includes("task"), "业务表不应出现在宿主数据页");
   const meta = tables.find((t) => t.name === "meta");
   assert(Array.isArray(meta.columns) && meta.columns.length > 0 && meta.columns.some((c) => c.name === "k"), "meta 应有列信息");
+  // 列元信息：中文名与 kind 要下发（字段页签按它渲染），平台表声明了中文名
+  assert(meta.columns.some((c) => c.label && c.label !== c.name), "平台表列应带中文名：" + JSON.stringify(meta.columns.slice(0, 3)));
+  assert(meta.columns.every((c) => typeof c.kind === "string" && c.kind), "每列都应有渲染 kind");
 
-  // 2. 白名单：业务表拒绝
+  // 1b. 目录按域分组：宿主平台表自己一组，表项同时出现在扁平列表里（老口径兼容）
+  const payload = (await uiCall("wb.dataTables", {})).payload.result;
+  assert(Array.isArray(payload.groups) && payload.groups.length >= 1, "dataTables 应返回分组目录");
+  const platform = payload.groups.find((g) => g.id === "wb-shell");
+  assert(platform && platform.tables.length === tables.length, "宿主平台表应单独成组且覆盖全部表");
+  assert(payload.tables.every((t) => t.group && t.groupTitle), "扁平列表应带分组信息");
+
+  // 2. 白名单：未声明的业务表拒绝（声明过的才可读）
   const denied = await uiCall("wb.dataQuery", { table: "task" });
-  assert(/未知宿主表|不在白名单/.test(String(denied.payload.text) + String(denied.payload.error)), "业务表应被白名单拒绝");
+  assert(/未知表|只浏览声明过/.test(String(denied.payload.text) + String(denied.payload.error)), "未声明的业务表应被白名单拒绝");
 
   // 3. 分页与关键字
   const page = (await uiCall("wb.dataQuery", { table: "meta", page: 1, pageSize: 5 })).payload.result;

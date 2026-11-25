@@ -453,6 +453,40 @@ export interface DomainHookResponse {
 
 export type DomainHookHandler = (req: DomainHookRequest) => DomainHookResponse | Promise<DomainHookResponse>;
 
+/**
+ * 声明一张表里某一列的元信息。只影响宿主数据浏览页的展示与输出，
+ * 不参与建表：列的真实结构仍以 PRAGMA table_info 为准。
+ */
+export interface DomainTableColumnDecl {
+  /** 真实列名 */
+  name: string;
+  /** 中文展示名；缺省时直接用列名 */
+  label?: string;
+  /** 默认不在「行数据」页签显示（字段页签仍列出）；用于长文本、二进制一类 */
+  hidden?: boolean;
+  /** 输出层掩码：命中时值替换为 ***；宿主直读与透传插件结果都会再掩一次码 */
+  mask?: boolean;
+}
+
+/**
+ * 声明一张可供宿主数据浏览页读取的表。
+ * 字符串写法 `"tasks"` 等价于 `{ name: "tasks" }`，旧插件不需要改。
+ */
+export interface DomainTableDecl {
+  /** 真实表名（必须是本域建的表） */
+  name: string;
+  /** 中文展示名 */
+  label?: string;
+  /** 一句话说明，展示在表头下方 */
+  desc?: string;
+  /** 默认排序列；缺省用主键列 */
+  sort?: string;
+  /** 只读声明：本期宿主统一只读，声明出来是为了明确语义与文档 */
+  readonly?: boolean;
+  /** 列元信息（可选）；未声明的列按真实结构生成 */
+  columns?: Array<string | DomainTableColumnDecl>;
+}
+
 /** 业务域定义：DSH 插件 apply() 里交给宿主。 */
 export interface DomainDef {
   /** 稳定 id，如 wb-addon-tasks；用于 DOM / action 归属 / 跨插件探测 */
@@ -460,8 +494,12 @@ export interface DomainDef {
   title: string;
   description?: string;
   version: string;
-  /** 声明贡献的表（备份与文档用；建表仍由业务插件负责） */
-  tables?: string[];
+  /**
+   * 声明贡献的表（备份与文档用；建表仍由业务插件负责）。
+   * 同时是宿主「数据」页的读取白名单：宿主只读这里声明过的表名，
+   * 声明成对象时可以给出中文名、说明、默认排序列与列掩码。
+   */
+  tables?: Array<string | DomainTableDecl>;
   /**
    * 事件授权清单：`publishes` 里的类型才允许 api.events.push，
    * `subscriptions` 里的类型才允许 api.events.subscribe（"*" 也要显式声明）。
@@ -560,7 +598,10 @@ export interface DomainPublicInfo {
   version: string;
   enabled: boolean;
   error: string | null;
+  /** 表名数组（老口径）；声明对象形式的完整信息在 tableDefs */
   tables: string[];
+  /** 归一后的表声明（字符串写法也在这里变成对象），供宿主数据页与能力清单使用 */
+  tableDefs: DomainTableDecl[];
   views: DomainViewDecl[];
   /** 是否实现数据导出/导入，客户端据此启用备份选项 */
   backup: { export: boolean; import: boolean };

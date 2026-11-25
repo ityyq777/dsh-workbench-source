@@ -42,11 +42,33 @@ export function createDomain(host) {
     description: "集中保存密码、授权码与 token；按分组授权给业务模块，加密落库、密文可同步。",
     version: ADDON_VERSION,
     category: "assets",
+    // 表声明：名字之外还给出中文名与掩码列。宿主「数据」页按这份声明只读浏览，
+    // 密文列一律在输出层打码（vault.dataQuery 的掩码口径同步收敛到这里）。
     tables: [
-      "vault_header",
+      {
+        name: "vault_header",
+        label: "保险箱头",
+        desc: "主口令指纹、盐值与包裹的密钥",
+        sort: "id",
+        columns: [
+          { name: "salt", label: "盐值", mask: true },
+          { name: "wrapped_dek", label: "包裹的密钥", mask: true },
+          { name: "passphrase_fp", label: "主口令指纹" },
+        ],
+      },
       "vault_device",
       "vault_group",
-      "vault_secret",
+      {
+        name: "vault_secret",
+        label: "凭据",
+        desc: "名称、元信息与加密后的密文",
+        sort: "created_at",
+        columns: [
+          { name: "name", label: "名称" },
+          { name: "ciphertext", label: "密文", mask: true },
+          { name: "meta", label: "元信息" },
+        ],
+      },
       "vault_set",
       "vault_secret_kind",
       "vault_group_set",

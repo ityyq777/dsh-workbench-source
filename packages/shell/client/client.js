@@ -650,7 +650,7 @@ var require_locale2 = __commonJS({
         tab_automation: "\u81EA\u52A8\u5316\uFF08\u5BBF\u4E3B\u5185\u7F6E\uFF09",
         automation_desc: "\u7528 action \u6216 AI \u89C4\u5219\u6309\u8BA1\u5212\u3001\u6309\u4E8B\u4EF6\u6267\u884C\u4EFB\u52A1\uFF1A\u7BA1\u7406\u89C4\u5219\u3001\u8FD0\u884C\u8BB0\u5F55\u4E0E\u8BBE\u7F6E",
         tab_data: "\u6570\u636E",
-        data_desc: "\u6D4F\u89C8\u5BBF\u4E3B\u81EA\u5DF1\u7EF4\u62A4\u7684\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u4F1A\u8BDD\u89D2\u8272\u3001\u5BA1\u8BA1\u65E5\u5FD7\uFF09\uFF1A\u53EA\u8BFB\u3001\u53EF\u641C\u7D22\u3001\u53EF\u5206\u9875",
+        data_desc: "\u53EA\u8BFB\u6D4F\u89C8\u58F0\u660E\u8FC7\u7684\u8868\uFF1A\u5BBF\u4E3B\u5E73\u53F0\u8868\uFF08meta\u3001\u540C\u6B65\u65E5\u5FD7/\u6B7B\u4FE1/\u6C34\u4F4D\u3001\u914D\u7F6E\u3001\u5BA1\u8BA1\u3001\u4E8B\u4EF6\u961F\u5217\u3001\u81EA\u52A8\u5316\uFF09\u4E0E\u5404\u63D2\u4EF6\u58F0\u660E\u7684\u4E1A\u52A1\u8868\uFF0C\u6309\u57DF\u5206\u7EC4\u3001\u53EF\u641C\u8868\u540D\u3001\u53EF\u5206\u9875",
         tab_config: "\u914D\u7F6E",
         config_desc: "\u6309\u65B9\u6848\u7BA1\u7406\u5907\u4EFD\u504F\u597D\u3002\u5BA1\u8BA1\u8BBE\u7F6E\u5BF9\u672C\u673A\u6240\u6709\u65B9\u6848\u751F\u6548\u3002",
         tab_queue: "\u4E8B\u4EF6\u961F\u5217",
@@ -1030,7 +1030,7 @@ var require_locale2 = __commonJS({
         tab_automation: "Automation (built-in)",
         automation_desc: "Run actions or AI rules on a schedule or event: manage rules, run history and settings",
         tab_data: "Data",
-        data_desc: "Browse the platform tables the host itself owns (meta, sync log/dead letters/state, session roles, audit log): read-only, searchable, paged",
+        data_desc: "Read-only browsing of declared tables: host platform tables (meta, sync log/dead letters/state, config, audit, event queue, automations) plus tables declared by plugins, grouped by domain, searchable and paged",
         tab_config: "Settings",
         config_desc: "Manage backup preferences in schemes. Audit settings apply to every scheme on this device.",
         tab_queue: "Event queue",
@@ -3068,242 +3068,6 @@ var require_styles3 = __commonJS({
   }
 });
 
-// packages/shell/client/panellist-icon.cjs
-var require_panellist_icon = __commonJS({
-  "packages/shell/client/panellist-icon.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function PanellistIcon(h2) {
-      return function Icon2(props) {
-        var size = props && props.size || 20;
-        return h2(
-          "svg",
-          { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
-          h2("rect", { x: 3, y: 3, width: 7, height: 9, rx: 1 }),
-          h2("rect", { x: 14, y: 3, width: 7, height: 5, rx: 1 }),
-          h2("rect", { x: 14, y: 12, width: 7, height: 9, rx: 1 }),
-          h2("rect", { x: 3, y: 16, width: 7, height: 5, rx: 1 })
-        );
-      };
-    };
-  }
-});
-
-// packages/shell/client/addon-nav.cjs
-var require_addon_nav = __commonJS({
-  "packages/shell/client/addon-nav.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createAddonNav() {
-      var hook = null;
-      var layout = null;
-      var pending = null;
-      return {
-        setLayout: function(api) {
-          layout = api && typeof api.selectPanel === "function" ? api : null;
-        },
-        // 返回注销函数：页面卸载时钩子必须清掉，否则会往已卸载的 state 里写路由。
-        setHook: function(fn) {
-          hook = typeof fn === "function" ? fn : null;
-          return function() {
-            if (hook === fn) hook = null;
-          };
-        },
-        // 取出待办（取完即清）；没有就返回 null。
-        takePending: function() {
-          var want = pending;
-          pending = null;
-          return want;
-        },
-        /// 返回是否真的跳了。addonId 必填，viewId 为空时落到插件首页视图。
-        /// params 是视图参数（如 {messageId}），面板未挂载时一并暂存。
-        navigate: function(panelId, addonId, viewId, params) {
-          if (!addonId) return false;
-          var id = String(addonId);
-          var vid = viewId ? String(viewId) : "";
-          var extra = params && typeof params === "object" ? params : null;
-          if (hook && hook(id, vid, extra) !== false) return true;
-          pending = { addonId: id, viewId: vid, params: extra };
-          if (layout) {
-            try {
-              layout.selectPanel(panelId);
-              return true;
-            } catch (e) {
-            }
-          }
-          pending = null;
-          return false;
-        }
-      };
-    };
-  }
-});
-
-// packages/addons/lib/client-common.cjs
-var require_client_common = __commonJS({
-  "packages/addons/lib/client-common.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function createCommon(prefix) {
-      var p = String(prefix || "wb");
-      function unwrap(r) {
-        if (r && r.ok === false) {
-          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
-          if (r.code !== void 0) error.code = r.code;
-          error.payload = r;
-          throw error;
-        }
-        return r && r.result !== void 0 ? r.result : r;
-      }
-      function call(api, action, args) {
-        return Promise.resolve(api.call(action, args || {})).then(unwrap);
-      }
-      function errText(e) {
-        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
-        if (typeof e === "string") return e;
-        return e.message || e.error || String(e);
-      }
-      function fmtTime(ts, lang) {
-        if (!ts) return "\u2014";
-        try {
-          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
-        } catch (e) {
-          return String(ts);
-        }
-      }
-      function Btn(props) {
-        var h2 = props.h;
-        return h2(
-          "button",
-          {
-            type: props.type || "button",
-            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
-            disabled: props.disabled,
-            onClick: props.onClick,
-            title: props.title
-          },
-          props.children
-        );
-      }
-      function Field(props) {
-        var h2 = props.h;
-        return h2(
-          "label",
-          { className: p + "-field" },
-          h2("span", { className: p + "-label" }, props.label),
-          props.children,
-          props.hint ? h2("span", { className: p + "-hint" }, props.hint) : null
-        );
-      }
-      function Notice(props) {
-        var h2 = props.h;
-        if (!props.text) return null;
-        return h2("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
-      }
-      function Empty(props) {
-        var h2 = props.h;
-        return h2("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
-      }
-      function Pill(props) {
-        var h2 = props.h;
-        return h2("span", { className: p + "-pill " + (props.kind || "") }, props.children);
-      }
-      function Json(props) {
-        var h2 = props.h;
-        var text;
-        try {
-          text = JSON.stringify(props.value, null, 2);
-        } catch (e) {
-          text = String(props.value);
-        }
-        return h2("pre", { className: p + "-json" }, text);
-      }
-      function useLoad(React, api, action, args, deps) {
-        var s = React.useState({ loading: true, data: null, error: "" });
-        var tick = React.useState(0);
-        var refresh = function() {
-          tick[1](tick[0] + 1);
-        };
-        React.useEffect(
-          function() {
-            var alive = true;
-            s[1]({ loading: true, data: null, error: "" });
-            call(api, action, args).then(function(data) {
-              if (alive) s[1]({ loading: false, data, error: "" });
-            }).catch(function(e) {
-              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
-            });
-            return function() {
-              alive = false;
-            };
-          },
-          (deps || []).concat([tick[0]])
-        );
-        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
-      }
-      return {
-        unwrap,
-        call,
-        errText,
-        fmtTime,
-        Switch: require_switch().Switch,
-        switchStyles: require_switch().styles,
-        NumberField: require_number_field().NumberField,
-        numberFieldStyles: require_number_field().styles,
-        validateNumber: require_number_field().validateNumber,
-        Btn,
-        Field,
-        Notice,
-        Empty,
-        Pill,
-        Json,
-        useLoad
-      };
-    };
-  }
-});
-
-// packages/addons/lib/highlight.cjs
-var require_highlight = __commonJS({
-  "packages/addons/lib/highlight.cjs"(exports2, module2) {
-    "use strict";
-    module2.exports = function(React) {
-      var h2 = React.createElement;
-      function sourceOf(keyword) {
-        var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return pattern.replace(/[a-zA-Z]/g, function(letter) {
-          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
-        });
-      }
-      return function createHighlight(prefix) {
-        var className = String(prefix || "wb") + "-hit";
-        function hit(rawText, rawKeyword) {
-          var text = rawText == null ? "" : String(rawText);
-          var keyword = rawKeyword == null ? "" : String(rawKeyword);
-          if (!keyword) return text;
-          var matcher, match, end = 0, parts = [];
-          try {
-            matcher = new RegExp(sourceOf(keyword), "g");
-          } catch (error) {
-            return text;
-          }
-          while (match = matcher.exec(text)) {
-            if (match.index > end) parts.push(text.slice(end, match.index));
-            parts.push(h2("mark", { className, key: match.index }, match[0]));
-            end = match.index + match[0].length;
-            if (!match[0]) matcher.lastIndex += 1;
-          }
-          if (!parts.length) return text;
-          if (end < text.length) parts.push(text.slice(end));
-          return parts;
-        }
-        function Highlight(props) {
-          return hit(props.text, props.keyword);
-        }
-        Highlight.hit = hit;
-        return Highlight;
-      };
-    };
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/shared/src/utils/toKebabCase.mjs
 var toKebabCase;
 var init_toKebabCase = __esm({
@@ -3592,23 +3356,563 @@ var init_createLucideIcon = __esm({
   }
 });
 
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user-cog.mjs
+var user_cog_exports = {};
+__export(user_cog_exports, {
+  __iconData: () => __iconData,
+  default: () => UserCog
+});
+var __iconData, UserCog;
+var init_user_cog = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user-cog.mjs"() {
+    init_createLucideIcon();
+    __iconData = {
+      name: "user-cog",
+      size: 24,
+      node: [
+        ["path", { d: "M10 15H6a4 4 0 0 0-4 4v2", key: "1nfge6" }],
+        ["path", { d: "m14.305 16.53.923-.382", key: "1itpsq" }],
+        ["path", { d: "m15.228 13.852-.923-.383", key: "eplpkm" }],
+        ["path", { d: "m16.852 12.228-.383-.923", key: "13v3q0" }],
+        ["path", { d: "m16.852 17.772-.383.924", key: "1i8mnm" }],
+        ["path", { d: "m19.148 12.228.383-.923", key: "1q8j1v" }],
+        ["path", { d: "m19.53 18.696-.382-.924", key: "vk1qj3" }],
+        ["path", { d: "m20.772 13.852.924-.383", key: "n880s0" }],
+        ["path", { d: "m20.772 16.148.924.383", key: "1g6xey" }],
+        ["circle", { cx: "18", cy: "15", r: "3", key: "gjjjvw" }],
+        ["circle", { cx: "9", cy: "7", r: "4", key: "nufk8" }]
+      ]
+    };
+    __iconData.node;
+    UserCog = createLucideIcon(__iconData);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
+var shield_check_exports = {};
+__export(shield_check_exports, {
+  __iconData: () => __iconData2,
+  default: () => ShieldCheck
+});
+var __iconData2, ShieldCheck;
+var init_shield_check = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
+    init_createLucideIcon();
+    __iconData2 = {
+      name: "shield-check",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
+            key: "oel41y"
+          }
+        ],
+        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+      ]
+    };
+    __iconData2.node;
+    ShieldCheck = createLucideIcon(__iconData2);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs
+var bot_exports = {};
+__export(bot_exports, {
+  __iconData: () => __iconData3,
+  default: () => Bot
+});
+var __iconData3, Bot;
+var init_bot = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs"() {
+    init_createLucideIcon();
+    __iconData3 = {
+      name: "bot",
+      size: 24,
+      node: [
+        ["path", { d: "M12 8V4H8", key: "hb8ula" }],
+        ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
+        ["path", { d: "M2 14h2", key: "vft8re" }],
+        ["path", { d: "M20 14h2", key: "4cs60a" }],
+        ["path", { d: "M15 13v2", key: "1xurst" }],
+        ["path", { d: "M9 13v2", key: "rq6x2g" }]
+      ]
+    };
+    __iconData3.node;
+    Bot = createLucideIcon(__iconData3);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs
+var inbox_exports = {};
+__export(inbox_exports, {
+  __iconData: () => __iconData4,
+  default: () => Inbox
+});
+var __iconData4, Inbox;
+var init_inbox = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/inbox.mjs"() {
+    init_createLucideIcon();
+    __iconData4 = {
+      name: "inbox",
+      size: 24,
+      node: [
+        ["polyline", { points: "22 12 16 12 14 15 10 15 8 12 2 12", key: "o97t9d" }],
+        [
+          "path",
+          {
+            d: "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z",
+            key: "oot6mr"
+          }
+        ]
+      ]
+    };
+    __iconData4.node;
+    Inbox = createLucideIcon(__iconData4);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
+var zap_exports = {};
+__export(zap_exports, {
+  __iconData: () => __iconData5,
+  default: () => Zap
+});
+var __iconData5, Zap;
+var init_zap = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
+    init_createLucideIcon();
+    __iconData5 = {
+      name: "zap",
+      size: 24,
+      node: [
+        [
+          "path",
+          {
+            d: "M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z",
+            key: "1v7up4"
+          }
+        ]
+      ]
+    };
+    __iconData5.node;
+    Zap = createLucideIcon(__iconData5);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
+var database_exports = {};
+__export(database_exports, {
+  __iconData: () => __iconData6,
+  default: () => Database
+});
+var __iconData6, Database;
+var init_database = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
+    init_createLucideIcon();
+    __iconData6 = {
+      name: "database",
+      size: 24,
+      node: [
+        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
+        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
+        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
+      ]
+    };
+    __iconData6.node;
+    Database = createLucideIcon(__iconData6);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
+var sliders_horizontal_exports = {};
+__export(sliders_horizontal_exports, {
+  __iconData: () => __iconData7,
+  default: () => SlidersHorizontal
+});
+var __iconData7, SlidersHorizontal;
+var init_sliders_horizontal = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
+    init_createLucideIcon();
+    __iconData7 = {
+      name: "sliders-horizontal",
+      size: 24,
+      node: [
+        ["path", { d: "M10 5H3", key: "1qgfaw" }],
+        ["path", { d: "M12 19H3", key: "yhmn1j" }],
+        ["path", { d: "M14 3v4", key: "1sua03" }],
+        ["path", { d: "M16 17v4", key: "1q0r14" }],
+        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
+        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
+        ["path", { d: "M21 5h-7", key: "1oszz2" }],
+        ["path", { d: "M8 10v4", key: "tgpxqk" }],
+        ["path", { d: "M8 12H3", key: "a7s4jb" }]
+      ]
+    };
+    __iconData7.node;
+    SlidersHorizontal = createLucideIcon(__iconData7);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hard-drive-download.mjs
+var hard_drive_download_exports = {};
+__export(hard_drive_download_exports, {
+  __iconData: () => __iconData8,
+  default: () => HardDriveDownload
+});
+var __iconData8, HardDriveDownload;
+var init_hard_drive_download = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hard-drive-download.mjs"() {
+    init_createLucideIcon();
+    __iconData8 = {
+      name: "hard-drive-download",
+      size: 24,
+      node: [
+        ["path", { d: "M12 2v8", key: "1q4o3n" }],
+        ["path", { d: "m16 6-4 4-4-4", key: "6wukr" }],
+        ["rect", { width: "20", height: "8", x: "2", y: "14", rx: "2", key: "w68u3i" }],
+        ["path", { d: "M6 18h.01", key: "uhywen" }],
+        ["path", { d: "M10 18h.01", key: "h775k" }]
+      ]
+    };
+    __iconData8.node;
+    HardDriveDownload = createLucideIcon(__iconData8);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/scroll-text.mjs
+var scroll_text_exports = {};
+__export(scroll_text_exports, {
+  __iconData: () => __iconData9,
+  default: () => ScrollText
+});
+var __iconData9, ScrollText;
+var init_scroll_text = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/scroll-text.mjs"() {
+    init_createLucideIcon();
+    __iconData9 = {
+      name: "scroll-text",
+      size: 24,
+      node: [
+        ["path", { d: "M15 12h-5", key: "r7krc0" }],
+        ["path", { d: "M15 8h-5", key: "1khuty" }],
+        ["path", { d: "M19 17V5a2 2 0 0 0-2-2H4", key: "zz82l3" }],
+        [
+          "path",
+          {
+            d: "M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3",
+            key: "1ph1d7"
+          }
+        ]
+      ]
+    };
+    __iconData9.node;
+    ScrollText = createLucideIcon(__iconData9);
+  }
+});
+
+// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
+var refresh_cw_exports = {};
+__export(refresh_cw_exports, {
+  __iconData: () => __iconData10,
+  default: () => RefreshCw
+});
+var __iconData10, RefreshCw;
+var init_refresh_cw = __esm({
+  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
+    init_createLucideIcon();
+    __iconData10 = {
+      name: "refresh-cw",
+      size: 24,
+      node: [
+        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+        ["path", { d: "M8 16H3v5", key: "1cv678" }]
+      ]
+    };
+    __iconData10.node;
+    RefreshCw = createLucideIcon(__iconData10);
+  }
+});
+
+// packages/shell/client/host-icons.cjs
+var require_host_icons = __commonJS({
+  "packages/shell/client/host-icons.cjs"(exports2, module2) {
+    "use strict";
+    var ICONS = {
+      roles: (init_user_cog(), __toCommonJS(user_cog_exports)).default,
+      agent: (init_shield_check(), __toCommonJS(shield_check_exports)).default,
+      agentList: (init_bot(), __toCommonJS(bot_exports)).default,
+      queue: (init_inbox(), __toCommonJS(inbox_exports)).default,
+      automation: (init_zap(), __toCommonJS(zap_exports)).default,
+      data: (init_database(), __toCommonJS(database_exports)).default,
+      config: (init_sliders_horizontal(), __toCommonJS(sliders_horizontal_exports)).default,
+      backup: (init_hard_drive_download(), __toCommonJS(hard_drive_download_exports)).default,
+      audit: (init_scroll_text(), __toCommonJS(scroll_text_exports)).default,
+      account: (init_refresh_cw(), __toCommonJS(refresh_cw_exports)).default
+    };
+    function hostIcon(key) {
+      return key && ICONS[key] || null;
+    }
+    module2.exports = { ICONS, hostIcon };
+  }
+});
+
+// packages/shell/client/panellist-icon.cjs
+var require_panellist_icon = __commonJS({
+  "packages/shell/client/panellist-icon.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function PanellistIcon(h2) {
+      return function Icon2(props) {
+        var size = props && props.size || 20;
+        return h2(
+          "svg",
+          { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
+          h2("rect", { x: 3, y: 3, width: 7, height: 9, rx: 1 }),
+          h2("rect", { x: 14, y: 3, width: 7, height: 5, rx: 1 }),
+          h2("rect", { x: 14, y: 12, width: 7, height: 9, rx: 1 }),
+          h2("rect", { x: 3, y: 16, width: 7, height: 5, rx: 1 })
+        );
+      };
+    };
+  }
+});
+
+// packages/shell/client/addon-nav.cjs
+var require_addon_nav = __commonJS({
+  "packages/shell/client/addon-nav.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createAddonNav() {
+      var hook = null;
+      var layout = null;
+      var pending = null;
+      return {
+        setLayout: function(api) {
+          layout = api && typeof api.selectPanel === "function" ? api : null;
+        },
+        // 返回注销函数：页面卸载时钩子必须清掉，否则会往已卸载的 state 里写路由。
+        setHook: function(fn) {
+          hook = typeof fn === "function" ? fn : null;
+          return function() {
+            if (hook === fn) hook = null;
+          };
+        },
+        // 取出待办（取完即清）；没有就返回 null。
+        takePending: function() {
+          var want = pending;
+          pending = null;
+          return want;
+        },
+        /// 返回是否真的跳了。addonId 必填，viewId 为空时落到插件首页视图。
+        /// params 是视图参数（如 {messageId}），面板未挂载时一并暂存。
+        navigate: function(panelId, addonId, viewId, params) {
+          if (!addonId) return false;
+          var id = String(addonId);
+          var vid = viewId ? String(viewId) : "";
+          var extra = params && typeof params === "object" ? params : null;
+          if (hook && hook(id, vid, extra) !== false) return true;
+          pending = { addonId: id, viewId: vid, params: extra };
+          if (layout) {
+            try {
+              layout.selectPanel(panelId);
+              return true;
+            } catch (e) {
+            }
+          }
+          pending = null;
+          return false;
+        }
+      };
+    };
+  }
+});
+
+// packages/addons/lib/client-common.cjs
+var require_client_common = __commonJS({
+  "packages/addons/lib/client-common.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function createCommon(prefix) {
+      var p = String(prefix || "wb");
+      function unwrap(r) {
+        if (r && r.ok === false) {
+          var error = new Error(r.error || r.message || "\u64CD\u4F5C\u5931\u8D25");
+          if (r.code !== void 0) error.code = r.code;
+          error.payload = r;
+          throw error;
+        }
+        return r && r.result !== void 0 ? r.result : r;
+      }
+      function call(api, action, args) {
+        return Promise.resolve(api.call(action, args || {})).then(unwrap);
+      }
+      function errText(e) {
+        if (!e) return "\u64CD\u4F5C\u5931\u8D25";
+        if (typeof e === "string") return e;
+        return e.message || e.error || String(e);
+      }
+      function fmtTime(ts, lang) {
+        if (!ts) return "\u2014";
+        try {
+          return new Date(ts).toLocaleString(lang === "en" ? "en-US" : "zh-CN", { hour12: false });
+        } catch (e) {
+          return String(ts);
+        }
+      }
+      function Btn(props) {
+        var h2 = props.h;
+        return h2(
+          "button",
+          {
+            type: props.type || "button",
+            className: p + "-btn" + (props.kind ? " " + props.kind : ""),
+            disabled: props.disabled,
+            onClick: props.onClick,
+            title: props.title
+          },
+          props.children
+        );
+      }
+      function Field(props) {
+        var h2 = props.h;
+        return h2(
+          "label",
+          { className: p + "-field" },
+          h2("span", { className: p + "-label" }, props.label),
+          props.children,
+          props.hint ? h2("span", { className: p + "-hint" }, props.hint) : null
+        );
+      }
+      function Notice(props) {
+        var h2 = props.h;
+        if (!props.text) return null;
+        return h2("div", { className: p + "-notice " + (props.kind || "info") }, props.text);
+      }
+      function Empty(props) {
+        var h2 = props.h;
+        return h2("div", { className: p + "-empty" }, props.text || "\u6682\u65E0\u6570\u636E");
+      }
+      function Pill(props) {
+        var h2 = props.h;
+        return h2("span", { className: p + "-pill " + (props.kind || "") }, props.children);
+      }
+      function Json(props) {
+        var h2 = props.h;
+        var text;
+        try {
+          text = JSON.stringify(props.value, null, 2);
+        } catch (e) {
+          text = String(props.value);
+        }
+        return h2("pre", { className: p + "-json" }, text);
+      }
+      function useLoad(React, api, action, args, deps) {
+        var s = React.useState({ loading: true, data: null, error: "" });
+        var tick = React.useState(0);
+        var refresh = function() {
+          tick[1](tick[0] + 1);
+        };
+        React.useEffect(
+          function() {
+            var alive = true;
+            s[1]({ loading: true, data: null, error: "" });
+            call(api, action, args).then(function(data) {
+              if (alive) s[1]({ loading: false, data, error: "" });
+            }).catch(function(e) {
+              if (alive) s[1]({ loading: false, data: null, error: errText(e) });
+            });
+            return function() {
+              alive = false;
+            };
+          },
+          (deps || []).concat([tick[0]])
+        );
+        return { loading: s[0].loading, data: s[0].data, error: s[0].error, refresh };
+      }
+      return {
+        unwrap,
+        call,
+        errText,
+        fmtTime,
+        Switch: require_switch().Switch,
+        switchStyles: require_switch().styles,
+        NumberField: require_number_field().NumberField,
+        numberFieldStyles: require_number_field().styles,
+        validateNumber: require_number_field().validateNumber,
+        Btn,
+        Field,
+        Notice,
+        Empty,
+        Pill,
+        Json,
+        useLoad
+      };
+    };
+  }
+});
+
+// packages/addons/lib/highlight.cjs
+var require_highlight = __commonJS({
+  "packages/addons/lib/highlight.cjs"(exports2, module2) {
+    "use strict";
+    module2.exports = function(React) {
+      var h2 = React.createElement;
+      function sourceOf(keyword) {
+        var pattern = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return pattern.replace(/[a-zA-Z]/g, function(letter) {
+          return "[" + letter.toLowerCase() + letter.toUpperCase() + "]";
+        });
+      }
+      return function createHighlight(prefix) {
+        var className = String(prefix || "wb") + "-hit";
+        function hit(rawText, rawKeyword) {
+          var text = rawText == null ? "" : String(rawText);
+          var keyword = rawKeyword == null ? "" : String(rawKeyword);
+          if (!keyword) return text;
+          var matcher, match, end = 0, parts = [];
+          try {
+            matcher = new RegExp(sourceOf(keyword), "g");
+          } catch (error) {
+            return text;
+          }
+          while (match = matcher.exec(text)) {
+            if (match.index > end) parts.push(text.slice(end, match.index));
+            parts.push(h2("mark", { className, key: match.index }, match[0]));
+            end = match.index + match[0].length;
+            if (!match[0]) matcher.lastIndex += 1;
+          }
+          if (!parts.length) return text;
+          if (end < text.length) parts.push(text.slice(end));
+          return parts;
+        }
+        function Highlight(props) {
+          return hit(props.text, props.keyword);
+        }
+        Highlight.hit = hit;
+        return Highlight;
+      };
+    };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs
 var chevron_right_exports = {};
 __export(chevron_right_exports, {
-  __iconData: () => __iconData,
+  __iconData: () => __iconData11,
   default: () => ChevronRight
 });
-var __iconData, ChevronRight;
+var __iconData11, ChevronRight;
 var init_chevron_right = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/chevron-right.mjs"() {
     init_createLucideIcon();
-    __iconData = {
+    __iconData11 = {
       name: "chevron-right",
       size: 24,
       node: [["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]]
     };
-    __iconData.node;
-    ChevronRight = createLucideIcon(__iconData);
+    __iconData11.node;
+    ChevronRight = createLucideIcon(__iconData11);
   }
 });
 
@@ -4541,16 +4845,16 @@ var require_system_pages = __commonJS({
       var t = deps.t;
       var card = deps.systemCard;
       return [
-        card("roles", "agent", t("tab_roles"), t("roles_desc")),
-        card("agent", "agent", t("tab_agent"), t("agent_desc")),
-        card("agentList", "agent", t("tab_agent_list"), t("agent_list_desc")),
+        card("roles", "\u89D2", t("tab_roles"), t("roles_desc")),
+        card("agent", "\u6743", t("tab_agent"), t("agent_desc")),
+        card("agentList", "\u5217", t("tab_agent_list"), t("agent_list_desc")),
         card("queue", "\u961F", t("tab_queue"), t("queue_desc")),
-        card("automation", "\u81EA\u52A8", t("tab_automation"), t("automation_desc")),
+        card("automation", "\u81EA", t("tab_automation"), t("automation_desc")),
         card("data", "\u6570", t("tab_data"), t("data_desc")),
         card("config", "\u914D", t("tab_config"), t("config_desc")),
-        card("backup", "backup", t("tab_backup"), t("backup_desc")),
-        card("audit", "audit", t("tab_audit"), t("audit_desc")),
-        card("account", "account", t("tab_account"), t("account_desc"))
+        card("backup", "\u5907", t("tab_backup"), t("backup_desc")),
+        card("audit", "\u5BA1", t("tab_audit"), t("audit_desc")),
+        card("account", "\u8D26", t("tab_account"), t("account_desc"))
       ];
     }
     module2.exports = { agentAccessPage, agentListPage, manageCards };
@@ -4566,6 +4870,9 @@ var require_data_copy = __commonJS({
         title: "\u6570\u636E",
         subtitle: "\u53EA\u8BFB\u6D4F\u89C8\u672C\u63D2\u4EF6\u8D1F\u8D23\u7684\u8868\uFF1B\u7CFB\u7EDF\u5217\u4E0E\u5DF2\u5220\u9664\u884C\u9ED8\u8BA4\u9690\u85CF",
         tables: "\u8868",
+        tableSearch: "\u641C\u7D22\u8868\u540D\u6216\u5206\u7EC4",
+        tableSearchEmpty: "\u6CA1\u6709\u5339\u914D\u7684\u8868",
+        groupToggle: "\u6298\u53E0\u6216\u5C55\u5F00\u5206\u7EC4",
         rows: "\u884C",
         deleted: "\u5DF2\u5220\u9664",
         rowCount: "\u5171 {n} \u884C",
@@ -4642,6 +4949,9 @@ var require_data_copy = __commonJS({
         title: "Data",
         subtitle: "Read-only view of this plugin's tables; system and deleted rows are hidden by default",
         tables: "Tables",
+        tableSearch: "Search table or group",
+        tableSearchEmpty: "No matching table",
+        groupToggle: "Collapse or expand group",
         rows: "rows",
         deleted: "deleted",
         rowCount: "{n} rows",
@@ -4741,6 +5051,15 @@ var require_data_style = __commonJS({
         "." + P + "-stabname{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;line-height:1.4;min-width:0}",
         "." + P + "-stabname span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
         "." + P + "-sidetable{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--cfg-muted);margin-top:3px;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sidefind{position:relative;display:flex;align-items:center;padding:0 6px 6px}",
+        "." + P + "-sidefind .wbi-svg{position:absolute;left:14px;color:var(--cfg-faint);pointer-events:none}",
+        "." + P + "-sidefind input{width:100%;border:1px solid var(--cfg-line);background:var(--dsw-alias-bg-base,transparent);color:inherit;border-radius:8px;padding:6px 9px 6px 28px;font:inherit;font-size:12px;outline:none}",
+        "." + P + "-sidefind input:focus{border-color:var(--dsw-alias-brand-primary,currentColor);box-shadow:0 0 0 3px color-mix(in oklab,var(--dsw-alias-brand-primary,currentColor) 14%,transparent)}",
+        "." + P + "-sidetoggle{display:flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--cfg-muted);font:inherit;font-size:11px;font-weight:660;letter-spacing:.4px;padding:8px 10px 4px;cursor:pointer;text-align:left}",
+        "." + P + "-sidetoggle:hover{color:var(--dsw-alias-label-primary,inherit)}",
+        "." + P + "-sidetoggle:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,currentColor);outline-offset:2px;border-radius:6px}",
+        "." + P + "-sidegroup{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+        "." + P + "-sideempty{padding:10px;font-size:11.5px;color:var(--cfg-faint)}",
         "." + P + "-sidecount{margin-left:auto;font-size:10.5px;font-variant-numeric:tabular-nums;color:var(--cfg-muted);background:color-mix(in oklab,currentColor 8%,transparent);border-radius:999px;padding:1px 7px;flex:none}",
         "." + P + "-main{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cfg-line);border-radius:var(--wb-radius-card);background:var(--cfg-surface);padding:14px 16px 12px;box-shadow:0 1px 2px color-mix(in oklab,currentColor 3%,transparent)}",
         "." + P + "-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}",
@@ -4902,7 +5221,7 @@ var require_data_view = __commonJS({
       function DataView(props) {
         var api = props.api;
         var lang = props.lang === "en" ? "en" : "zh";
-        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: options.tables.join(" / "), domain: DOMAIN }) });
+        var t = Object.assign({}, COPY[lang], { indexSub: fmt(COPY[lang].indexSub, { tables: (options.tables || []).join(" / ") || DOMAIN, domain: DOMAIN }) });
         var cfgWrap = configView.useConfig(api, CFG_FALLBACK);
         var cfg = cfgWrap.values;
         var tablesS = React.useState(null);
@@ -4951,6 +5270,10 @@ var require_data_view = __commonJS({
             return n + 1;
           });
         }
+        var groupOpenS = React.useState({});
+        var groupOpen = groupOpenS[0], setGroupOpen = groupOpenS[1];
+        var tableQueryS = React.useState("");
+        var tableQuery = tableQueryS[0], setTableQuery = tableQueryS[1];
         var indexReqRef = React.useRef(0);
         var indexS = React.useState(null);
         var index = indexS[0], setIndex = indexS[1];
@@ -4969,6 +5292,23 @@ var require_data_view = __commonJS({
             setToast("");
           }, 1600);
         }
+        function normalizeTableList(body) {
+          if (Array.isArray(body.groups) && body.groups.length) {
+            var flat = [];
+            for (var i2 = 0; i2 < body.groups.length; i2++) {
+              var g = body.groups[i2];
+              if (!g || !Array.isArray(g.tables)) continue;
+              for (var j = 0; j < g.tables.length; j++) {
+                var tb = g.tables[j];
+                if (!tb || !tb.name) continue;
+                flat.push(Object.assign({}, tb, { group: g.id || g.title || "default", groupTitle: g.title || g.id || "" }));
+              }
+            }
+            return flat;
+          }
+          if (!Array.isArray(body.tables)) return null;
+          return body.tables;
+        }
         function loadTables() {
           setLoadingTables(true);
           Promise.resolve((options.tablesLoader || function(a) {
@@ -4976,10 +5316,12 @@ var require_data_view = __commonJS({
           })(api)).then(function(r) {
             if (r && r.ok === false) throw new Error(r && r.error || t.loadFail);
             var body = unwrap(r);
-            if (!body || !Array.isArray(body.tables)) throw new Error(t.loadFail);
-            setTables(body.tables);
+            if (!body) throw new Error(t.loadFail);
+            var list = normalizeTableList(body);
+            if (!list) throw new Error(t.loadFail);
+            setTables(list);
             setError("");
-            if (!active && body.tables.length) setActive(body.tables[0].name);
+            if (!active && list.length) setActive(list[0].name);
           }).catch(function(e) {
             setError(String(e && e.message || e) || t.loadFail);
           }).then(function() {
@@ -5522,6 +5864,84 @@ var require_data_view = __commonJS({
             data && data.queryMs !== void 0 ? h2("span", null, fmt(t.queryTime, { n: data.queryMs })) : null
           );
         }
+        function isGrouped() {
+          return (tables || []).some(function(tb) {
+            return !!tb.group;
+          });
+        }
+        function sideGroups() {
+          var kw = tableQuery.trim().toLowerCase();
+          var out = [];
+          var index2 = {};
+          for (var i2 = 0; i2 < tables.length; i2++) {
+            var tb = tables[i2];
+            if (kw) {
+              var hay = (String(tb.name) + " " + tableLabel(tb) + " " + (tb.groupTitle || "")).toLowerCase();
+              if (hay.indexOf(kw) < 0) continue;
+            }
+            var key = tb.group || "";
+            if (!index2[key]) {
+              index2[key] = { id: key, title: tb.groupTitle || key, tables: [] };
+              out.push(index2[key]);
+            }
+            index2[key].tables.push(tb);
+          }
+          return out;
+        }
+        function renderTableButton(tb) {
+          return h2(
+            "button",
+            {
+              key: (tb.group || "") + "/" + tb.name,
+              type: "button",
+              className: P + "-stab" + (tb.name === active ? " on" : ""),
+              "aria-pressed": tb.name === active,
+              onClick: function() {
+                selectTable(tb.name);
+              }
+            },
+            h2(
+              "span",
+              { className: P + "-stabname" },
+              h2("span", null, tableLabel(tb)),
+              h2("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
+            ),
+            h2("span", { className: P + "-sidetable" }, tb.name)
+          );
+        }
+        function renderSideList() {
+          if (!isGrouped()) return tables.map(renderTableButton);
+          var groups = sideGroups();
+          if (!groups.length) return h2("div", { className: P + "-sideempty" }, t.tableSearchEmpty);
+          var nodes = [];
+          for (var i2 = 0; i2 < groups.length; i2++) {
+            var g = groups[i2];
+            var open = groupOpen[g.id] !== false;
+            nodes.push(h2(
+              "button",
+              {
+                key: "g:" + g.id,
+                type: "button",
+                className: P + "-sidetoggle",
+                "aria-expanded": open,
+                "aria-label": (g.title || t.groupToggle) + " \xB7 " + t.groupToggle,
+                onClick: /* @__PURE__ */ (function(id) {
+                  return function() {
+                    setGroupOpen(function(prev) {
+                      var next = Object.assign({}, prev);
+                      next[id] = prev[id] === false;
+                      return next;
+                    });
+                  };
+                })(g.id)
+              },
+              h2("span", { className: P + "-sidegroup" }, open ? "\u25BE " : "\u25B8 ", g.title || g.id),
+              h2("span", { className: P + "-sidecount" }, String(g.tables.length))
+            ));
+            if (open) for (var j = 0; j < g.tables.length; j++) nodes.push(renderTableButton(g.tables[j]));
+          }
+          return nodes;
+        }
         if (!tables && loadingTables && options.Skeleton) return h2(options.Skeleton, { lang, label: t.loading });
         if (!tables && loadingTables) {
           return h2("div", { className: P + "-skwrap", "aria-busy": "true" }, h2("span", { className: P + "-sr" }, t.loading), [0, 1, 2, 3].map(function(i2) {
@@ -5539,27 +5959,21 @@ var require_data_view = __commonJS({
             "div",
             { className: P + "-side" },
             h2("div", { className: P + "-sidetitle" }, h2("span", null, icon("table"), t.tables), h2("span", null, String(tables.length))),
-            tables.map(function(tb) {
-              return h2(
-                "button",
-                {
-                  key: tb.name,
-                  type: "button",
-                  className: P + "-stab" + (tb.name === active ? " on" : ""),
-                  "aria-pressed": tb.name === active,
-                  onClick: function() {
-                    selectTable(tb.name);
-                  }
-                },
-                h2(
-                  "span",
-                  { className: P + "-stabname" },
-                  h2("span", null, tableLabel(tb)),
-                  h2("span", { className: P + "-sidecount" }, tb.count === void 0 || tb.count === null ? "" : String(tb.count))
-                ),
-                h2("span", { className: P + "-sidetable" }, tb.name)
-              );
-            })
+            isGrouped() ? h2(
+              "div",
+              { className: P + "-sidefind" },
+              icon("search"),
+              h2("input", {
+                type: "search",
+                value: tableQuery,
+                placeholder: t.tableSearch,
+                "aria-label": t.tableSearch,
+                onChange: function(e) {
+                  setTableQuery(e.target.value);
+                }
+              })
+            ) : null,
+            renderSideList()
           ),
           h2(
             "div",
@@ -5866,25 +6280,17 @@ var require_host_pages = __commonJS({
     var schemes = require_config_scheme_bar();
     var SW = require_switch();
     var NF = require_number_field();
-    var HOST_TABLES = [
-      "meta",
-      "sync_change_log",
-      "conflict_shadow",
-      "sync_dead_letter",
-      "sync_state",
-      "session_role",
-      "audit_log",
-      "host_event",
-      "host_event_delivery",
-      "host_event_subscription"
-    ];
+    function catalogLoader(api) {
+      return api.call("wb.dataTables", {});
+    }
     function useHostDisplayConfig() {
       return { values: { "data.pageSize": 50, "data.showSystemColumns": false, "data.includeDeleted": false }, ready: true };
     }
     var HostDataView = createDataView({
       domain: "wb",
       prefix: "wbh",
-      tables: HOST_TABLES,
+      tables: [],
+      tablesLoader: catalogLoader,
       useConfig: useHostDisplayConfig
     }).DataView;
     function hostApi(api) {
@@ -6136,7 +6542,7 @@ var require_host_pages = __commonJS({
     function ConfigView(props) {
       return configPage(props);
     }
-    module2.exports = { PreferenceView, dataPage, configPage, configBody, ConfigView, DataView: HostDataView, HOST_TABLES };
+    module2.exports = { PreferenceView, dataPage, configPage, configBody, ConfigView, DataView: HostDataView };
   }
 });
 
@@ -6690,14 +7096,14 @@ var require_icons = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/activity.mjs
 var activity_exports = {};
 __export(activity_exports, {
-  __iconData: () => __iconData2,
+  __iconData: () => __iconData12,
   default: () => Activity
 });
-var __iconData2, Activity;
+var __iconData12, Activity;
 var init_activity = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/activity.mjs"() {
     init_createLucideIcon();
-    __iconData2 = {
+    __iconData12 = {
       name: "activity",
       size: 24,
       node: [
@@ -6710,49 +7116,22 @@ var init_activity = __esm({
         ]
       ]
     };
-    __iconData2.node;
-    Activity = createLucideIcon(__iconData2);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs
-var bot_exports = {};
-__export(bot_exports, {
-  __iconData: () => __iconData3,
-  default: () => Bot
-});
-var __iconData3, Bot;
-var init_bot = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/bot.mjs"() {
-    init_createLucideIcon();
-    __iconData3 = {
-      name: "bot",
-      size: 24,
-      node: [
-        ["path", { d: "M12 8V4H8", key: "hb8ula" }],
-        ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
-        ["path", { d: "M2 14h2", key: "vft8re" }],
-        ["path", { d: "M20 14h2", key: "4cs60a" }],
-        ["path", { d: "M15 13v2", key: "1xurst" }],
-        ["path", { d: "M9 13v2", key: "rq6x2g" }]
-      ]
-    };
-    __iconData3.node;
-    Bot = createLucideIcon(__iconData3);
+    __iconData12.node;
+    Activity = createLucideIcon(__iconData12);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-clock.mjs
 var calendar_clock_exports = {};
 __export(calendar_clock_exports, {
-  __iconData: () => __iconData4,
+  __iconData: () => __iconData13,
   default: () => CalendarClock
 });
-var __iconData4, CalendarClock;
+var __iconData13, CalendarClock;
 var init_calendar_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/calendar-clock.mjs"() {
     init_createLucideIcon();
-    __iconData4 = {
+    __iconData13 = {
       name: "calendar-clock",
       size: 24,
       node: [
@@ -6764,22 +7143,22 @@ var init_calendar_clock = __esm({
         ["circle", { cx: "16", cy: "16", r: "6", key: "qoo3c4" }]
       ]
     };
-    __iconData4.node;
-    CalendarClock = createLucideIcon(__iconData4);
+    __iconData13.node;
+    CalendarClock = createLucideIcon(__iconData13);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs
 var clock_exports = {};
 __export(clock_exports, {
-  __iconData: () => __iconData5,
+  __iconData: () => __iconData14,
   default: () => Clock
 });
-var __iconData5, Clock;
+var __iconData14, Clock;
 var init_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/clock.mjs"() {
     init_createLucideIcon();
-    __iconData5 = {
+    __iconData14 = {
       name: "clock",
       size: 24,
       node: [
@@ -6787,22 +7166,22 @@ var init_clock = __esm({
         ["path", { d: "M12 6v6l4 2", key: "mmk7yg" }]
       ]
     };
-    __iconData5.node;
-    Clock = createLucideIcon(__iconData5);
+    __iconData14.node;
+    Clock = createLucideIcon(__iconData14);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hourglass.mjs
 var hourglass_exports = {};
 __export(hourglass_exports, {
-  __iconData: () => __iconData6,
+  __iconData: () => __iconData15,
   default: () => Hourglass
 });
-var __iconData6, Hourglass;
+var __iconData15, Hourglass;
 var init_hourglass = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hourglass.mjs"() {
     init_createLucideIcon();
-    __iconData6 = {
+    __iconData15 = {
       name: "hourglass",
       size: 24,
       node: [
@@ -6824,22 +7203,22 @@ var init_hourglass = __esm({
         ]
       ]
     };
-    __iconData6.node;
-    Hourglass = createLucideIcon(__iconData6);
+    __iconData15.node;
+    Hourglass = createLucideIcon(__iconData15);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/repeat.mjs
 var repeat_exports = {};
 __export(repeat_exports, {
-  __iconData: () => __iconData7,
+  __iconData: () => __iconData16,
   default: () => Repeat
 });
-var __iconData7, Repeat;
+var __iconData16, Repeat;
 var init_repeat = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/repeat.mjs"() {
     init_createLucideIcon();
-    __iconData7 = {
+    __iconData16 = {
       name: "repeat",
       size: 24,
       node: [
@@ -6849,22 +7228,22 @@ var init_repeat = __esm({
         ["path", { d: "M21 13v1a4 4 0 0 1-4 4H3", key: "1rx37r" }]
       ]
     };
-    __iconData7.node;
-    Repeat = createLucideIcon(__iconData7);
+    __iconData16.node;
+    Repeat = createLucideIcon(__iconData16);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs
 var send_exports = {};
 __export(send_exports, {
-  __iconData: () => __iconData8,
+  __iconData: () => __iconData17,
   default: () => Send
 });
-var __iconData8, Send;
+var __iconData17, Send;
 var init_send = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/send.mjs"() {
     init_createLucideIcon();
-    __iconData8 = {
+    __iconData17 = {
       name: "send",
       size: 24,
       node: [
@@ -6878,22 +7257,22 @@ var init_send = __esm({
         ["path", { d: "m21.854 2.147-10.94 10.939", key: "12cjpa" }]
       ]
     };
-    __iconData8.node;
-    Send = createLucideIcon(__iconData8);
+    __iconData17.node;
+    Send = createLucideIcon(__iconData17);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sparkles.mjs
 var sparkles_exports = {};
 __export(sparkles_exports, {
-  __iconData: () => __iconData9,
+  __iconData: () => __iconData18,
   default: () => Sparkles
 });
-var __iconData9, Sparkles;
+var __iconData18, Sparkles;
 var init_sparkles = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sparkles.mjs"() {
     init_createLucideIcon();
-    __iconData9 = {
+    __iconData18 = {
       name: "sparkles",
       size: 24,
       node: [
@@ -6910,22 +7289,22 @@ var init_sparkles = __esm({
       ],
       aliases: ["stars"]
     };
-    __iconData9.node;
-    Sparkles = createLucideIcon(__iconData9);
+    __iconData18.node;
+    Sparkles = createLucideIcon(__iconData18);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs
 var alarm_clock_exports = {};
 __export(alarm_clock_exports, {
-  __iconData: () => __iconData10,
+  __iconData: () => __iconData19,
   default: () => AlarmClock
 });
-var __iconData10, AlarmClock;
+var __iconData19, AlarmClock;
 var init_alarm_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/alarm-clock.mjs"() {
     init_createLucideIcon();
-    __iconData10 = {
+    __iconData19 = {
       name: "alarm-clock",
       size: 24,
       node: [
@@ -6937,17 +7316,17 @@ var init_alarm_clock = __esm({
         ["path", { d: "M17.64 18.67 20 21", key: "kv2oe2" }]
       ]
     };
-    __iconData10.node;
-    AlarmClock = createLucideIcon(__iconData10);
+    __iconData19.node;
+    AlarmClock = createLucideIcon(__iconData19);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs
-var __iconData11, TriangleExclamationPoint;
+var __iconData20, TriangleExclamationPoint;
 var init_triangle_exclamation_point = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/triangle-exclamation-point.mjs"() {
     init_createLucideIcon();
-    __iconData11 = {
+    __iconData20 = {
       name: "triangle-exclamation-point",
       size: 24,
       node: [
@@ -6963,8 +7342,8 @@ var init_triangle_exclamation_point = __esm({
       ],
       aliases: ["alert-triangle", "triangle-alert"]
     };
-    __iconData11.node;
-    TriangleExclamationPoint = createLucideIcon(__iconData11);
+    __iconData20.node;
+    TriangleExclamationPoint = createLucideIcon(__iconData20);
   }
 });
 
@@ -6980,11 +7359,11 @@ var init_alert_triangle = __esm({
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs
-var __iconData12, CircleCheckBig;
+var __iconData21, CircleCheckBig;
 var init_circle_check_big = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-check-big.mjs"() {
     init_createLucideIcon();
-    __iconData12 = {
+    __iconData21 = {
       name: "circle-check-big",
       size: 24,
       node: [
@@ -6993,8 +7372,8 @@ var init_circle_check_big = __esm({
       ],
       aliases: ["check-circle"]
     };
-    __iconData12.node;
-    CircleCheckBig = createLucideIcon(__iconData12);
+    __iconData21.node;
+    CircleCheckBig = createLucideIcon(__iconData21);
   }
 });
 
@@ -7009,41 +7388,17 @@ var init_check_circle = __esm({
   }
 });
 
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs
-var database_exports = {};
-__export(database_exports, {
-  __iconData: () => __iconData13,
-  default: () => Database
-});
-var __iconData13, Database;
-var init_database = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/database.mjs"() {
-    init_createLucideIcon();
-    __iconData13 = {
-      name: "database",
-      size: 24,
-      node: [
-        ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
-        ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
-        ["path", { d: "M3 12A9 3 0 0 0 21 12", key: "mv7ke4" }]
-      ]
-    };
-    __iconData13.node;
-    Database = createLucideIcon(__iconData13);
-  }
-});
-
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs
 var hand_exports = {};
 __export(hand_exports, {
-  __iconData: () => __iconData14,
+  __iconData: () => __iconData22,
   default: () => Hand
 });
-var __iconData14, Hand;
+var __iconData22, Hand;
 var init_hand = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/hand.mjs"() {
     init_createLucideIcon();
-    __iconData14 = {
+    __iconData22 = {
       name: "hand",
       size: 24,
       node: [
@@ -7059,17 +7414,17 @@ var init_hand = __esm({
         ]
       ]
     };
-    __iconData14.node;
-    Hand = createLucideIcon(__iconData14);
+    __iconData22.node;
+    Hand = createLucideIcon(__iconData22);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs
-var __iconData15, RotateCcwClock;
+var __iconData23, RotateCcwClock;
 var init_rotate_ccw_clock = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/rotate-ccw-clock.mjs"() {
     init_createLucideIcon();
-    __iconData15 = {
+    __iconData23 = {
       name: "rotate-ccw-clock",
       size: 24,
       node: [
@@ -7079,8 +7434,8 @@ var init_rotate_ccw_clock = __esm({
       ],
       aliases: ["history"]
     };
-    __iconData15.node;
-    RotateCcwClock = createLucideIcon(__iconData15);
+    __iconData23.node;
+    RotateCcwClock = createLucideIcon(__iconData23);
   }
 });
 
@@ -7098,14 +7453,14 @@ var init_history = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs
 var layers_exports = {};
 __export(layers_exports, {
-  __iconData: () => __iconData16,
+  __iconData: () => __iconData24,
   default: () => Layers
 });
-var __iconData16, Layers;
+var __iconData24, Layers;
 var init_layers = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/layers.mjs"() {
     init_createLucideIcon();
-    __iconData16 = {
+    __iconData24 = {
       name: "layers",
       size: 24,
       node: [
@@ -7133,22 +7488,22 @@ var init_layers = __esm({
       ],
       aliases: ["layers-3"]
     };
-    __iconData16.node;
-    Layers = createLucideIcon(__iconData16);
+    __iconData24.node;
+    Layers = createLucideIcon(__iconData24);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs
 var list_exports = {};
 __export(list_exports, {
-  __iconData: () => __iconData17,
+  __iconData: () => __iconData25,
   default: () => List
 });
-var __iconData17, List;
+var __iconData25, List;
 var init_list = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/list.mjs"() {
     init_createLucideIcon();
-    __iconData17 = {
+    __iconData25 = {
       name: "list",
       size: 24,
       node: [
@@ -7160,22 +7515,22 @@ var init_list = __esm({
         ["path", { d: "M8 19h13", key: "m83p4d" }]
       ]
     };
-    __iconData17.node;
-    List = createLucideIcon(__iconData17);
+    __iconData25.node;
+    List = createLucideIcon(__iconData25);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs
 var pencil_exports = {};
 __export(pencil_exports, {
-  __iconData: () => __iconData18,
+  __iconData: () => __iconData26,
   default: () => Pencil
 });
-var __iconData18, Pencil;
+var __iconData26, Pencil;
 var init_pencil = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pencil.mjs"() {
     init_createLucideIcon();
-    __iconData18 = {
+    __iconData26 = {
       name: "pencil",
       size: 24,
       node: [
@@ -7189,22 +7544,22 @@ var init_pencil = __esm({
         ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
       ]
     };
-    __iconData18.node;
-    Pencil = createLucideIcon(__iconData18);
+    __iconData26.node;
+    Pencil = createLucideIcon(__iconData26);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs
 var plus_exports = {};
 __export(plus_exports, {
-  __iconData: () => __iconData19,
+  __iconData: () => __iconData27,
   default: () => Plus
 });
-var __iconData19, Plus;
+var __iconData27, Plus;
 var init_plus = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/plus.mjs"() {
     init_createLucideIcon();
-    __iconData19 = {
+    __iconData27 = {
       name: "plus",
       size: 24,
       node: [
@@ -7212,22 +7567,22 @@ var init_plus = __esm({
         ["path", { d: "M12 5v14", key: "s699le" }]
       ]
     };
-    __iconData19.node;
-    Plus = createLucideIcon(__iconData19);
+    __iconData27.node;
+    Plus = createLucideIcon(__iconData27);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs
 var play_exports = {};
 __export(play_exports, {
-  __iconData: () => __iconData20,
+  __iconData: () => __iconData28,
   default: () => Play
 });
-var __iconData20, Play;
+var __iconData28, Play;
 var init_play = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/play.mjs"() {
     init_createLucideIcon();
-    __iconData20 = {
+    __iconData28 = {
       name: "play",
       size: 24,
       node: [
@@ -7240,22 +7595,22 @@ var init_play = __esm({
         ]
       ]
     };
-    __iconData20.node;
-    Play = createLucideIcon(__iconData20);
+    __iconData28.node;
+    Play = createLucideIcon(__iconData28);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs
 var power_exports = {};
 __export(power_exports, {
-  __iconData: () => __iconData21,
+  __iconData: () => __iconData29,
   default: () => Power
 });
-var __iconData21, Power;
+var __iconData29, Power;
 var init_power = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power.mjs"() {
     init_createLucideIcon();
-    __iconData21 = {
+    __iconData29 = {
       name: "power",
       size: 24,
       node: [
@@ -7263,22 +7618,22 @@ var init_power = __esm({
         ["path", { d: "M18.4 6.6a9 9 0 1 1-12.77.04", key: "obofu9" }]
       ]
     };
-    __iconData21.node;
-    Power = createLucideIcon(__iconData21);
+    __iconData29.node;
+    Power = createLucideIcon(__iconData29);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs
 var power_off_exports = {};
 __export(power_off_exports, {
-  __iconData: () => __iconData22,
+  __iconData: () => __iconData30,
   default: () => PowerOff
 });
-var __iconData22, PowerOff;
+var __iconData30, PowerOff;
 var init_power_off = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/power-off.mjs"() {
     init_createLucideIcon();
-    __iconData22 = {
+    __iconData30 = {
       name: "power-off",
       size: 24,
       node: [
@@ -7288,22 +7643,22 @@ var init_power_off = __esm({
         ["path", { d: "m2 2 20 20", key: "1ooewy" }]
       ]
     };
-    __iconData22.node;
-    PowerOff = createLucideIcon(__iconData22);
+    __iconData30.node;
+    PowerOff = createLucideIcon(__iconData30);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs
 var radio_exports = {};
 __export(radio_exports, {
-  __iconData: () => __iconData23,
+  __iconData: () => __iconData31,
   default: () => Radio
 });
-var __iconData23, Radio;
+var __iconData31, Radio;
 var init_radio = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/radio.mjs"() {
     init_createLucideIcon();
-    __iconData23 = {
+    __iconData31 = {
       name: "radio",
       size: 24,
       node: [
@@ -7314,51 +7669,22 @@ var init_radio = __esm({
         ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }]
       ]
     };
-    __iconData23.node;
-    Radio = createLucideIcon(__iconData23);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs
-var shield_check_exports = {};
-__export(shield_check_exports, {
-  __iconData: () => __iconData24,
-  default: () => ShieldCheck
-});
-var __iconData24, ShieldCheck;
-var init_shield_check = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/shield-check.mjs"() {
-    init_createLucideIcon();
-    __iconData24 = {
-      name: "shield-check",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-            key: "oel41y"
-          }
-        ],
-        ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-      ]
-    };
-    __iconData24.node;
-    ShieldCheck = createLucideIcon(__iconData24);
+    __iconData31.node;
+    Radio = createLucideIcon(__iconData31);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs
 var skip_forward_exports = {};
 __export(skip_forward_exports, {
-  __iconData: () => __iconData25,
+  __iconData: () => __iconData32,
   default: () => SkipForward
 });
-var __iconData25, SkipForward;
+var __iconData32, SkipForward;
 var init_skip_forward = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/skip-forward.mjs"() {
     init_createLucideIcon();
-    __iconData25 = {
+    __iconData32 = {
       name: "skip-forward",
       size: 24,
       node: [
@@ -7372,52 +7698,22 @@ var init_skip_forward = __esm({
         ]
       ]
     };
-    __iconData25.node;
-    SkipForward = createLucideIcon(__iconData25);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs
-var sliders_horizontal_exports = {};
-__export(sliders_horizontal_exports, {
-  __iconData: () => __iconData26,
-  default: () => SlidersHorizontal
-});
-var __iconData26, SlidersHorizontal;
-var init_sliders_horizontal = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/sliders-horizontal.mjs"() {
-    init_createLucideIcon();
-    __iconData26 = {
-      name: "sliders-horizontal",
-      size: 24,
-      node: [
-        ["path", { d: "M10 5H3", key: "1qgfaw" }],
-        ["path", { d: "M12 19H3", key: "yhmn1j" }],
-        ["path", { d: "M14 3v4", key: "1sua03" }],
-        ["path", { d: "M16 17v4", key: "1q0r14" }],
-        ["path", { d: "M21 12h-9", key: "1o4lsq" }],
-        ["path", { d: "M21 19h-5", key: "1rlt1p" }],
-        ["path", { d: "M21 5h-7", key: "1oszz2" }],
-        ["path", { d: "M8 10v4", key: "tgpxqk" }],
-        ["path", { d: "M8 12H3", key: "a7s4jb" }]
-      ]
-    };
-    __iconData26.node;
-    SlidersHorizontal = createLucideIcon(__iconData26);
+    __iconData32.node;
+    SkipForward = createLucideIcon(__iconData32);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs
 var timer_exports = {};
 __export(timer_exports, {
-  __iconData: () => __iconData27,
+  __iconData: () => __iconData33,
   default: () => Timer
 });
-var __iconData27, Timer;
+var __iconData33, Timer;
 var init_timer = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/timer.mjs"() {
     init_createLucideIcon();
-    __iconData27 = {
+    __iconData33 = {
       name: "timer",
       size: 24,
       node: [
@@ -7426,17 +7722,17 @@ var init_timer = __esm({
         ["circle", { cx: "12", cy: "14", r: "8", key: "1e1u0o" }]
       ]
     };
-    __iconData27.node;
-    Timer = createLucideIcon(__iconData27);
+    __iconData33.node;
+    Timer = createLucideIcon(__iconData33);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs
-var __iconData28, Trash;
+var __iconData34, Trash;
 var init_trash = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/trash.mjs"() {
     init_createLucideIcon();
-    __iconData28 = {
+    __iconData34 = {
       name: "trash",
       size: 24,
       node: [
@@ -7448,8 +7744,8 @@ var init_trash = __esm({
       ],
       aliases: ["trash-2"]
     };
-    __iconData28.node;
-    Trash = createLucideIcon(__iconData28);
+    __iconData34.node;
+    Trash = createLucideIcon(__iconData34);
   }
 });
 
@@ -7467,14 +7763,14 @@ var init_trash_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs
 var x_exports = {};
 __export(x_exports, {
-  __iconData: () => __iconData29,
+  __iconData: () => __iconData35,
   default: () => X
 });
-var __iconData29, X;
+var __iconData35, X;
 var init_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/x.mjs"() {
     init_createLucideIcon();
-    __iconData29 = {
+    __iconData35 = {
       name: "x",
       size: 24,
       node: [
@@ -7482,36 +7778,8 @@ var init_x = __esm({
         ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
       ]
     };
-    __iconData29.node;
-    X = createLucideIcon(__iconData29);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs
-var zap_exports = {};
-__export(zap_exports, {
-  __iconData: () => __iconData30,
-  default: () => Zap
-});
-var __iconData30, Zap;
-var init_zap = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/zap.mjs"() {
-    init_createLucideIcon();
-    __iconData30 = {
-      name: "zap",
-      size: 24,
-      node: [
-        [
-          "path",
-          {
-            d: "M15.914 4a1.5 1.5 0 00-2.474-1.561l-9 9A1.5 1.5 0 005.5 14h4.002a.5.5 0 01.471.666L8.086 20a1.5 1.5 0 002.475 1.56l9-9A1.5 1.5 0 0018.5 10h-3.997a.5.5 0 01-.472-.667z",
-            key: "1v7up4"
-          }
-        ]
-      ]
-    };
-    __iconData30.node;
-    Zap = createLucideIcon(__iconData30);
+    __iconData35.node;
+    X = createLucideIcon(__iconData35);
   }
 });
 
@@ -10710,34 +10978,34 @@ var require_button = __commonJS({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs
 var check_exports = {};
 __export(check_exports, {
-  __iconData: () => __iconData31,
+  __iconData: () => __iconData36,
   default: () => Check
 });
-var __iconData31, Check;
+var __iconData36, Check;
 var init_check = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/check.mjs"() {
     init_createLucideIcon();
-    __iconData31 = {
+    __iconData36 = {
       name: "check",
       size: 24,
       node: [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]
     };
-    __iconData31.node;
-    Check = createLucideIcon(__iconData31);
+    __iconData36.node;
+    Check = createLucideIcon(__iconData36);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user.mjs
 var user_exports = {};
 __export(user_exports, {
-  __iconData: () => __iconData32,
+  __iconData: () => __iconData37,
   default: () => User
 });
-var __iconData32, User;
+var __iconData37, User;
 var init_user = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/user.mjs"() {
     init_createLucideIcon();
-    __iconData32 = {
+    __iconData37 = {
       name: "user",
       size: 24,
       node: [
@@ -10745,17 +11013,17 @@ var init_user = __esm({
         ["circle", { cx: "12", cy: "7", r: "4", key: "17ys0d" }]
       ]
     };
-    __iconData32.node;
-    User = createLucideIcon(__iconData32);
+    __iconData37.node;
+    User = createLucideIcon(__iconData37);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-x.mjs
-var __iconData33, CircleX;
+var __iconData38, CircleX;
 var init_circle_x = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/circle-x.mjs"() {
     init_createLucideIcon();
-    __iconData33 = {
+    __iconData38 = {
       name: "circle-x",
       size: 24,
       node: [
@@ -10765,8 +11033,8 @@ var init_circle_x = __esm({
       ],
       aliases: ["x-circle"]
     };
-    __iconData33.node;
-    CircleX = createLucideIcon(__iconData33);
+    __iconData38.node;
+    CircleX = createLucideIcon(__iconData38);
   }
 });
 
@@ -10784,14 +11052,14 @@ var init_x_circle = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/copy.mjs
 var copy_exports = {};
 __export(copy_exports, {
-  __iconData: () => __iconData34,
+  __iconData: () => __iconData39,
   default: () => Copy
 });
-var __iconData34, Copy;
+var __iconData39, Copy;
 var init_copy = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/copy.mjs"() {
     init_createLucideIcon();
-    __iconData34 = {
+    __iconData39 = {
       name: "copy",
       size: 24,
       node: [
@@ -10799,22 +11067,22 @@ var init_copy = __esm({
         ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
       ]
     };
-    __iconData34.node;
-    Copy = createLucideIcon(__iconData34);
+    __iconData39.node;
+    Copy = createLucideIcon(__iconData39);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs
 var eye_exports = {};
 __export(eye_exports, {
-  __iconData: () => __iconData35,
+  __iconData: () => __iconData40,
   default: () => Eye
 });
-var __iconData35, Eye;
+var __iconData40, Eye;
 var init_eye = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye.mjs"() {
     init_createLucideIcon();
-    __iconData35 = {
+    __iconData40 = {
       name: "eye",
       size: 24,
       node: [
@@ -10828,47 +11096,22 @@ var init_eye = __esm({
         ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
       ]
     };
-    __iconData35.node;
-    Eye = createLucideIcon(__iconData35);
-  }
-});
-
-// node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs
-var refresh_cw_exports = {};
-__export(refresh_cw_exports, {
-  __iconData: () => __iconData36,
-  default: () => RefreshCw
-});
-var __iconData36, RefreshCw;
-var init_refresh_cw = __esm({
-  "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/refresh-cw.mjs"() {
-    init_createLucideIcon();
-    __iconData36 = {
-      name: "refresh-cw",
-      size: 24,
-      node: [
-        ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
-        ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
-        ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
-        ["path", { d: "M8 16H3v5", key: "1cv678" }]
-      ]
-    };
-    __iconData36.node;
-    RefreshCw = createLucideIcon(__iconData36);
+    __iconData40.node;
+    Eye = createLucideIcon(__iconData40);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs
 var arrow_left_exports = {};
 __export(arrow_left_exports, {
-  __iconData: () => __iconData37,
+  __iconData: () => __iconData41,
   default: () => ArrowLeft
 });
-var __iconData37, ArrowLeft;
+var __iconData41, ArrowLeft;
 var init_arrow_left = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-left.mjs"() {
     init_createLucideIcon();
-    __iconData37 = {
+    __iconData41 = {
       name: "arrow-left",
       size: 24,
       node: [
@@ -10876,22 +11119,22 @@ var init_arrow_left = __esm({
         ["path", { d: "M19 12H5", key: "x3x0zl" }]
       ]
     };
-    __iconData37.node;
-    ArrowLeft = createLucideIcon(__iconData37);
+    __iconData41.node;
+    ArrowLeft = createLucideIcon(__iconData41);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-right.mjs
 var arrow_right_exports = {};
 __export(arrow_right_exports, {
-  __iconData: () => __iconData38,
+  __iconData: () => __iconData42,
   default: () => ArrowRight
 });
-var __iconData38, ArrowRight;
+var __iconData42, ArrowRight;
 var init_arrow_right = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/arrow-right.mjs"() {
     init_createLucideIcon();
-    __iconData38 = {
+    __iconData42 = {
       name: "arrow-right",
       size: 24,
       node: [
@@ -10899,17 +11142,17 @@ var init_arrow_right = __esm({
         ["path", { d: "m12 5 7 7-7 7", key: "xquz4c" }]
       ]
     };
-    __iconData38.node;
-    ArrowRight = createLucideIcon(__iconData38);
+    __iconData42.node;
+    ArrowRight = createLucideIcon(__iconData42);
   }
 });
 
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs
-var __iconData39, CodeXml;
+var __iconData43, CodeXml;
 var init_code_xml = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/code-xml.mjs"() {
     init_createLucideIcon();
-    __iconData39 = {
+    __iconData43 = {
       name: "code-xml",
       size: 24,
       node: [
@@ -10919,8 +11162,8 @@ var init_code_xml = __esm({
       ],
       aliases: ["code-2"]
     };
-    __iconData39.node;
-    CodeXml = createLucideIcon(__iconData39);
+    __iconData43.node;
+    CodeXml = createLucideIcon(__iconData43);
   }
 });
 
@@ -10938,14 +11181,14 @@ var init_code_2 = __esm({
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs
 var pilcrow_exports = {};
 __export(pilcrow_exports, {
-  __iconData: () => __iconData40,
+  __iconData: () => __iconData44,
   default: () => Pilcrow
 });
-var __iconData40, Pilcrow;
+var __iconData44, Pilcrow;
 var init_pilcrow = __esm({
   "node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/pilcrow.mjs"() {
     init_createLucideIcon();
-    __iconData40 = {
+    __iconData44 = {
       name: "pilcrow",
       size: 24,
       node: [
@@ -10954,8 +11197,8 @@ var init_pilcrow = __esm({
         ["path", { d: "M19 4H9.5a4.5 4.5 0 0 0 0 9H13", key: "sh4n9v" }]
       ]
     };
-    __iconData40.node;
-    Pilcrow = createLucideIcon(__iconData40);
+    __iconData44.node;
+    Pilcrow = createLucideIcon(__iconData44);
   }
 });
 
@@ -13261,6 +13504,7 @@ var h = react.createElement;
 var NS = "workbench";
 var LOCALE = require_locale2();
 var CSS = require_styles3();
+var HOST_ICONS = require_host_icons();
 var createPanellistIcon = require_panellist_icon();
 var addonNav = require_addon_nav()();
 var SystemPages = require_system_pages();
@@ -13755,6 +13999,8 @@ function WorkbenchPage(props) {
     }
   }
   function cardIcon(id, title) {
+    var HostIcon = HOST_ICONS.hostIcon(id);
+    if (HostIcon) return h(HostIcon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     var m = registry.get(id) || registry.get("wb-addon-" + id);
     if (m && m.icon) return h(m.icon, { size: 18, strokeWidth: 1.9, "aria-hidden": "true" });
     return String(title || "?").slice(0, 1);
