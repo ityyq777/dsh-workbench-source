@@ -25,9 +25,41 @@ function textOf(value) {
   return typeof value === "object" ? JSON.stringify(value) : String(value);
 }
 
-function columnsOf(rows) {
-  if (!rows.length) return [];
-  return Object.keys(rows[0]).map(function (name) { return { name: name, type: "TEXT", system: false }; });
+/** 列元信息归一：字符串列名补成 TEXT；对象列把可选契约字段原样带过去。 */
+function columnOf(col) {
+  if (typeof col === "string") return { name: col, type: "TEXT", system: false };
+  if (!col || typeof col !== "object" || !col.name) return null;
+  return {
+    name: String(col.name),
+    type: String(col.type || "TEXT"),
+    kind: col.kind,
+    label: col.label,
+    system: col.system === true,
+    pk: col.pk === true,
+    notnull: col.notnull,
+    defaultValue: col.defaultValue,
+  };
+}
+
+/**
+ * 声明列优先、行派生兜底：表清单里声明了列就用它（空表也能出完整表头与字段页签），
+ * 声明里没有、行里却有的列补在最后（只声明一部分列的旧插件也能看全数据）。
+ */
+function columnsOf(rows, declared) {
+  var seen = Object.create(null);
+  var cols = [];
+  (declared || []).forEach(function (col) {
+    var c = columnOf(col);
+    if (c && !seen[c.name]) { seen[c.name] = true; cols.push(c); }
+  });
+  if (rows.length) {
+    Object.keys(rows[0]).forEach(function (name) {
+      if (seen[name]) return;
+      seen[name] = true;
+      cols.push({ name: name, type: "TEXT", system: false });
+    });
+  }
+  return cols;
 }
 
 function tableNames(body) {
@@ -78,12 +110,33 @@ module.exports = function createLegacyData(domain, options) {
     return next();
   }
 
+  // 表清单缓存按 api 对象隔离：同一个数据页反复翻页/筛选时不必每页都重拉一次表结构。
+  var tablesCache = new WeakMap();
+  function tablesOf(api) {
+    var cached = tablesCache.get(api);
+    if (cached) return cached;
+    var pending = Promise.resolve(tablesLoader(api)).then(function (body) { return body.tables; });
+    pending.catch(function () { tablesCache.delete(api); });
+    tablesCache.set(api, pending);
+    return pending;
+  }
+
   function query(api, args) {
-    return fetchAll(api, args.table).then(function (all) {
+    return tablesOf(api).then(function (tables) {
+      var declared = null;
+      for (var i = 0; i < tables.length; i++) if (tables[i].name === args.table) declared = tables[i].columns;
+      return fetchAll(api, args.table).then(function (all) {
+      return runQuery(api, args, all, declared);
+    });
+    });
+  }
+
+  function runQuery(api, args, all, declared) {
       var search = String(args.search || "").trim().toLowerCase();
       var filters = args.filters && typeof args.filters === "object" ? args.filters : {};
       var filterKeys = Object.keys(filters).slice(0, 20);
-      var colNames = all.length ? Object.keys(all[0]) : [];
+      var columns = columnsOf(all, declared);
+      var colNames = columns.map(function (c) { return c.name; });
       var includeDeleted = args.includeDeleted === true;
       var rows = all.filter(function (row) {
         if (!includeDeleted && row.deleted_at) return false;
@@ -113,7 +166,7 @@ module.exports = function createLegacyData(domain, options) {
       var started = Date.now();
       return {
         table: args.table,
-        columns: columnsOf(all),
+        columns: columns,
         rows: rows.slice(start, start + pageSize),
         page: page,
         pageSize: pageSize,
@@ -126,7 +179,6 @@ module.exports = function createLegacyData(domain, options) {
         includeDeleted: includeDeleted,
         queryMs: Math.max(0, Date.now() - started),
       };
-    });
   }
 
   return { tablesLoader: tablesLoader, query: query };

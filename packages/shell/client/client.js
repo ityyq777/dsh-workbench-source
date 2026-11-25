@@ -4623,7 +4623,20 @@ var require_data_copy = __commonJS({
         idxNone: "\u65E0",
         idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
         idxTables: "\u8868",
-        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4",
+        fields: "\u5B57\u6BB5",
+        fieldsSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u5B57\u6BB5\u7ED3\u6784\uFF08\u53EA\u8BFB\uFF09\uFF1B\u7CFB\u7EDF\u5217\u9ED8\u8BA4\u9690\u85CF",
+        fieldsCount: "\u5171 {n} \u4E2A\u5B57\u6BB5",
+        fieldsEmpty: "\u8FD9\u5F20\u8868\u8FD8\u6CA1\u6709\u5B57\u6BB5\u4FE1\u606F",
+        fieldsHint: "\u5B57\u6BB5\u5143\u4FE1\u606F\u6765\u81EA\u8868\u7ED3\u6784\uFF1B\u65E7\u7248\u63D2\u4EF6\u53EA\u7ED9\u5B57\u6BB5\u540D\u65F6\uFF0C\u7C7B\u578B\u663E\u793A\u4E3A TEXT",
+        fieldName: "\u5B57\u6BB5\u540D",
+        fieldLabel: "\u4E2D\u6587\u540D",
+        fieldType: "\u7C7B\u578B",
+        fieldNullable: "\u53EF\u7A7A",
+        fieldDefault: "\u9ED8\u8BA4\u503C",
+        fieldPrimary: "\u4E3B\u952E",
+        fieldSystem: "\u7CFB\u7EDF\u5217",
+        fieldDash: "\u2014"
       },
       en: {
         title: "Data",
@@ -4686,7 +4699,20 @@ var require_data_copy = __commonJS({
         idxNone: "\u2014",
         idxEmpty: "No index statistics available for this table",
         idxTables: "Tables",
-        idxAt: "Generated"
+        idxAt: "Generated",
+        fields: "Fields",
+        fieldsSub: "Field structure of the selected table (read-only); system columns are hidden by default",
+        fieldsCount: "{n} fields",
+        fieldsEmpty: "No field information for this table",
+        fieldsHint: "Field metadata comes from the table schema; older plugins that list only names show TEXT as the type",
+        fieldName: "Field",
+        fieldLabel: "Label",
+        fieldType: "Type",
+        fieldNullable: "Nullable",
+        fieldDefault: "Default",
+        fieldPrimary: "Primary key",
+        fieldSystem: "System",
+        fieldDash: "\u2014"
       }
     };
     module2.exports = COPY;
@@ -4928,6 +4954,8 @@ var require_data_view = __commonJS({
         var indexReqRef = React.useRef(0);
         var indexS = React.useState(null);
         var index = indexS[0], setIndex = indexS[1];
+        var viewS = React.useState("rows");
+        var view = viewS[0], setView = viewS[1];
         var indexBusyS = React.useState(false);
         var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
         var cfgSize = Number(cfg["data.pageSize"]) || 50;
@@ -5003,7 +5031,7 @@ var require_data_view = __commonJS({
           };
         }, [filterDraft]);
         React.useEffect(function() {
-          if (!active || !cfgWrap.ready || index) return void 0;
+          if (!active || !cfgWrap.ready || view === "index") return void 0;
           var req = ++reqRef.current;
           setLoadingRows(true);
           var args = { table: active, page, pageSize: size, order, includeDeleted };
@@ -5029,7 +5057,7 @@ var require_data_view = __commonJS({
           return function() {
             reqRef.current++;
           };
-        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], view === "index"]);
         React.useEffect(function() {
           if (!drawer) return void 0;
           function onKey(e) {
@@ -5044,11 +5072,23 @@ var require_data_view = __commonJS({
         if (tables) {
           for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
         }
-        function leaveIndex() {
+        function showRows() {
           indexReqRef.current++;
           setIndex(null);
           setIndexBusy(false);
           setError("");
+          setView("rows");
+        }
+        function showFields() {
+          indexReqRef.current++;
+          setIndex(null);
+          setIndexBusy(false);
+          setError("");
+          setView("fields");
+        }
+        function showIndex() {
+          setView("index");
+          loadIndex();
         }
         function loadIndex() {
           reqRef.current++;
@@ -5142,6 +5182,77 @@ var require_data_view = __commonJS({
             )
           );
         }
+        function renderFields() {
+          var all = tableColumns();
+          var cols = all.filter(function(c) {
+            return showSystem || !c.system;
+          });
+          var hasNullable = cols.some(function(c) {
+            return c.notnull === 0 || c.notnull === 1;
+          });
+          var hasDefault = cols.some(function(c) {
+            return Object.prototype.hasOwnProperty.call(c, "defaultValue") && c.defaultValue !== null;
+          });
+          var headers = [t.fieldName, t.fieldLabel, t.fieldType];
+          if (hasNullable) headers.push(t.fieldNullable);
+          if (hasDefault) headers.push(t.fieldDefault);
+          headers.push(t.fieldPrimary, t.fieldSystem);
+          function dashOr(value) {
+            return value === null || value === void 0 || value === "" ? t.fieldDash : String(value);
+          }
+          return h2(
+            "div",
+            { className: P + "-idx" },
+            h2(
+              "div",
+              { className: P + "-head" },
+              h2(
+                "div",
+                { className: P + "-headmain" },
+                h2("h2", null, icon("table"), tableLabel(current), h2("span", { className: P + "-code" }, active)),
+                h2("div", { className: P + "-idxsub" }, fmt(t.fieldsCount, { n: cols.length }) + " \xB7 " + t.fieldsSub)
+              ),
+              h2("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
+                "aria-busy": loadingTables ? "true" : "false",
+                onClick: function() {
+                  loadTables();
+                }
+              }, icon("refresh"), h2("span", { className: P + "-btnlabel" }, t.refresh))
+            ),
+            loadingTables ? options.Skeleton ? h2(options.Skeleton, { lang, label: t.loading }) : h2("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !cols.length ? h2("div", { className: P + "-empty" }, t.fieldsEmpty) : h2(
+              "div",
+              null,
+              h2(
+                "div",
+                { className: P + "-tablewrap" },
+                h2(
+                  "table",
+                  { className: P + "-table " + P + "-idxtable" },
+                  h2("thead", null, h2("tr", null, headers.map(function(label) {
+                    return h2("th", { scope: "col", key: label }, h2("span", { className: P + "-thbtn" }, label));
+                  }))),
+                  h2("tbody", null, cols.map(function(col) {
+                    var cells = [
+                      h2("td", { key: "name", className: P + "-cell mono" }, col.name),
+                      h2("td", { key: "label", className: P + "-cell" }, col.label ? colLabel(col) : t.fieldDash),
+                      h2("td", { key: "type", className: P + "-cell mono" }, dashOr(col.type && String(col.type).toLowerCase()))
+                    ];
+                    if (hasNullable) cells.push(h2("td", { key: "null", className: P + "-cell" }, col.notnull === 0 ? t.yes : col.notnull === 1 ? t.no : t.fieldDash));
+                    if (hasDefault) cells.push(h2("td", { key: "default", className: P + "-cell mono" }, dashOr(col.defaultValue)));
+                    cells.push(h2("td", { key: "pk", className: P + "-cell" }, col.pk ? t.yes : t.fieldDash));
+                    cells.push(h2("td", { key: "system", className: P + "-cell" }, col.system ? t.yes : t.no));
+                    return h2("tr", { className: P + "-tr", key: col.name }, cells);
+                  }))
+                )
+              ),
+              h2("div", { className: P + "-idxsub" }, t.fieldsHint)
+            )
+          );
+        }
         function tableLabel(tb) {
           if (!tb || !tb.label) return "";
           return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
@@ -5150,11 +5261,24 @@ var require_data_view = __commonJS({
           if (!col.label) return col.name;
           return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
         }
+        function normalizeColumn(col) {
+          if (typeof col === "string") return { name: col, type: "TEXT", system: false };
+          if (!col || typeof col !== "object") return null;
+          return col;
+        }
+        function tableColumns() {
+          var declared = data && data.columns && data.columns.length ? data.columns : null;
+          if (!declared && current && Array.isArray(current.columns) && current.columns.length) declared = current.columns;
+          if (!declared) return [];
+          return declared.map(normalizeColumn).filter(function(c) {
+            return !!c;
+          });
+        }
         function visibleColumns() {
-          var cols = data && data.columns ? data.columns.map(function(col) {
+          var cols = tableColumns().map(function(col) {
             var hook = columnHooks[col.name];
             return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
-          }) : [];
+          });
           return cols.filter(function(c) {
             return showSystem || !c.system;
           });
@@ -5443,11 +5567,12 @@ var require_data_view = __commonJS({
             h2(
               "div",
               { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
-              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "rows", onClick: showRows }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "fields", onClick: showFields }, icon("table"), t.fields),
+              h2("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "index", onClick: showIndex }, icon("database"), t.index)
             ),
-            index && error ? h2("div", { className: P + "-err", role: "alert" }, error) : null,
-            index ? renderIndex() : [
+            view !== "rows" && error ? h2("div", { className: P + "-err", role: "alert" }, error) : null,
+            view === "index" ? renderIndex() : view === "fields" ? renderFields() : [
               h2(
                 "div",
                 { className: P + "-head" },

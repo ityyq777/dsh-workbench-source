@@ -102,6 +102,10 @@ function DataView(props) {
   var indexReqRef = React.useRef(0);
   var indexS = React.useState(null);
   var index = indexS[0], setIndex = indexS[1];
+  // 三个页签：行数据 / 字段 / 表索引。旧实现用「索引数据是否为 null」当二态开关，
+  // 加字段页签后必须显式存视图状态，否则切到字段页签会被当成「还在行数据」。
+  var viewS = React.useState("rows");
+  var view = viewS[0], setView = viewS[1];
   var indexBusyS = React.useState(false);
   var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
   var cfgSize = Number(cfg["data.pageSize"]) || 50;
@@ -172,7 +176,7 @@ function DataView(props) {
   }, [filterDraft]);
 
   React.useEffect(function () {
-    if (!active || !cfgWrap.ready || index) return undefined;
+    if (!active || !cfgWrap.ready || view === "index") return undefined;
     var req = ++reqRef.current;
     setLoadingRows(true);
     var args = { table: active, page: page, pageSize: size, order: order, includeDeleted: includeDeleted };
@@ -195,7 +199,7 @@ function DataView(props) {
       })
       .then(function () { if (req === reqRef.current) setLoadingRows(false); });
     return function () { reqRef.current++; };
-  }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
+  }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], view === "index"]);
 
   React.useEffect(function () {
     if (!drawer) return undefined;
@@ -209,12 +213,28 @@ function DataView(props) {
     for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
   }
 
-  /** 只拉本插件自己的 dataTables(stats=true)，索引页与左侧目录同口径。 */
-  function leaveIndex() {
+  /** 回到行数据：作废未完成的索引请求，清掉索引数据。 */
+  function showRows() {
     indexReqRef.current++;
     setIndex(null);
     setIndexBusy(false);
     setError("");
+    setView("rows");
+  }
+
+  /** 字段页签只用表清单里的列元信息，不需要额外请求；顺手把索引请求作废。 */
+  function showFields() {
+    indexReqRef.current++;
+    setIndex(null);
+    setIndexBusy(false);
+    setError("");
+    setView("fields");
+  }
+
+  /** 只拉本插件自己的 dataTables(stats=true)，索引页与左侧目录同口径。 */
+  function showIndex() {
+    setView("index");
+    loadIndex();
   }
 
   function loadIndex() {
@@ -281,6 +301,55 @@ function DataView(props) {
             })))));
   }
 
+  /**
+   * 字段页签：按表结构铺字段，空表也能看全（行数据表头也不再只剩「#」）。
+   * 列契约在 { name, type, kind?, label?, system?, pk? } 上可选扩 notnull / defaultValue，
+   * 服务端没给就不出那两列，旧插件不会多出一排「—」。
+   */
+  function renderFields() {
+    var all = tableColumns();
+    var cols = all.filter(function (c) { return showSystem || !c.system; });
+    var hasNullable = cols.some(function (c) { return c.notnull === 0 || c.notnull === 1; });
+    var hasDefault = cols.some(function (c) { return Object.prototype.hasOwnProperty.call(c, "defaultValue") && c.defaultValue !== null; });
+    var headers = [t.fieldName, t.fieldLabel, t.fieldType];
+    if (hasNullable) headers.push(t.fieldNullable);
+    if (hasDefault) headers.push(t.fieldDefault);
+    headers.push(t.fieldPrimary, t.fieldSystem);
+    function dashOr(value) { return value === null || value === undefined || value === "" ? t.fieldDash : String(value); }
+    return h("div", { className: P + "-idx" },
+      h("div", { className: P + "-head" },
+        h("div", { className: P + "-headmain" },
+          h("h2", null, icon("table"), tableLabel(current), h("span", { className: P + "-code" }, active)),
+          h("div", { className: P + "-idxsub" }, fmt(t.fieldsCount, { n: cols.length }) + " · " + t.fieldsSub)),
+        h("button", {
+          type: "button", className: P + "-btn", "aria-label": t.refresh, title: t.refresh,
+          "aria-busy": loadingTables ? "true" : "false",
+          onClick: function () { loadTables(); },
+        }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))),
+      loadingTables
+        ? options.Skeleton ? h(options.Skeleton, { lang: lang, label: t.loading }) : h("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading)
+        : !cols.length ? h("div", { className: P + "-empty" }, t.fieldsEmpty)
+        : h("div", null,
+          h("div", { className: P + "-tablewrap" },
+            h("table", { className: P + "-table " + P + "-idxtable" },
+              h("thead", null, h("tr", null, headers.map(function (label) {
+                return h("th", { scope: "col", key: label }, h("span", { className: P + "-thbtn" }, label));
+              }))),
+              h("tbody", null, cols.map(function (col) {
+                var cells = [
+                  h("td", { key: "name", className: P + "-cell mono" }, col.name),
+                  h("td", { key: "label", className: P + "-cell" }, col.label ? colLabel(col) : t.fieldDash),
+                  h("td", { key: "type", className: P + "-cell mono" }, dashOr(col.type && String(col.type).toLowerCase())),
+                ];
+                if (hasNullable) cells.push(h("td", { key: "null", className: P + "-cell" }, col.notnull === 0 ? t.yes : col.notnull === 1 ? t.no : t.fieldDash));
+                if (hasDefault) cells.push(h("td", { key: "default", className: P + "-cell mono" }, dashOr(col.defaultValue)));
+                cells.push(h("td", { key: "pk", className: P + "-cell" }, col.pk ? t.yes : t.fieldDash));
+                cells.push(h("td", { key: "system", className: P + "-cell" }, col.system ? t.yes : t.no));
+                return h("tr", { className: P + "-tr", key: col.name }, cells);
+              })))),
+          h("div", { className: P + "-idxsub" }, t.fieldsHint)));
+  }
+
   function tableLabel(tb) {
     if (!tb || !tb.label) return "";
     return lang === "en" ? (tb.label.en || tb.label.zh) : (tb.label.zh || tb.label.en);
@@ -291,11 +360,29 @@ function DataView(props) {
     return lang === "en" ? (col.label.en || col.label.zh) : (col.label.zh || col.label.en);
   }
 
+  /** 列对象都归一成 { name, type, kind?, label?, system?, pk?, notnull?, defaultValue? }。 */
+  function normalizeColumn(col) {
+    if (typeof col === "string") return { name: col, type: "TEXT", system: false };
+    if (!col || typeof col !== "object") return null;
+    return col;
+  }
+
+  /**
+   * 当前表的列：优先用 dataQuery 返回的 columns；没有（空表/旧插件）就退回表清单里
+   * 声明的 columns —— 表头与字段页签都靠它，不能因为表里没行就只剩一列「#」。
+   */
+  function tableColumns() {
+    var declared = data && data.columns && data.columns.length ? data.columns : null;
+    if (!declared && current && Array.isArray(current.columns) && current.columns.length) declared = current.columns;
+    if (!declared) return [];
+    return declared.map(normalizeColumn).filter(function (c) { return !!c; });
+  }
+
   function visibleColumns() {
-    var cols = data && data.columns ? data.columns.map(function (col) {
+    var cols = tableColumns().map(function (col) {
       var hook = columnHooks[col.name];
       return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
-    }) : [];
+    });
     return cols.filter(function (c) { return showSystem || !c.system; });
   }
 
@@ -498,10 +585,11 @@ function DataView(props) {
       })),
     h("div", { className: P + "-main" },
       h("div", { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "行数据"),
-        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)),
-      index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
-      index ? renderIndex() : [
+        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "rows", onClick: showRows }, icon("list"), lang === "en" ? "Row data" : "行数据"),
+        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "fields", onClick: showFields }, icon("table"), t.fields),
+        h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "index", onClick: showIndex }, icon("database"), t.index)),
+      view !== "rows" && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
+      view === "index" ? renderIndex() : view === "fields" ? renderFields() : [
       h("div", { className: P + "-head" },
         h("div", { className: P + "-headmain" },
           h("h2", null, icon("database"), tableLabel(current), h("span", { className: P + "-code" }, active)),

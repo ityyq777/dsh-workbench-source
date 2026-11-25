@@ -6007,11 +6007,38 @@ var require_legacy_data = __commonJS({
       if (value === null || value === void 0) return "";
       return typeof value === "object" ? JSON.stringify(value) : String(value);
     }
-    function columnsOf(rows) {
-      if (!rows.length) return [];
-      return Object.keys(rows[0]).map(function(name) {
-        return { name, type: "TEXT", system: false };
+    function columnOf(col) {
+      if (typeof col === "string") return { name: col, type: "TEXT", system: false };
+      if (!col || typeof col !== "object" || !col.name) return null;
+      return {
+        name: String(col.name),
+        type: String(col.type || "TEXT"),
+        kind: col.kind,
+        label: col.label,
+        system: col.system === true,
+        pk: col.pk === true,
+        notnull: col.notnull,
+        defaultValue: col.defaultValue
+      };
+    }
+    function columnsOf(rows, declared) {
+      var seen = /* @__PURE__ */ Object.create(null);
+      var cols = [];
+      (declared || []).forEach(function(col) {
+        var c = columnOf(col);
+        if (c && !seen[c.name]) {
+          seen[c.name] = true;
+          cols.push(c);
+        }
       });
+      if (rows.length) {
+        Object.keys(rows[0]).forEach(function(name) {
+          if (seen[name]) return;
+          seen[name] = true;
+          cols.push({ name, type: "TEXT", system: false });
+        });
+      }
+      return cols;
     }
     function tableNames(body) {
       var list = body && Array.isArray(body.tables) ? body.tables : [];
@@ -6058,55 +6085,78 @@ var require_legacy_data = __commonJS({
         }
         return next();
       }
-      function query(api, args) {
-        return fetchAll(api, args.table).then(function(all) {
-          var search = String(args.search || "").trim().toLowerCase();
-          var filters = args.filters && typeof args.filters === "object" ? args.filters : {};
-          var filterKeys = Object.keys(filters).slice(0, 20);
-          var colNames = all.length ? Object.keys(all[0]) : [];
-          var includeDeleted = args.includeDeleted === true;
-          var rows = all.filter(function(row) {
-            if (!includeDeleted && row.deleted_at) return false;
-            if (search) {
-              var hit = colNames.some(function(c) {
-                return textOf(row[c]).toLowerCase().indexOf(search) >= 0;
-              });
-              if (!hit) return false;
-            }
-            return filterKeys.every(function(c) {
-              return textOf(row[c]).toLowerCase().indexOf(textOf(filters[c]).toLowerCase()) >= 0;
-            });
-          });
-          var sort = String(args.sort || "");
-          var order = args.order === "asc" ? "asc" : "desc";
-          if (sort && colNames.indexOf(sort) >= 0) {
-            rows = rows.slice().sort(function(a, b) {
-              var d = compare(a[sort], b[sort]);
-              return order === "asc" ? d : -d;
-            });
-          }
-          var pageSize = Math.max(1, Math.min(200, Number(args.pageSize) || 50));
-          var total = rows.length;
-          var pages = Math.max(1, Math.ceil(total / pageSize));
-          var page = Math.max(1, Math.min(pages, Number(args.page) || 1));
-          var start = (page - 1) * pageSize;
-          var started = Date.now();
-          return {
-            table: args.table,
-            columns: columnsOf(all),
-            rows: rows.slice(start, start + pageSize),
-            page,
-            pageSize,
-            pages,
-            total,
-            sort,
-            order,
-            search,
-            filters,
-            includeDeleted,
-            queryMs: Math.max(0, Date.now() - started)
-          };
+      var tablesCache = /* @__PURE__ */ new WeakMap();
+      function tablesOf(api) {
+        var cached = tablesCache.get(api);
+        if (cached) return cached;
+        var pending = Promise.resolve(tablesLoader(api)).then(function(body) {
+          return body.tables;
         });
+        pending.catch(function() {
+          tablesCache.delete(api);
+        });
+        tablesCache.set(api, pending);
+        return pending;
+      }
+      function query(api, args) {
+        return tablesOf(api).then(function(tables) {
+          var declared = null;
+          for (var i = 0; i < tables.length; i++) if (tables[i].name === args.table) declared = tables[i].columns;
+          return fetchAll(api, args.table).then(function(all) {
+            return runQuery(api, args, all, declared);
+          });
+        });
+      }
+      function runQuery(api, args, all, declared) {
+        var search = String(args.search || "").trim().toLowerCase();
+        var filters = args.filters && typeof args.filters === "object" ? args.filters : {};
+        var filterKeys = Object.keys(filters).slice(0, 20);
+        var columns = columnsOf(all, declared);
+        var colNames = columns.map(function(c) {
+          return c.name;
+        });
+        var includeDeleted = args.includeDeleted === true;
+        var rows = all.filter(function(row) {
+          if (!includeDeleted && row.deleted_at) return false;
+          if (search) {
+            var hit = colNames.some(function(c) {
+              return textOf(row[c]).toLowerCase().indexOf(search) >= 0;
+            });
+            if (!hit) return false;
+          }
+          return filterKeys.every(function(c) {
+            return textOf(row[c]).toLowerCase().indexOf(textOf(filters[c]).toLowerCase()) >= 0;
+          });
+        });
+        var sort = String(args.sort || "");
+        var order = args.order === "asc" ? "asc" : "desc";
+        if (sort && colNames.indexOf(sort) >= 0) {
+          rows = rows.slice().sort(function(a, b) {
+            var d = compare(a[sort], b[sort]);
+            return order === "asc" ? d : -d;
+          });
+        }
+        var pageSize = Math.max(1, Math.min(200, Number(args.pageSize) || 50));
+        var total = rows.length;
+        var pages = Math.max(1, Math.ceil(total / pageSize));
+        var page = Math.max(1, Math.min(pages, Number(args.page) || 1));
+        var start = (page - 1) * pageSize;
+        var started = Date.now();
+        return {
+          table: args.table,
+          columns,
+          rows: rows.slice(start, start + pageSize),
+          page,
+          pageSize,
+          pages,
+          total,
+          sort,
+          order,
+          search,
+          filters,
+          includeDeleted,
+          queryMs: Math.max(0, Date.now() - started)
+        };
       }
       return { tablesLoader, query };
     };
@@ -6179,7 +6229,20 @@ var require_data_copy = __commonJS({
         idxNone: "\u65E0",
         idxEmpty: "\u5F53\u524D\u8868\u6CA1\u6709\u53EF\u7528\u7684\u7D22\u5F15\u7EDF\u8BA1",
         idxTables: "\u8868",
-        idxAt: "\u7EDF\u8BA1\u65F6\u95F4"
+        idxAt: "\u7EDF\u8BA1\u65F6\u95F4",
+        fields: "\u5B57\u6BB5",
+        fieldsSub: "\u5F53\u524D\u9009\u4E2D\u8868\u7684\u5B57\u6BB5\u7ED3\u6784\uFF08\u53EA\u8BFB\uFF09\uFF1B\u7CFB\u7EDF\u5217\u9ED8\u8BA4\u9690\u85CF",
+        fieldsCount: "\u5171 {n} \u4E2A\u5B57\u6BB5",
+        fieldsEmpty: "\u8FD9\u5F20\u8868\u8FD8\u6CA1\u6709\u5B57\u6BB5\u4FE1\u606F",
+        fieldsHint: "\u5B57\u6BB5\u5143\u4FE1\u606F\u6765\u81EA\u8868\u7ED3\u6784\uFF1B\u65E7\u7248\u63D2\u4EF6\u53EA\u7ED9\u5B57\u6BB5\u540D\u65F6\uFF0C\u7C7B\u578B\u663E\u793A\u4E3A TEXT",
+        fieldName: "\u5B57\u6BB5\u540D",
+        fieldLabel: "\u4E2D\u6587\u540D",
+        fieldType: "\u7C7B\u578B",
+        fieldNullable: "\u53EF\u7A7A",
+        fieldDefault: "\u9ED8\u8BA4\u503C",
+        fieldPrimary: "\u4E3B\u952E",
+        fieldSystem: "\u7CFB\u7EDF\u5217",
+        fieldDash: "\u2014"
       },
       en: {
         title: "Data",
@@ -6242,7 +6305,20 @@ var require_data_copy = __commonJS({
         idxNone: "\u2014",
         idxEmpty: "No index statistics available for this table",
         idxTables: "Tables",
-        idxAt: "Generated"
+        idxAt: "Generated",
+        fields: "Fields",
+        fieldsSub: "Field structure of the selected table (read-only); system columns are hidden by default",
+        fieldsCount: "{n} fields",
+        fieldsEmpty: "No field information for this table",
+        fieldsHint: "Field metadata comes from the table schema; older plugins that list only names show TEXT as the type",
+        fieldName: "Field",
+        fieldLabel: "Label",
+        fieldType: "Type",
+        fieldNullable: "Nullable",
+        fieldDefault: "Default",
+        fieldPrimary: "Primary key",
+        fieldSystem: "System",
+        fieldDash: "\u2014"
       }
     };
     module2.exports = COPY;
@@ -6494,6 +6570,8 @@ var require_data_view = __commonJS({
         var indexReqRef = React.useRef(0);
         var indexS = React.useState(null);
         var index = indexS[0], setIndex = indexS[1];
+        var viewS = React.useState("rows");
+        var view = viewS[0], setView = viewS[1];
         var indexBusyS = React.useState(false);
         var indexBusy = indexBusyS[0], setIndexBusy = indexBusyS[1];
         var cfgSize = Number(cfg["data.pageSize"]) || 50;
@@ -6569,7 +6647,7 @@ var require_data_view = __commonJS({
           };
         }, [filterDraft]);
         React.useEffect(function() {
-          if (!active || !cfgWrap.ready || index) return void 0;
+          if (!active || !cfgWrap.ready || view === "index") return void 0;
           var req = ++reqRef.current;
           setLoadingRows(true);
           var args = { table: active, page, pageSize: size, order, includeDeleted };
@@ -6595,7 +6673,7 @@ var require_data_view = __commonJS({
           return function() {
             reqRef.current++;
           };
-        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], !!index]);
+        }, [active, page, size, sort, order, search, includeDeleted, cfgWrap.ready, filtersKey, refreshS[0], view === "index"]);
         React.useEffect(function() {
           if (!drawer) return void 0;
           function onKey(e) {
@@ -6610,11 +6688,23 @@ var require_data_view = __commonJS({
         if (tables) {
           for (var i = 0; i < tables.length; i++) if (tables[i].name === active) current = tables[i];
         }
-        function leaveIndex() {
+        function showRows() {
           indexReqRef.current++;
           setIndex(null);
           setIndexBusy(false);
           setError("");
+          setView("rows");
+        }
+        function showFields() {
+          indexReqRef.current++;
+          setIndex(null);
+          setIndexBusy(false);
+          setError("");
+          setView("fields");
+        }
+        function showIndex() {
+          setView("index");
+          loadIndex();
         }
         function loadIndex() {
           reqRef.current++;
@@ -6708,6 +6798,77 @@ var require_data_view = __commonJS({
             )
           );
         }
+        function renderFields() {
+          var all = tableColumns();
+          var cols = all.filter(function(c) {
+            return showSystem || !c.system;
+          });
+          var hasNullable = cols.some(function(c) {
+            return c.notnull === 0 || c.notnull === 1;
+          });
+          var hasDefault = cols.some(function(c) {
+            return Object.prototype.hasOwnProperty.call(c, "defaultValue") && c.defaultValue !== null;
+          });
+          var headers = [t.fieldName, t.fieldLabel, t.fieldType];
+          if (hasNullable) headers.push(t.fieldNullable);
+          if (hasDefault) headers.push(t.fieldDefault);
+          headers.push(t.fieldPrimary, t.fieldSystem);
+          function dashOr(value) {
+            return value === null || value === void 0 || value === "" ? t.fieldDash : String(value);
+          }
+          return h(
+            "div",
+            { className: P + "-idx" },
+            h(
+              "div",
+              { className: P + "-head" },
+              h(
+                "div",
+                { className: P + "-headmain" },
+                h("h2", null, icon("table"), tableLabel(current), h("span", { className: P + "-code" }, active)),
+                h("div", { className: P + "-idxsub" }, fmt(t.fieldsCount, { n: cols.length }) + " \xB7 " + t.fieldsSub)
+              ),
+              h("button", {
+                type: "button",
+                className: P + "-btn",
+                "aria-label": t.refresh,
+                title: t.refresh,
+                "aria-busy": loadingTables ? "true" : "false",
+                onClick: function() {
+                  loadTables();
+                }
+              }, icon("refresh"), h("span", { className: P + "-btnlabel" }, t.refresh))
+            ),
+            loadingTables ? options.Skeleton ? h(options.Skeleton, { lang, label: t.loading }) : h("div", { className: P + "-empty", role: "status", "aria-busy": "true" }, t.loading) : !cols.length ? h("div", { className: P + "-empty" }, t.fieldsEmpty) : h(
+              "div",
+              null,
+              h(
+                "div",
+                { className: P + "-tablewrap" },
+                h(
+                  "table",
+                  { className: P + "-table " + P + "-idxtable" },
+                  h("thead", null, h("tr", null, headers.map(function(label) {
+                    return h("th", { scope: "col", key: label }, h("span", { className: P + "-thbtn" }, label));
+                  }))),
+                  h("tbody", null, cols.map(function(col) {
+                    var cells = [
+                      h("td", { key: "name", className: P + "-cell mono" }, col.name),
+                      h("td", { key: "label", className: P + "-cell" }, col.label ? colLabel(col) : t.fieldDash),
+                      h("td", { key: "type", className: P + "-cell mono" }, dashOr(col.type && String(col.type).toLowerCase()))
+                    ];
+                    if (hasNullable) cells.push(h("td", { key: "null", className: P + "-cell" }, col.notnull === 0 ? t.yes : col.notnull === 1 ? t.no : t.fieldDash));
+                    if (hasDefault) cells.push(h("td", { key: "default", className: P + "-cell mono" }, dashOr(col.defaultValue)));
+                    cells.push(h("td", { key: "pk", className: P + "-cell" }, col.pk ? t.yes : t.fieldDash));
+                    cells.push(h("td", { key: "system", className: P + "-cell" }, col.system ? t.yes : t.no));
+                    return h("tr", { className: P + "-tr", key: col.name }, cells);
+                  }))
+                )
+              ),
+              h("div", { className: P + "-idxsub" }, t.fieldsHint)
+            )
+          );
+        }
         function tableLabel(tb) {
           if (!tb || !tb.label) return "";
           return lang === "en" ? tb.label.en || tb.label.zh : tb.label.zh || tb.label.en;
@@ -6716,11 +6877,24 @@ var require_data_view = __commonJS({
           if (!col.label) return col.name;
           return lang === "en" ? col.label.en || col.label.zh : col.label.zh || col.label.en;
         }
+        function normalizeColumn(col) {
+          if (typeof col === "string") return { name: col, type: "TEXT", system: false };
+          if (!col || typeof col !== "object") return null;
+          return col;
+        }
+        function tableColumns() {
+          var declared = data && data.columns && data.columns.length ? data.columns : null;
+          if (!declared && current && Array.isArray(current.columns) && current.columns.length) declared = current.columns;
+          if (!declared) return [];
+          return declared.map(normalizeColumn).filter(function(c) {
+            return !!c;
+          });
+        }
         function visibleColumns() {
-          var cols = data && data.columns ? data.columns.map(function(col) {
+          var cols = tableColumns().map(function(col) {
             var hook = columnHooks[col.name];
             return hook && hook.kind ? Object.assign({}, col, { kind: hook.kind, type: hook.type || col.type }) : col;
-          }) : [];
+          });
           return cols.filter(function(c) {
             return showSystem || !c.system;
           });
@@ -7009,11 +7183,12 @@ var require_data_view = __commonJS({
             h(
               "div",
               { className: P + "-tabs", role: "tablist", "aria-label": t.title },
-              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !index, onClick: leaveIndex }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
-              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": !!index, onClick: loadIndex }, icon("database"), t.index)
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "rows", onClick: showRows }, icon("list"), lang === "en" ? "Row data" : "\u884C\u6570\u636E"),
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "fields", onClick: showFields }, icon("table"), t.fields),
+              h("button", { type: "button", role: "tab", className: P + "-btn", "aria-selected": view === "index", onClick: showIndex }, icon("database"), t.index)
             ),
-            index && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
-            index ? renderIndex() : [
+            view !== "rows" && error ? h("div", { className: P + "-err", role: "alert" }, error) : null,
+            view === "index" ? renderIndex() : view === "fields" ? renderFields() : [
               h(
                 "div",
                 { className: P + "-head" },
@@ -7990,7 +8165,7 @@ var GLYPHS = require_icons2().ICONS;
   var slotBackToMessage = require_slot_back_to_message()({ React, h, C, Icon: Icon2 });
   host.registerAddon({
     id: "wb-addon-mail",
-    version: "0.9.0",
+    version: "0.9.1",
     icon: GLYPHS["mail"],
     slots: [{ slot: "item.actions", id: "mail.back-to-message", order: 100, component: slotBackToMessage }],
     views: [

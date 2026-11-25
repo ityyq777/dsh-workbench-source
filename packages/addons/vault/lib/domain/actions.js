@@ -4,6 +4,7 @@
  */
 import { KINDS } from "./secret-input.js";
 import { registerSetActions } from "./actions-sets.js";
+import { DATA_TABLES, columnsOf, countOf, statsOf, dataTableNames } from "./data-schema.js";
 
 function only(ctx, allowed, action) {
   const origin = ctx && ctx.origin ? ctx.origin : "agent";
@@ -431,71 +432,47 @@ export function registerVaultActions(api, vault, groups) {
 
   api.action("vault.dataTables", {
     origins: ["ui"],
-    description: "只读：数据页表清单。",
-    input: { type: "object", properties: {}, additionalProperties: false },
-    execute: (_args, ctx) => {
+    description:
+      "只读：数据页表清单。columns 为完整列元信息（含中文名、类型、主键、可空与缺省值），" +
+      "空表也能列出全部字段；stats=true 时附行数与索引摘要，口径与 tags/tasks 数据页一致。",
+    input: {
+      type: "object",
+      properties: {
+        stats: { type: "boolean", description: "是否附带行数与索引摘要，默认 false" },
+      },
+      additionalProperties: false,
+    },
+    execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.dataTables");
+      const withStats = Boolean(args && args.stats);
       return {
-        tables: [
-          {
-            name: "vault_secret",
-            columns: ["id", "name", "meta", "ciphertext", "created_at", "updated_at", "deleted_at", "rev"],
-          },
-          { name: "vault_group", columns: ["id", "name", "description", "color", "created_at", "updated_at"] },
-          {
-            name: "vault_binding",
-            columns: ["id", "subject_type", "subject_id", "group_id", "created_at", "updated_at"],
-          },
-          {
-            name: "vault_secret_kind",
-            columns: ["id", "secret_id", "kind", "created_at", "updated_at", "deleted_at", "rev"],
-          },
-          {
-            name: "vault_set",
-            columns: [
-              "id",
-              "name",
-              "description",
-              "color",
-              "created_at",
-              "updated_at",
-              "deleted_at",
-              "rev",
-            ],
-          },
-          {
-            name: "vault_group_set",
-            columns: ["id", "group_id", "set_id", "created_at", "updated_at", "deleted_at", "rev"],
-          },
-          {
-            name: "vault_set_secret",
-            columns: ["id", "set_id", "secret_id", "created_at", "updated_at", "deleted_at", "rev"],
-          },
-        ],
+        tables: DATA_TABLES.map((tb) => {
+          const table = {
+            name: tb.name,
+            label: tb.label,
+            columns: columnsOf(api.db, tb.name),
+            count: countOf(api.db, tb.name),
+          };
+          if (withStats) table.stats = statsOf(api.db, tb.name);
+          return table;
+        }),
       };
     },
   });
 
   api.action("vault.dataQuery", {
     origins: ["ui"],
-    description: "只读：数据页查询；密文列一律掩码。",
+    description:
+      "只读：数据页查询；密文列一律掩码。返回 columns（完整列元信息）与 page/pageSize/pages/total，" +
+      "分页参数同时接受 page/pageSize 与 limit/offset 两种写法。",
     input: {
       type: "object",
       properties: {
-        table: {
-          type: "string",
-          enum: [
-            "vault_secret",
-            "vault_secret_kind",
-            "vault_group",
-            "vault_binding",
-            "vault_set",
-            "vault_group_set",
-            "vault_set_secret",
-          ],
-        },
-        limit: { type: "number", description: "默认 50，上限 200" },
-        offset: { type: "number", description: "默认 0" },
+        table: { type: "string", enum: dataTableNames() },
+        page: { type: "number", description: "页码，从 1 开始" },
+        pageSize: { type: "number", description: "每页行数，默认 50，上限 200" },
+        limit: { type: "number", description: "兼容旧调用：每页行数，默认 50，上限 200" },
+        offset: { type: "number", description: "兼容旧调用：行偏移，默认 0" },
       },
       required: ["table"],
       additionalProperties: false,
@@ -503,35 +480,38 @@ export function registerVaultActions(api, vault, groups) {
     execute: (args, ctx) => {
       only(ctx, ["ui"], "vault.dataQuery");
       const table = String(args.table);
-      const limit = Math.max(1, Math.min(200, Number(args.limit) || 50));
-      const offset = Math.max(0, Number(args.offset) || 0);
-      if (table === "vault_secret") {
-        const rows = api.db
-          .prepare(
-            "SELECT id, name, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
-              "FROM vault_secret ORDER BY updated_at DESC LIMIT ? OFFSET ?",
-          )
-          .all(limit, offset);
-        return {
-          table,
-          rows: rows.map((row) => ({ ...row, ciphertext: "***" })),
-          limit,
-          offset,
-        };
-      }
-      const safe = {
-        vault_secret_kind: "vault_secret_kind",
-        vault_group: "vault_group",
-        vault_binding: "vault_binding",
-        vault_set: "vault_set",
-        vault_group_set: "vault_group_set",
-        vault_set_secret: "vault_set_secret",
-      }[table];
-      if (!safe) throw new Error("不支持的数据表：" + table);
-      const rows = api.db
-        .prepare("SELECT * FROM " + safe + " ORDER BY updated_at DESC LIMIT ? OFFSET ?")
-        .all(limit, offset);
-      return { table, rows, limit, offset };
+      if (!dataTableNames().includes(table)) throw new Error("不支持的数据表：" + table);
+      const limit = Math.max(1, Math.min(200, Number(args.pageSize) || Number(args.limit) || 50));
+      const offset =
+        args.page !== undefined && args.page !== null
+          ? Math.max(0, (Math.max(1, Number(args.page) || 1) - 1) * limit)
+          : Math.max(0, Number(args.offset) || 0);
+      const columns = columnsOf(api.db, table);
+      const total = countOf(api.db, table);
+      const page = Math.floor(offset / limit) + 1;
+      const rows =
+        table === "vault_secret"
+          ? api.db
+              .prepare(
+                "SELECT id, name, meta, ciphertext, created_at, updated_at, deleted_at, rev " +
+                  "FROM vault_secret ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+              )
+              .all(limit, offset)
+          : api.db
+              .prepare("SELECT * FROM " + table + " ORDER BY updated_at DESC LIMIT ? OFFSET ?")
+              .all(limit, offset);
+      return {
+        table,
+        columns,
+        // 密文列不论哪条路径都掩码：浏览页永远不展示明文。
+        rows: rows.map((row) => (Object.prototype.hasOwnProperty.call(row, "ciphertext") ? { ...row, ciphertext: "***" } : row)),
+        page,
+        pageSize: limit,
+        pages: Math.max(1, Math.ceil(total / limit)),
+        total,
+        limit,
+        offset,
+      };
     },
   });
 }

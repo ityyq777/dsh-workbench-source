@@ -814,3 +814,68 @@ test("5.x → 6.0 迁移：单值类型拆表、旧 AAD 重封装、集合账号
   vault.lock();
   assert.equal(String(run("vault.unlock", { passphrase: PASS }).notice || ""), "");
 });
+
+test("数据页：字段元信息、空表表头与分页契约", () => {
+  const { db, run } = makeVault();
+  run("vault.setup", { passphrase: PASS });
+
+  const listed = run("vault.dataTables");
+  assert.equal(listed.tables.length, 7);
+  const groupSet = listed.tables.find((t) => t.name === "vault_group_set");
+  assert.deepEqual(groupSet.label, { zh: "集合分组", en: "Group sets" });
+  // 0 行表也要有完整列元信息：字段页签与空表表头都靠它
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM vault_group_set").get().n, 0);
+  assert.ok(groupSet.columns.length >= 6);
+  const idCol = groupSet.columns.find((c) => c.name === "id");
+  assert.equal(idCol.pk, true);
+  assert.equal(idCol.system, true);
+  assert.equal(idCol.type, "TEXT");
+  assert.equal(idCol.label, "标识");
+  assert.equal(groupSet.columns.find((c) => c.name === "group_id").label, "分组");
+  for (const c of groupSet.columns) {
+    assert.equal(typeof c.name, "string");
+    assert.equal(typeof c.type, "string");
+    assert.equal(typeof c.kind, "string");
+    assert.equal(typeof c.label, "string");
+    assert.equal(typeof c.system, "boolean");
+    assert.equal(typeof c.pk, "boolean");
+    assert.ok(c.notnull === 0 || c.notnull === 1, "notnull 用 0/1 暴露");
+    assert.ok(c.defaultValue === null || typeof c.defaultValue === "string");
+  }
+
+  // 空表查询：columns 与 dataTables 同源，total 为 0，分页字段齐全
+  const empty = run("vault.dataQuery", { table: "vault_group_set" });
+  assert.deepEqual(empty.rows, []);
+  assert.equal(empty.columns.length, groupSet.columns.length);
+  assert.equal(empty.total, 0);
+  assert.equal(empty.page, 1);
+  assert.equal(empty.pageSize, 50);
+  assert.equal(empty.pages, 1);
+
+  // 有数据时密文仍掩码，列里能看出 ciphertext 的中文名
+  run("vault.secretCreate", { name: "rss", kinds: ["password"], secret: "s3cret-value" });
+  const secrets = run("vault.dataQuery", { table: "vault_secret" });
+  assert.equal(secrets.total, 1);
+  assert.equal(secrets.rows.length, 1);
+  assert.equal(secrets.rows[0].ciphertext, "***");
+  assert.ok(!JSON.stringify(secrets).includes("s3cret-value"));
+  assert.equal(secrets.columns.find((c) => c.name === "ciphertext").label, "密文");
+
+  // 两种分页写法等价；页数按 pageSize 计算
+  const byPage = run("vault.dataQuery", { table: "vault_secret", page: 2, pageSize: 1 });
+  assert.equal(byPage.rows.length, 0);
+  assert.equal(byPage.page, 2);
+  assert.equal(byPage.pages, 1);
+  const byOffset = run("vault.dataQuery", { table: "vault_secret", limit: 1, offset: 1 });
+  assert.equal(byOffset.page, 2);
+  assert.equal(byOffset.rows.length, 0);
+
+  // stats=true 供索引页使用；未知表与非 ui 来源都被拦
+  const stats = run("vault.dataTables", { stats: true });
+  const statsTable = stats.tables.find((t) => t.name === "vault_group_set");
+  assert.equal(statsTable.stats.rows, 0);
+  assert.ok(statsTable.stats.columnCount >= 6);
+  assert.ok(statsTable.stats.indexes.some((ix) => ix.origin === "pk"));
+  assert.throws(() => run("vault.dataQuery", { table: "sqlite_master" }), /不支持的数据表/);
+  assert.throws(() => run("vault.dataTables", {}, "agent"), /不允许 agent 调用/);
+});
