@@ -340,7 +340,7 @@ module.exports = function GroupsView(props) {
         }) : h("span", { className: "wbv-muted" }, "还没有集合")),
         openS[0].loading ? h(C.Empty, { h: h, text: "读取中…" })
           : openS[0].error ? h(C.Notice, { h: h, kind: "error", text: openS[0].error })
-          : openS[0].items.length === 0 ? h(P.EmptyState, { h: h, title: "还没有模块关联到这个分组", hint: "关联由业务模块通过 vault.bind 注册，这里只读。" })
+          : openS[0].items.length === 0 ? h(P.EmptyState, { h: h, title: "还没有模块关联到这个分组", hint: "关联在业务方界面里设置（例如站点记录页的「凭据分组」）；这里只读。" })
           : h(P.DataTable, {
               h: h,
               label: "关联对象",
@@ -354,6 +354,6 @@ module.exports = function GroupsView(props) {
               },
             })),
       h("div", { className: "wbv-modal-foot" },
-        h("span", { className: "wbv-muted wbv-grow" }, "关联由业务模块通过 vault.bind 注册；这里只读。"),
+        h("span", { className: "wbv-muted wbv-grow" }, "关联在业务方界面里设置（例如站点记录页的「凭据分组」）；这里只读。"),
         h(C.Btn, { h: h, onClick: function () { openS[1](null); } }, "关闭"))) : null);
 };

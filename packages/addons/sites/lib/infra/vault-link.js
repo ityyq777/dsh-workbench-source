@@ -30,6 +30,24 @@ export async function bindingsOfSite(siteId) {
   return (result && result.items) || [];
 }
 
+/**
+ * 向保险箱登记本域的对象类型（vault_subject_type），让「分组 → 关联对象」能显示中文名。
+ * 幂等：保险箱按 type 唯一，重复调用只更新标题与说明；未装保险箱时静默跳过。
+ */
+export async function registerSiteSubject() {
+  if (!bridge) return { registered: false };
+  try {
+    const reply = await bridge("vault.subjectRegister", {
+      type: "site",
+      title: "站点",
+      description: "站点插件登记的业务对象；在站点记录页的「凭据分组」里把站点关联进保险箱分组。",
+    });
+    return { registered: reply ? reply.ok !== false : false };
+  } catch (error) {
+    return { registered: false };
+  }
+}
+
 /** 删除站点后清掉保险箱里的映射，尽力而为：没装保险箱或还没初始化时静默跳过。 */
 export async function unbindSite(siteId) {
   if (!bridge) return { removed: 0 };

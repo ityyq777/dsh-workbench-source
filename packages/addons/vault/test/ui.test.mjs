@@ -462,3 +462,57 @@ test("保存成功后弹窗关闭、列表出现新凭据；失败时保留弹�
   assert.match(texts(tree), /保险箱已锁定，请先解锁/);
   assert.match(texts(tree), /解锁保险箱/);
 });
+
+// ── 站点「凭据分组」插槽贡献 ───────────────────────────────────────────────
+// 站点只放落点（host.Slot），入口与弹窗由保险箱贡献；这里锁住两件事：
+// 组件只认 kind=site（装在邮件等落点上要渲染成 null），以及关联只写 vault.bind/unbind。
+const SlotBindSiteGroups = require("../client/views/slot-bind-site-groups.cjs")({
+  React: React,
+  h: h,
+  injectCss: () => {},
+});
+
+function renderSlot(props) {
+  return renderToStaticMarkup(h(SlotBindSiteGroups, Object.assign({ h, lang: "zh" }, props)));
+}
+
+test("站点插槽贡献：只认 kind=site，别的条目渲染成空", () => {
+  assert.equal(renderSlot({ item: { kind: "mail.message", id: "m1", title: "邮件" } }), "");
+  assert.equal(renderSlot({ item: null }), "");
+  const html = renderSlot({ item: { kind: "site", id: "s1", title: "站点 A" } });
+  assert.match(html, /凭据分组/);
+  // 常态下不预渲染弹窗，点开才加载分组
+  assert.doesNotMatch(html, /勾选即关联/);
+});
+
+test("站点插槽贡献：关联只走 vault.bind / vault.unbind，只读列表走 groupList 与 bindingsOf", () => {
+  const src = fs.readFileSync(path.join(dir, "views/slot-bind-site-groups.cjs"), "utf8");
+  assert.match(src, /var KIND = "site";/);
+  assert.match(src, /"vault\.groupList"/);
+  assert.match(src, /"vault\.bindingsOf", \{ subjectType: KIND, subjectId: item\.id \}/);
+  assert.match(src, /"vault\.bind", \{ subjectType: KIND, subjectId: item\.id, groupId: id \}/);
+  assert.match(src, /"vault\.unbind", \{ subjectType: KIND, subjectId: item\.id, groupId: id \}/);
+  // 不自己写库、不重复拼一套遮罩
+  assert.doesNotMatch(src, /(INSERT|UPDATE|DELETE)\s+(INTO|FROM)?\s*vault_binding/i);
+  assert.doesNotMatch(src, /className: "wbv-modal"/);
+  assert.match(src, /require\("\.\.\/ui\/dialog\.cjs"\)/);
+});
+
+test("站点插槽贡献：保险箱声明贡献、站点声明落点，两边成对", () => {
+  const vaultClient = fs.readFileSync(path.join(dir, "client.src.cjs"), "utf8");
+  assert.match(
+    vaultClient,
+    /slots: \[\{ slot: "item\.actions", id: "vault\.bind-site-groups", order: 90, component: slotBindSiteGroups \}\]/,
+  );
+  const vaultLib = fs.readFileSync(path.join(process.cwd(), "packages/addons/vault/lib/index.js"), "utf8");
+  assert.match(vaultLib, /slots: \["item\.actions"\]/);
+
+  const sitesClient = fs.readFileSync(path.join(process.cwd(), "packages/addons/sites/client/client.src.cjs"), "utf8");
+  assert.match(sitesClient, /h\(host\.Slot, \{\s*slot: "item\.actions",\s*item: \{ kind: "site", id: s\.id, title: s\.siteName \}/);
+  // 站点不再有自己那套只读弹窗与按钮
+  assert.doesNotMatch(sitesClient, /VaultGroupsModal/);
+  assert.equal(fs.existsSync(path.join(process.cwd(), "packages/addons/sites/client/ui/vault-groups-modal.cjs")), false);
+  const sitesLib = fs.readFileSync(path.join(process.cwd(), "packages/addons/sites/lib/index.js"), "utf8");
+  assert.match(sitesLib, /slotHosts: \["item\.actions"\]/);
+  assert.match(sitesLib, /registerSiteSubject\(\)/);
+});

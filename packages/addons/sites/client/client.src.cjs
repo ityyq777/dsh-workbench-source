@@ -431,11 +431,6 @@ var staged = require("../../lib/staged-dialog.cjs");
     );
   }
 
-  var VaultGroupsModal = require("./ui/vault-groups-modal.cjs")({
-    h: h, React: React, useState: useState, useEffect: useEffect,
-    Modal: Modal, Icon: Icon, text: text, callApi: callApi, errText: errText,
-  });
-
   function DeleteSiteModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -520,7 +515,6 @@ var staged = require("../../lib/staged-dialog.cjs");
     var [expandedRow, setExpandedRow] = useState(null);
     var [selected, setSelected] = useState({});
     var [editing, setEditing] = useState(null);
-    var [accSite, setAccSite] = useState(null);
     var [dirDlg, setDirDlg] = useState(null);
     var [deleting, setDeleting] = useState(null);
     var [toast, setToast] = useState(null);
@@ -912,7 +906,12 @@ var staged = require("../../lib/staged-dialog.cjs");
                       h("div", { className: "wbs-actions" },
                         h("button", { className: "wbs-btn sm", title: text(lang, "links"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "links" ? null : { id: s.id, type: "links" }); } }, h(Icon, { name: "link", size: 12 }), text(lang, "links") + " " + (s.siteLinks ? s.siteLinks.length : 0)),
                         h("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function () { setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" }); } }, h(Icon, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h("button", { className: "wbs-btn sm", title: text(lang, "vaultGroups"), onClick: function () { setAccSite(s); } }, h(Icon, { name: "key", size: 12 }), text(lang, "vaultGroups")),
+                        h(host.Slot, {
+                          slot: "item.actions",
+                          item: { kind: "site", id: s.id, title: s.siteName },
+                          lang: lang,
+                          ownerId: "wb-addon-sites",
+                        }),
                         h("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function () { openEdit(s); } }, h(Icon, { name: "edit", size: 13 })),
                         h("button", { className: "wbs-btn sm danger icononly", title: text(lang, "del"), onClick: function () { if (cfgConfirm) setDeleting(s); else removeSite(s); } }, h(Icon, { name: "trash", size: 13 })),
                       ),
@@ -969,12 +968,6 @@ var staged = require("../../lib/staged-dialog.cjs");
         dlg: dirDlg,
         onClose: function () { setDirDlg(null); },
         onDone: onDirDone,
-      }) : null,
-      accSite ? h(VaultGroupsModal, {
-        api: api,
-        lang: lang,
-        site: accSite,
-        onClose: function () { setAccSite(null); },
       }) : null,
       deleting ? h(DeleteSiteModal, {
         api: api,

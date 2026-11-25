@@ -5953,12 +5953,6 @@ var require_copy = __commonJS({
         saved: "\u5DF2\u4FDD\u5B58",
         deleted: "\u5DF2\u5220\u9664",
         moved: "\u5DF2\u79FB\u52A8",
-        vaultGroups: "\u51ED\u636E\u5206\u7EC4",
-        vaultGroupsTitle: "\u5173\u8054\u7684\u51ED\u636E\u5206\u7EC4 \xB7 {name}",
-        vaultGroupsSub: "\u5206\u7EC4\u4E0E\u51ED\u636E\u90FD\u653E\u5728\u51ED\u636E\u4FDD\u9669\u7BB1\u91CC\uFF1B\u7ED1\u5B9A\u3001\u89E3\u7ED1\u4E0E\u6539\u53E3\u4EE4\u8BF7\u5728\u4FDD\u9669\u7BB1\u9875\u7684\u300C\u5206\u7EC4\u300D\u91CC\u64CD\u4F5C\u3002",
-        vaultGroupsEmpty: "\u8FD9\u4E2A\u7AD9\u70B9\u8FD8\u6CA1\u6709\u5173\u8054\u51ED\u636E\u5206\u7EC4\u3002",
-        vaultGroupsNoVault: "\u672A\u5B89\u88C5\u51ED\u636E\u4FDD\u9669\u7BB1\uFF1A\u88C5\u597D\u540E\u53EF\u4EE5\u5728\u4FDD\u9669\u7BB1\u7684\u5206\u7EC4\u91CC\u628A\u672C\u7AD9\u70B9\u5173\u8054\u8FDB\u6765\u3002",
-        vaultGroupsHint: "\u6620\u5C04\u7531\u51ED\u636E\u4FDD\u9669\u7BB1\u7EF4\u62A4\uFF0C\u7AD9\u70B9\u53EA\u8BFB",
         groupName: "\u5206\u7EC4",
         groupSecrets: "\u51ED\u636E\u6570",
         close: "\u5173\u95ED",
@@ -6057,12 +6051,6 @@ var require_copy = __commonJS({
         saved: "Saved",
         deleted: "Deleted",
         moved: "Moved",
-        vaultGroups: "Credential groups",
-        vaultGroupsTitle: "Linked credential groups \xB7 {name}",
-        vaultGroupsSub: "Groups and credentials live in the vault; bind, unbind and rotate passphrases on the vault's Groups page.",
-        vaultGroupsEmpty: "No credential group linked to this site yet.",
-        vaultGroupsNoVault: "Vault add-on is not installed; install it and link this site from a vault group.",
-        vaultGroupsHint: "Mapping is owned by the vault; sites are read-only",
         groupName: "Group",
         groupSecrets: "Secrets",
         close: "Close",
@@ -6328,80 +6316,6 @@ var require_styles = __commonJS({
       "@media(max-width:860px){.wbs-body{flex-direction:column}.wbs-tree{width:100%;box-sizing:border-box;max-height:220px}.wbs-main{min-width:0;width:100%}.wbs-root{min-height:0}}",
       "@media(max-width:600px){.wbs-head h2{font-size:18px}.wbs-linkrow{grid-template-columns:1fr 1fr}.wbs-modal{padding:14px}}"
     ].concat(require_stepper().styles, require_staged_dialog().styles).concat(require_filter_checklist_styles()).concat(require_client_base_styles().secretFieldStyles).concat([require_date_picker_styles()("wbs")]).concat(require_switch().styles).join("\n");
-  }
-});
-
-// packages/addons/sites/client/ui/vault-groups-modal.cjs
-var require_vault_groups_modal = __commonJS({
-  "packages/addons/sites/client/ui/vault-groups-modal.cjs"(exports2, module2) {
-    module2.exports = function createVaultGroupsModal(deps) {
-      var h2 = deps.h;
-      var React2 = deps.React;
-      var useState = deps.useState;
-      var useEffect = deps.useEffect;
-      var Modal = deps.Modal;
-      var Icon2 = deps.Icon;
-      var text = deps.text;
-      var callApi = deps.callApi;
-      var errText = deps.errText;
-      function VaultGroupsModal(props) {
-        var api = props.api;
-        var lang = props.lang || "zh";
-        var site = props.site;
-        var [state, setState] = useState({ loading: true, installed: true, items: [], error: "" });
-        useEffect(function() {
-          var alive = true;
-          callApi(api, "sites.vaultGroups", { siteId: site.id }).then(function(r) {
-            if (!alive) return;
-            setState({ loading: false, installed: r && r.installed !== false, items: r && r.items || [], error: "" });
-          }).catch(function(e) {
-            if (!alive) return;
-            setState({ loading: false, installed: true, items: [], error: errText(e) });
-          });
-          return function() {
-            alive = false;
-          };
-        }, [site.id]);
-        return h2(
-          Modal,
-          { "aria-label": text(lang, "vaultGroupsTitle", { name: site.siteName || site.id }), onClose: props.onClose },
-          h2(
-            "div",
-            { className: "wbs-modal-title" },
-            h2(Icon2, { name: "key", size: 15 }),
-            text(lang, "vaultGroupsTitle", { name: site.siteName || site.id }),
-            h2("button", { type: "button", className: "wbs-mini wbs-modal-x", title: text(lang, "cancel"), onClick: props.onClose }, h2(Icon2, { name: "x", size: 15 }))
-          ),
-          h2("div", { className: "wbs-modal-sub" }, text(lang, "vaultGroupsSub")),
-          state.error ? h2("div", { className: "wbs-error" }, state.error) : null,
-          state.loading ? h2("div", { className: "wbs-muted" }, text(lang, "loading")) : !state.installed ? h2("div", { className: "wbs-muted" }, text(lang, "vaultGroupsNoVault")) : !state.items.length ? h2("div", { className: "wbs-muted" }, text(lang, "vaultGroupsEmpty")) : h2(
-            "table",
-            { className: "wbs-subtable" },
-            h2("thead", null, h2(
-              "tr",
-              null,
-              h2("th", null, text(lang, "groupName")),
-              h2("th", null, text(lang, "groupSecrets"))
-            )),
-            h2("tbody", null, state.items.map(function(g) {
-              return h2(
-                "tr",
-                { key: g.id },
-                h2("td", null, g.name || g.id),
-                h2("td", { className: "wbs-muted" }, String(g.secretCount || 0))
-              );
-            }))
-          ),
-          h2(
-            "div",
-            { className: "wbs-formfoot" },
-            h2("div", { className: "wbs-grow" }, h2("span", { className: "wbs-muted" }, text(lang, "vaultGroupsHint"))),
-            h2("button", { className: "wbs-btn", onClick: props.onClose }, text(lang, "close"))
-          )
-        );
-      }
-      return VaultGroupsModal;
-    };
   }
 });
 
@@ -7768,17 +7682,6 @@ var staged = require_staged_dialog();
       )
     );
   }
-  var VaultGroupsModal = require_vault_groups_modal()({
-    h: h2,
-    React: React2,
-    useState,
-    useEffect,
-    Modal,
-    Icon: Icon2,
-    text,
-    callApi,
-    errText
-  });
   function DeleteSiteModal(props) {
     var api = props.api;
     var lang = props.lang || "zh";
@@ -7869,7 +7772,6 @@ var staged = require_staged_dialog();
     var [expandedRow, setExpandedRow] = useState(null);
     var [selected, setSelected] = useState({});
     var [editing, setEditing] = useState(null);
-    var [accSite, setAccSite] = useState(null);
     var [dirDlg, setDirDlg] = useState(null);
     var [deleting, setDeleting] = useState(null);
     var [toast, setToast] = useState(null);
@@ -8411,9 +8313,12 @@ var staged = require_staged_dialog();
                         h2("button", { className: "wbs-btn sm", title: text(lang, "dirs"), onClick: function() {
                           setExpandedRow(expandedRow && expandedRow.id === s.id && expandedRow.type === "dirs" ? null : { id: s.id, type: "dirs" });
                         } }, h2(Icon2, { name: "folder", size: 12 }), text(lang, "dirs") + " " + (s.dirs ? s.dirs.length : 0)),
-                        h2("button", { className: "wbs-btn sm", title: text(lang, "vaultGroups"), onClick: function() {
-                          setAccSite(s);
-                        } }, h2(Icon2, { name: "key", size: 12 }), text(lang, "vaultGroups")),
+                        h2(host.Slot, {
+                          slot: "item.actions",
+                          item: { kind: "site", id: s.id, title: s.siteName },
+                          lang,
+                          ownerId: "wb-addon-sites"
+                        }),
                         h2("button", { className: "wbs-btn sm icononly", title: text(lang, "edit"), onClick: function() {
                           openEdit(s);
                         } }, h2(Icon2, { name: "edit", size: 13 })),
@@ -8496,14 +8401,6 @@ var staged = require_staged_dialog();
         },
         onDone: onDirDone
       }) : null,
-      accSite ? h2(VaultGroupsModal, {
-        api,
-        lang,
-        site: accSite,
-        onClose: function() {
-          setAccSite(null);
-        }
-      }) : null,
       deleting ? h2(DeleteSiteModal, {
         api,
         lang,
@@ -8519,7 +8416,7 @@ var staged = require_staged_dialog();
   injectCss();
   host.registerAddon({
     id: "wb-addon-sites",
-    version: "1.14.2",
+    version: "1.14.3",
     icon: icons.ICONS["globe"],
     views: [
       { id: "stats", icon: tabIcon("chart"), title: { zh: "\u7EDF\u8BA1", en: "Stats" }, component: statsView.SitesStatsView },

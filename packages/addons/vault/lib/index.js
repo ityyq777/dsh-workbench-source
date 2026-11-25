@@ -94,6 +94,9 @@ export function createDomain(host) {
         },
       ],
     },
+    // 贡献声明：保险箱往「条目操作」插槽里挂「凭据分组」（见 client/views/slot-bind-site-groups.cjs）。
+    // 站点用 slotHosts 提供落点；站点没装时 capabilities 会写「暂无落点」，不会静默不显示。
+    slots: ["item.actions"],
     views: [
       { id: "status", title: "保险箱", icon: "shield" },
       { id: "secrets", title: "凭据", icon: "key" },

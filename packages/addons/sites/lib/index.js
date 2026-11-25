@@ -22,7 +22,7 @@ import { registerSiteActions } from "./domain/sites.js";
 import { registerVaultGroupActions } from "./domain/vault-groups.js";
 import { registerConfigActions } from "./infra/config.js";
 import { registerDataActions } from "./infra/data.js";
-import { bindVault } from "./infra/vault-link.js";
+import { bindVault, registerSiteSubject } from "./infra/vault-link.js";
 
 export const inject = ["workbench"];
 
@@ -70,6 +70,8 @@ function registerActionSchemaAction(api, defs, domain) {
 export function setup(api) {
   domainApi = api;
   if (typeof api.call === "function") bindVault(api.call);
+  // 向保险箱登记 site 这个对象类型：只在装了保险箱时生效，失败不影响站点域启动。
+  void registerSiteSubject();
   if (typeof api.now === "function") bindClock(api.now);
   ensureSchema(api.db, api.log);
   // 标签来源登记：标签域（tags ≥ 1.7.1）要求 item_type 先注册才能写 tag_mapping。
@@ -111,6 +113,8 @@ export function apply(ctx) {
         // 只声明本域自建的表：tag_mapping 归标签域（tags）独占，站点仅读写 item_type='site' 的行。
         tables: ["site", "site_node", "site_node_mapping"],
         sync: siteSync,
+        // 提供落点：站点记录行渲染「条目操作」插槽，凭据分组的入口与弹窗由保险箱贡献。
+        slotHosts: ["item.actions"],
         views: [
           { id: "stats", title: { zh: "统计", en: "Stats" } },
           { id: "sites", title: { zh: "记录", en: "Records" } },

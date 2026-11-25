@@ -56,10 +56,19 @@ var GLYPHS = require("./ui/icons.cjs").ICONS;
 
   ensureStyles();
 
+  // 插槽贡献：站点记录行上的「凭据分组」入口由保险箱渲染，站点只放落点（host.Slot）。
+  // 组件只认 item.kind === "site"，装在邮件等别的落点上时自动渲染成 null。
+  var slotBindSiteGroups = require("./views/slot-bind-site-groups.cjs")({
+    React: React,
+    h: h,
+    injectCss: ensureStyles,
+  });
+
   host.registerAddon({
     id: "wb-addon-vault",
     version: __ADDON_VERSION__,
     icon: GLYPHS["shield-check"],
+    slots: [{ slot: "item.actions", id: "vault.bind-site-groups", order: 90, component: slotBindSiteGroups }],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "保险箱", en: "Vault" }, component: withProps(require("./views/status.cjs"), "保险箱") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "凭据", en: "Secrets" }, component: withProps(require("./views/secrets.cjs"), "凭据") },

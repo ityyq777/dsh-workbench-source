@@ -2160,6 +2160,268 @@ var require_page = __commonJS({
   }
 });
 
+// packages/addons/vault/client/ui/dialog.cjs
+var require_dialog = __commonJS({
+  "packages/addons/vault/client/ui/dialog.cjs"(exports2, module2) {
+    "use strict";
+    var createOverlay = require_overlay();
+    var stagedFactory = require_staged_dialog();
+    var GLYPHS2 = require_icons2().ICONS;
+    var Dialog = createOverlay({
+      tag: "div",
+      maskClass: "wbv-modal",
+      dialogClass: "wbv-modal-box",
+      ariaLabelledByOf: function(props) {
+        return props.titleId || null;
+      },
+      header: function(props) {
+        var h = props.h;
+        if (!props.title && !props.onClose) return null;
+        var Close = GLYPHS2["x"];
+        return h(
+          "div",
+          { className: "wbv-modal-head" },
+          props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
+          props.onClose ? h(
+            "button",
+            {
+              type: "button",
+              className: "wbv-icon-btn",
+              "aria-label": props.closeLabel || "\u5173\u95ED",
+              title: props.closeLabel || "\u5173\u95ED",
+              disabled: props.busy,
+              onClick: props.onClose
+            },
+            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "\xD7"
+          ) : null
+        );
+      }
+    });
+    function ConfirmDialog(props) {
+      var h = props.h;
+      return h(
+        Dialog,
+        {
+          h,
+          React: props.React,
+          title: props.title || "\u8BF7\u786E\u8BA4",
+          titleId: props.titleId || "wbv-confirm-title",
+          onClose: props.busy ? null : props.onCancel,
+          closeOnEscape: !props.busy,
+          closeOnMask: !props.busy,
+          busy: props.busy
+        },
+        props.message ? h("p", { className: "wbv-modal-sub" }, props.message) : null,
+        props.children ? h("div", { className: "wbv-modal-body" }, props.children) : null,
+        h(
+          "div",
+          { className: "wbv-modal-foot" },
+          h("button", { type: "button", className: "wbv-btn", disabled: props.busy, onClick: props.onCancel }, props.cancelText || "\u53D6\u6D88"),
+          h(
+            "button",
+            {
+              type: "button",
+              className: "wbv-btn " + (props.primary ? "primary" : "danger"),
+              disabled: props.busy,
+              onClick: props.onConfirm
+            },
+            props.busy ? props.busyText || "\u5904\u7406\u4E2D\u2026" : props.confirmText || "\u786E\u8BA4"
+          )
+        )
+      );
+    }
+    var FormDialog = stagedFactory.createStagedDialog({
+      tag: "div",
+      maskClass: "wbv-modal",
+      dialogClass: "wbv-modal-box",
+      displayName: "VaultFormDialog",
+      ariaLabelledByOf: function(props) {
+        return props.titleId || null;
+      },
+      header: function(props) {
+        var h = props.h;
+        if (!props.title && !props.onClose) return null;
+        var Close = GLYPHS2["x"];
+        return h(
+          "div",
+          { className: "wbv-modal-head" },
+          props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
+          props.onClose ? h(
+            "button",
+            {
+              type: "button",
+              className: "wbv-icon-btn",
+              "aria-label": props.closeLabel || "\u5173\u95ED",
+              title: props.closeLabel || "\u5173\u95ED",
+              disabled: !!props.submitting,
+              onClick: props.onClose
+            },
+            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "\xD7"
+          ) : null
+        );
+      },
+      closeOnEscape: function(props) {
+        return !props.submitting;
+      },
+      closeOnMask: function(props) {
+        return !props.submitting;
+      }
+    });
+    module2.exports = { Dialog, ConfirmDialog, FormDialog };
+  }
+});
+
+// packages/addons/vault/client/views/slot-bind-site-groups.cjs
+var require_slot_bind_site_groups = __commonJS({
+  "packages/addons/vault/client/views/slot-bind-site-groups.cjs"(exports2, module2) {
+    "use strict";
+    var C = require_common();
+    var Page = require_page();
+    var Dialog = require_dialog().Dialog;
+    var GLYPHS2 = require_icons2().ICONS;
+    var KIND = "site";
+    module2.exports = function createSlotBindSiteGroups(deps) {
+      var React = deps.React;
+      var h = deps.h;
+      var injectCss = typeof deps.injectCss === "function" ? deps.injectCss : function() {
+      };
+      var Key = GLYPHS2["key-round"];
+      return function SlotBindSiteGroups(props) {
+        React.useEffect(function() {
+          injectCss();
+        }, []);
+        var api = props.api;
+        var item = props.item || null;
+        var en = props.lang === "en";
+        var openS = React.useState(false);
+        var stateS = React.useState({ loading: false, groups: [], bound: {}, error: "" });
+        var busyS = React.useState("");
+        if (!item || item.kind !== KIND || !item.id) return null;
+        function load() {
+          stateS[1](function(old) {
+            return Object.assign({}, old, { loading: true, error: "" });
+          });
+          Promise.all([
+            C.call(api, "vault.groupList"),
+            C.call(api, "vault.bindingsOf", { subjectType: KIND, subjectId: item.id })
+          ]).then(function(r) {
+            var bound = {};
+            (r[1] && r[1].items || []).forEach(function(b) {
+              bound[String(b.groupId)] = true;
+            });
+            stateS[1]({ loading: false, groups: r[0] && r[0].items || [], bound, error: "" });
+          }).catch(function(e) {
+            stateS[1]({ loading: false, groups: [], bound: {}, error: C.errText(e) });
+          });
+        }
+        function openDialog() {
+          openS[1](true);
+          load();
+        }
+        function toggle(group) {
+          var id = String(group.id);
+          var on = !!stateS[0].bound[id];
+          busyS[1](id);
+          var action = on ? C.call(api, "vault.unbind", { subjectType: KIND, subjectId: item.id, groupId: id }) : C.call(api, "vault.bind", { subjectType: KIND, subjectId: item.id, groupId: id });
+          action.then(function() {
+            stateS[1](function(old) {
+              var bound = Object.assign({}, old.bound);
+              if (on) delete bound[id];
+              else bound[id] = true;
+              return Object.assign({}, old, { bound, error: "" });
+            });
+          }).catch(function(e) {
+            stateS[1](function(old) {
+              return Object.assign({}, old, { error: C.errText(e) });
+            });
+          }).then(function() {
+            busyS[1]("");
+          });
+        }
+        var state = stateS[0];
+        var title = String(item.title || item.id);
+        return h(
+          React.Fragment,
+          null,
+          h(
+            C.Btn,
+            { h, title: en ? "Credential groups" : "\u51ED\u636E\u5206\u7EC4", onClick: openDialog },
+            Key ? h(Key, { size: 12, strokeWidth: 2, "aria-hidden": "true" }) : null,
+            en ? "Groups" : "\u51ED\u636E\u5206\u7EC4"
+          ),
+          openS[0] ? h(
+            Dialog,
+            {
+              h,
+              React,
+              title: (en ? "Credential groups \xB7 " : "\u51ED\u636E\u5206\u7EC4 \xB7 ") + title,
+              titleId: "wbv-site-groups-title",
+              onClose: function() {
+                openS[1](false);
+              }
+            },
+            h(
+              "div",
+              { className: "wbv-modal-body" },
+              h(
+                "p",
+                { className: "wbv-modal-sub" },
+                en ? "Checked means linked; unchecking removes the link. Only vault_binding changes, credentials stay untouched." : "\u52FE\u9009\u5373\u5173\u8054\u5230\u8BE5\u5206\u7EC4\uFF0C\u53D6\u6D88\u52FE\u9009\u5373\u89E3\u9664\uFF1B\u53EA\u6539\u5173\u8054\uFF0C\u4E0D\u52A8\u51ED\u636E\u4E0E\u96C6\u5408\u3002"
+              ),
+              h(C.Notice, { h, kind: "error", text: state.error }),
+              state.loading ? h(C.Empty, { h, text: en ? "Loading\u2026" : "\u8BFB\u53D6\u4E2D\u2026" }) : h(
+                "div",
+                { className: "wbv-check-list" },
+                state.groups.length ? state.groups.map(function(group) {
+                  var id = String(group.id);
+                  return h(
+                    "label",
+                    { key: id, className: "wbv-check" },
+                    h("input", {
+                      type: "checkbox",
+                      checked: !!state.bound[id],
+                      disabled: busyS[0] === id,
+                      onChange: function() {
+                        toggle(group);
+                      }
+                    }),
+                    h("span", {
+                      className: "wbv-dot",
+                      style: { background: group.color || "var(--wb-accent)" }
+                    }),
+                    h("span", null, group.name),
+                    h(
+                      "span",
+                      { className: "wbv-muted" },
+                      " \xB7 " + (group.secretCount || 0) + (en ? " secrets" : " \u6761\u51ED\u636E")
+                    )
+                  );
+                }) : h(Page.EmptyState, {
+                  h,
+                  title: en ? "No credential groups yet" : "\u8FD8\u6CA1\u6709\u51ED\u636E\u5206\u7EC4",
+                  hint: en ? "Create one in the vault's Groups page, then come back to link this site." : "\u5148\u5230\u4FDD\u9669\u7BB1\u300C\u5206\u7EC4\u4E0E\u5173\u8054\u300D\u65B0\u5EFA\u5206\u7EC4\uFF0C\u518D\u56DE\u8FD9\u91CC\u5173\u8054\u672C\u7AD9\u70B9\u3002"
+                })
+              )
+            ),
+            h(
+              "div",
+              { className: "wbv-modal-foot" },
+              h(
+                "span",
+                { className: "wbv-muted wbv-grow" },
+                en ? "Mapping is owned by the vault." : "\u5173\u8054\u7531\u4FDD\u9669\u7BB1\u7EF4\u62A4\uFF0C\u7AD9\u70B9\u8FD9\u91CC\u53EA\u662F\u5165\u53E3\u3002"
+              ),
+              h(C.Btn, { h, onClick: function() {
+                openS[1](false);
+              } }, en ? "Close" : "\u5173\u95ED")
+            )
+          ) : null
+        );
+      };
+    };
+  }
+});
+
 // node_modules/.pnpm/lucide-react@1.70.0_react@19.2.0/node_modules/lucide-react/dist/esm/icons/eye-off.mjs
 var eye_off_exports = {};
 __export(eye_off_exports, {
@@ -2458,117 +2720,6 @@ var require_status = __commonJS({
         h(C.Notice, { h, kind: "error", text: msg[0] })
       );
     };
-  }
-});
-
-// packages/addons/vault/client/ui/dialog.cjs
-var require_dialog = __commonJS({
-  "packages/addons/vault/client/ui/dialog.cjs"(exports2, module2) {
-    "use strict";
-    var createOverlay = require_overlay();
-    var stagedFactory = require_staged_dialog();
-    var GLYPHS2 = require_icons2().ICONS;
-    var Dialog = createOverlay({
-      tag: "div",
-      maskClass: "wbv-modal",
-      dialogClass: "wbv-modal-box",
-      ariaLabelledByOf: function(props) {
-        return props.titleId || null;
-      },
-      header: function(props) {
-        var h = props.h;
-        if (!props.title && !props.onClose) return null;
-        var Close = GLYPHS2["x"];
-        return h(
-          "div",
-          { className: "wbv-modal-head" },
-          props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
-          props.onClose ? h(
-            "button",
-            {
-              type: "button",
-              className: "wbv-icon-btn",
-              "aria-label": props.closeLabel || "\u5173\u95ED",
-              title: props.closeLabel || "\u5173\u95ED",
-              disabled: props.busy,
-              onClick: props.onClose
-            },
-            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "\xD7"
-          ) : null
-        );
-      }
-    });
-    function ConfirmDialog(props) {
-      var h = props.h;
-      return h(
-        Dialog,
-        {
-          h,
-          React: props.React,
-          title: props.title || "\u8BF7\u786E\u8BA4",
-          titleId: props.titleId || "wbv-confirm-title",
-          onClose: props.busy ? null : props.onCancel,
-          closeOnEscape: !props.busy,
-          closeOnMask: !props.busy,
-          busy: props.busy
-        },
-        props.message ? h("p", { className: "wbv-modal-sub" }, props.message) : null,
-        props.children ? h("div", { className: "wbv-modal-body" }, props.children) : null,
-        h(
-          "div",
-          { className: "wbv-modal-foot" },
-          h("button", { type: "button", className: "wbv-btn", disabled: props.busy, onClick: props.onCancel }, props.cancelText || "\u53D6\u6D88"),
-          h(
-            "button",
-            {
-              type: "button",
-              className: "wbv-btn " + (props.primary ? "primary" : "danger"),
-              disabled: props.busy,
-              onClick: props.onConfirm
-            },
-            props.busy ? props.busyText || "\u5904\u7406\u4E2D\u2026" : props.confirmText || "\u786E\u8BA4"
-          )
-        )
-      );
-    }
-    var FormDialog = stagedFactory.createStagedDialog({
-      tag: "div",
-      maskClass: "wbv-modal",
-      dialogClass: "wbv-modal-box",
-      displayName: "VaultFormDialog",
-      ariaLabelledByOf: function(props) {
-        return props.titleId || null;
-      },
-      header: function(props) {
-        var h = props.h;
-        if (!props.title && !props.onClose) return null;
-        var Close = GLYPHS2["x"];
-        return h(
-          "div",
-          { className: "wbv-modal-head" },
-          props.title ? h("h3", { className: "wbv-modal-title", id: props.titleId }, props.title) : h("span", null),
-          props.onClose ? h(
-            "button",
-            {
-              type: "button",
-              className: "wbv-icon-btn",
-              "aria-label": props.closeLabel || "\u5173\u95ED",
-              title: props.closeLabel || "\u5173\u95ED",
-              disabled: !!props.submitting,
-              onClick: props.onClose
-            },
-            Close ? h(Close, { size: 15, strokeWidth: 2, "aria-hidden": true, focusable: false }) : "\xD7"
-          ) : null
-        );
-      },
-      closeOnEscape: function(props) {
-        return !props.submitting;
-      },
-      closeOnMask: function(props) {
-        return !props.submitting;
-      }
-    });
-    module2.exports = { Dialog, ConfirmDialog, FormDialog };
   }
 });
 
@@ -4655,7 +4806,7 @@ var require_groups = __commonJS({
                 h("span", { className: "wbv-muted" }, " \xB7 " + (set.secretCount || 0) + " \u6761")
               );
             }) : h("span", { className: "wbv-muted" }, "\u8FD8\u6CA1\u6709\u96C6\u5408")),
-            openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(P.EmptyState, { h, title: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4", hint: "\u5173\u8054\u7531\u4E1A\u52A1\u6A21\u5757\u901A\u8FC7 vault.bind \u6CE8\u518C\uFF0C\u8FD9\u91CC\u53EA\u8BFB\u3002" }) : h(P.DataTable, {
+            openS[0].loading ? h(C.Empty, { h, text: "\u8BFB\u53D6\u4E2D\u2026" }) : openS[0].error ? h(C.Notice, { h, kind: "error", text: openS[0].error }) : openS[0].items.length === 0 ? h(P.EmptyState, { h, title: "\u8FD8\u6CA1\u6709\u6A21\u5757\u5173\u8054\u5230\u8FD9\u4E2A\u5206\u7EC4", hint: "\u5173\u8054\u5728\u4E1A\u52A1\u65B9\u754C\u9762\u91CC\u8BBE\u7F6E\uFF08\u4F8B\u5982\u7AD9\u70B9\u8BB0\u5F55\u9875\u7684\u300C\u51ED\u636E\u5206\u7EC4\u300D\uFF09\uFF1B\u8FD9\u91CC\u53EA\u8BFB\u3002" }) : h(P.DataTable, {
               h,
               label: "\u5173\u8054\u5BF9\u8C61",
               columns: [{ key: "type", label: "\u7C7B\u578B" }, { key: "id", label: "\u5BF9\u8C61 id" }, { key: "title", label: "\u6807\u9898" }],
@@ -4674,7 +4825,7 @@ var require_groups = __commonJS({
           h(
             "div",
             { className: "wbv-modal-foot" },
-            h("span", { className: "wbv-muted wbv-grow" }, "\u5173\u8054\u7531\u4E1A\u52A1\u6A21\u5757\u901A\u8FC7 vault.bind \u6CE8\u518C\uFF1B\u8FD9\u91CC\u53EA\u8BFB\u3002"),
+            h("span", { className: "wbv-muted wbv-grow" }, "\u5173\u8054\u5728\u4E1A\u52A1\u65B9\u754C\u9762\u91CC\u8BBE\u7F6E\uFF08\u4F8B\u5982\u7AD9\u70B9\u8BB0\u5F55\u9875\u7684\u300C\u51ED\u636E\u5206\u7EC4\u300D\uFF09\uFF1B\u8FD9\u91CC\u53EA\u8BFB\u3002"),
             h(C.Btn, { h, onClick: function() {
               openS[1](null);
             } }, "\u5173\u95ED")
@@ -7106,10 +7257,16 @@ var GLYPHS = require_icons2().ICONS;
     injectStyles({ id: "wb-vault-style", css: CSS, addon: "wb-addon-vault" });
   }
   ensureStyles();
+  var slotBindSiteGroups = require_slot_bind_site_groups()({
+    React,
+    h,
+    injectCss: ensureStyles
+  });
   host.registerAddon({
     id: "wb-addon-vault",
-    version: "0.7.4",
+    version: "0.7.5",
     icon: GLYPHS["shield-check"],
+    slots: [{ slot: "item.actions", id: "vault.bind-site-groups", order: 90, component: slotBindSiteGroups }],
     views: [
       { id: "status", icon: tabIcon("shield"), title: { zh: "\u4FDD\u9669\u7BB1", en: "Vault" }, component: withProps(require_status(), "\u4FDD\u9669\u7BB1") },
       { id: "secrets", icon: tabIcon("key"), title: { zh: "\u51ED\u636E", en: "Secrets" }, component: withProps(require_secrets(), "\u51ED\u636E") },
